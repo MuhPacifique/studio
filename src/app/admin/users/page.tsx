@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -71,7 +72,11 @@ export default function AdminUsersPage() {
                     <Badge variant={user.role === 'Admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={user.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}>{user.status}</Badge>
+                    <Badge 
+                      className={user.status === 'Active' ? 'bg-accent text-accent-foreground' : 'bg-muted-foreground text-background'}
+                    >
+                      {user.status}
+                    </Badge>
                   </TableCell>
                   <TableCell>{user.joinedDate}</TableCell>
                   <TableCell className="space-x-2">

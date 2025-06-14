@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -112,6 +113,21 @@ export default function MedicinesPage() {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [cart]);
 
+  const getStatusBadgeClass = (status: Order['status']) => {
+    switch (status) {
+      case 'Delivered':
+        return 'bg-accent text-accent-foreground';
+      case 'Processing':
+        return 'bg-yellow-500 text-black'; // Kept yellow for processing as it's distinct
+      case 'Shipped':
+        return 'bg-blue-500 text-white'; // Kept blue for shipped
+      case 'Pending':
+        return 'bg-muted text-muted-foreground';
+      default:
+        return 'bg-secondary text-secondary-foreground';
+    }
+  };
+
   return (
     <AppLayout>
       <PageHeader title="Order Medicines" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Medicines"}]}>
@@ -150,9 +166,9 @@ export default function MedicinesPage() {
                     <CardDescription className="text-sm mb-2">{med.description}</CardDescription>
                     <p className="text-lg font-semibold text-primary">${med.price.toFixed(2)}</p>
                     {med.stock > 0 ? (
-                       <p className="text-xs text-green-600">{med.stock} in stock</p>
+                       <p className="text-xs text-green-600 dark:text-green-400">{med.stock} in stock</p>
                     ) : (
-                       <p className="text-xs text-red-600">Out of stock</p>
+                       <p className="text-xs text-red-600 dark:text-red-400">Out of stock</p>
                     )}
                   </CardContent>
                   <CardFooter className="p-4">
@@ -238,11 +254,7 @@ export default function MedicinesPage() {
                     <TableCell>
                       <Badge 
                         variant={order.status === 'Delivered' ? 'default' : order.status === 'Processing' ? 'secondary' : 'outline'}
-                        className={
-                            order.status === 'Delivered' ? 'bg-green-500 text-white' : 
-                            order.status === 'Processing' ? 'bg-yellow-500 text-black' :
-                            order.status === 'Shipped' ? 'bg-blue-500 text-white' : ''
-                        }
+                        className={getStatusBadgeClass(order.status)}
                       >
                         {order.status}
                       </Badge>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -11,11 +12,11 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 const adminFeatures = [
-  { title: "Manage Users", description: "View and manage patient and staff accounts.", href: "/admin/users", icon: Users, color: "text-blue-500", bgColor: "bg-blue-50 hover:bg-blue-100" },
-  { title: "Medicine Inventory", description: "Update and manage medicine stock and details.", href: "/admin/inventory", icon: Pill, color: "text-green-500", bgColor: "bg-green-50 hover:bg-green-100" },
-  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-purple-500", bgColor: "bg-purple-50 hover:bg-purple-100" },
-  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-yellow-500", bgColor: "bg-yellow-50 hover:bg-yellow-100" },
-  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100" },
+  { title: "Manage Users", description: "View and manage patient and staff accounts.", href: "/admin/users", icon: Users, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" },
+  { title: "Medicine Inventory", description: "Update and manage medicine stock and details.", href: "/admin/inventory", icon: Pill, color: "text-accent", bgColor: "bg-accent/10 hover:bg-accent/20" },
+  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-purple-500", bgColor: "bg-purple-500/10 hover:bg-purple-500/20" }, // Using a specific purple for variety
+  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-orange-500", bgColor: "bg-orange-500/10 hover:bg-orange-500/20" }, // Using a specific orange
+  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-pink-500", bgColor: "bg-pink-500/10 hover:bg-pink-500/20" }, // Using a specific pink
 ];
 
 
@@ -61,7 +62,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    <div className="flex items-center pt-4 text-sm font-medium text-primary group-hover:underline">
+                    <div className={`flex items-center pt-4 text-sm font-medium ${feature.color} group-hover:underline`}>
                         Go to {feature.title} <ArrowRight className="ml-2 h-4 w-4" />
                     </div>
                 </CardContent>

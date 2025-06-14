@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Edit3, Trash2, Search, Stethoscope, ListOrdered } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, Search, ListOrdered } from 'lucide-react';
 
 interface ServiceItem {
   id: string;
@@ -82,7 +83,7 @@ export default function AdminServicesPage() {
                   <TableCell className="text-right">{service.price.toFixed(2)}</TableCell>
                   <TableCell>{service.duration || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge className={service.isActive ? 'bg-green-500' : 'bg-gray-400'}>
+                    <Badge className={service.isActive ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}>
                       {service.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>

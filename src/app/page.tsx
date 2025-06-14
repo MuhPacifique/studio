@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -14,48 +15,48 @@ const features = [
     description: "Browse our catalog and order your medicines online.",
     href: "/medicines",
     icon: Pill,
-    color: "text-blue-500",
-    bgColor: "bg-blue-50 hover:bg-blue-100",
+    color: "text-primary",
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
     title: "View Medical Tests",
     description: "Access information about available medical tests.",
     href: "/medical-tests",
-    icon: Stethoscope,
-    color: "text-green-500",
-    bgColor: "bg-green-50 hover:bg-green-100",
+    icon: Stethoscope, // Kept Stethoscope as it's fitting
+    color: "text-accent",
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
     title: "Symptom Analyzer",
     description: "Get insights based on your symptoms. (AI Powered)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-purple-500",
-    bgColor: "bg-purple-50 hover:bg-purple-100",
+    color: "text-purple-500", // Using a specific purple for variety
+    bgColor: "bg-purple-500/10 hover:bg-purple-500/20",
   },
   {
     title: "Medical FAQ",
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-yellow-500",
-    bgColor: "bg-yellow-50 hover:bg-yellow-100",
+    color: "text-orange-500", // Using a specific orange
+    bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
   },
   {
     title: "Test Yourself",
     description: "Input symptoms for potential disease info. (AI Powered)",
     href: "/test-yourself",
     icon: FlaskConical,
-    color: "text-red-500",
-    bgColor: "bg-red-50 hover:bg-red-100",
+    color: "text-pink-500", // Using a specific pink
+    bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
   },
   {
     title: "Online Consultation",
     description: "Consult with doctors online via video call.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-50 hover:bg-indigo-100",
+    color: "text-indigo-500", // Using a specific indigo
+    bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
   },
 ];
 
@@ -87,7 +88,7 @@ export default function HomePage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    <div className="flex items-center pt-4 text-sm font-medium text-primary group-hover:underline">
+                    <div className={`flex items-center pt-4 text-sm font-medium ${feature.color} group-hover:underline`}>
                       Explore <ArrowRight className="ml-2 h-4 w-4" />
                     </div>
                   </CardContent>
