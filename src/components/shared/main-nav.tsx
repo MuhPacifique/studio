@@ -164,6 +164,8 @@ const useAuth = () => {
       }
       if (storedLang) {
         setPreferredLanguage(storedLang);
+      } else {
+        localStorage.setItem('mockUserLang', 'kn'); // Set default if not present
       }
     }
   }, [isClient]);
@@ -229,7 +231,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   asChild
                   variant="default"
@@ -277,7 +279,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href} passHref legacyBehavior>
+                         <Link href={subItem.href}>
                            <SidebarMenuSubButton
                              asChild
                              size="md"
