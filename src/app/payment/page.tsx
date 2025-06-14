@@ -238,7 +238,7 @@ export default function PaymentPage() {
               />
 
               {paymentMethod === 'creditCard' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
                   <h3 className="text-lg font-medium flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary" />Card Details</h3>
                   <FormField control={form.control} name="cardHolderName" render={({ field }) => (
                     <FormItem>
@@ -274,7 +274,7 @@ export default function PaymentPage() {
               )}
 
               {paymentMethod === 'mobileMoney' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
                    <h3 className="text-lg font-medium flex items-center"><Smartphone className="mr-2 h-5 w-5 text-primary" />Mobile Money Details</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
@@ -302,7 +302,7 @@ export default function PaymentPage() {
               )}
               
               {paymentMethod === 'bankTransfer' && (
-                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
+                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
                     <h3 className="text-lg font-medium flex items-center"><Landmark className="mr-2 h-5 w-5 text-primary"/>Bank Transfer Details</h3>
                     <Alert>
                         <AlertTitle className="font-semibold">Bank Transfer Instructions</AlertTitle>

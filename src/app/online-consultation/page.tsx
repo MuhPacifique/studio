@@ -220,7 +220,7 @@ export default function OnlineConsultationPage() {
                 {isCallActive ? "You are currently in a virtual consultation." : `Connect with qualified doctors from home via ${callMode} call.`}
               </CardDescription>
             </CardHeader>
-            <CardContent className={`aspect-[16/9] bg-black flex items-center justify-center relative ${isCallActive ? 'border-2 border-primary animate-pulse-border' : 'border-2 border-muted'}`}>
+            <CardContent className={`aspect-[16/9] bg-black flex items-center justify-center relative ${isCallActive ? 'border-2 border-primary' : 'border-2 border-muted'}`}>
               {isCallActive ? (
                 <>
                   {/* Mock Doctor's View */}
@@ -385,13 +385,10 @@ export default function OnlineConsultationPage() {
         </div>
       </div>
       <style jsx global>{`
-        @keyframes pulse-border {
-          0% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
-          50% { border-color: hsl(var(--primary)); box-shadow: 0 0 15px hsl(var(--primary)/0.5); }
-          100% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
-        }
+        /* Removed the pulse-border animation as per previous request */
         .animate-pulse-border {
-          animation: pulse-border 2s infinite;
+          /* border-color: hsl(var(--primary) / 0.5); 
+          box-shadow: 0 0 5px hsl(var(--primary)/0.2);  */
         }
       `}</style>
     </AppLayout>

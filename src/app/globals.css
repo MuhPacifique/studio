@@ -137,13 +137,3 @@ body {
    @apply hover:shadow-lg hover:shadow-[hsl(var(--primary))]/30;
 }
 
-
-/* Keyframes for border pulse animation (can be used selectively) */
-@keyframes pulse-border {
-  0% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.1); }
-  50% { border-color: hsl(var(--primary)); box-shadow: 0 0 10px hsl(var(--primary)/0.3); }
-  100% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.1); }
-}
-.animate-pulse-border {
-  animation: pulse-border 2s infinite;
-}
