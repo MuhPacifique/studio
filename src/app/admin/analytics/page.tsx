@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart, LineChart, PieChart, Users, Activity, DollarSign } from 'lucide-react';
+import { BarChart, LineChart as LineChartIcon, PieChart as PieChartIcon, Users, Activity, DollarSign } from 'lucide-react'; // Aliased to avoid conflict
 import {
   ChartContainer,
   ChartTooltip,
@@ -14,7 +14,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { Bar, Line, Pie, ResponsiveContainer, Cell, TooltipProps, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Bar, Line, Pie, ResponsiveContainer, Cell, TooltipProps, CartesianGrid, XAxis, YAxis, LineChart, PieChart } from "recharts" // Imported LineChart and PieChart
 import { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 
 const chartData = [
@@ -111,7 +111,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: -25, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
@@ -122,7 +121,6 @@ export default function AdminAnalyticsPage() {
                   <Line yAxisId="left" type="monotone" dataKey="users" stroke="var(--color-users)" strokeWidth={2} dot={false} />
                   <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
                 </LineChart>
-              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -134,7 +132,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent className="flex justify-center">
             <ChartContainer config={{}} className="h-[300px] w-full max-w-xs">
-              <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
                   <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label >
                      {pieChartData.map((entry, index) => (
@@ -144,7 +141,6 @@ export default function AdminAnalyticsPage() {
                   <ChartTooltip content={<CustomTooltip />} cursor={false}/>
                   <ChartLegend content={<ChartLegendContent />} />
                 </PieChart>
-              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
