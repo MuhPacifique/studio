@@ -88,7 +88,7 @@ export default function HomePage() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{feature.description}</p>
                     <div className={`flex items-center pt-4 text-sm font-medium ${feature.color} group-hover:underline`}>
-                      Explore <ArrowRight className="ml-2 h-4 w-4" />
+                      Explore <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </CardContent>
                 </Card>
@@ -114,4 +114,3 @@ export default function HomePage() {
     </AppLayout>
   );
 }
-

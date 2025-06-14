@@ -14,9 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 const adminFeatures = [
   { title: "Manage Users", description: "View and manage patient and staff accounts.", href: "/admin/users", icon: Users, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" },
   { title: "Medicine Inventory", description: "Update and manage medicine stock and details.", href: "/admin/inventory", icon: Pill, color: "text-accent", bgColor: "bg-accent/10 hover:bg-accent/20" },
-  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-purple-500", bgColor: "bg-purple-500/10 hover:bg-purple-500/20" }, // Using a specific purple for variety
-  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-orange-500", bgColor: "bg-orange-500/10 hover:bg-orange-500/20" }, // Using a specific orange
-  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-pink-500", bgColor: "bg-pink-500/10 hover:bg-pink-500/20" }, // Using a specific pink
+  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-purple-500", bgColor: "bg-purple-500/10 hover:bg-purple-500/20" }, 
+  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-orange-500", bgColor: "bg-orange-500/10 hover:bg-orange-500/20" }, 
+  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-pink-500", bgColor: "bg-pink-500/10 hover:bg-pink-500/20" }, 
 ];
 
 
@@ -53,21 +53,19 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {adminFeatures.map((feature) => (
-          <Link href={feature.href} key={feature.title} legacyBehavior>
-            <a className="block group">
-                <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor}`}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className={`text-lg font-medium font-headline ${feature.color}`}>{feature.title}</CardTitle>
-                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    <div className={`flex items-center pt-4 text-sm font-medium ${feature.color} group-hover:underline`}>
-                        Go to {feature.title} <ArrowRight className="ml-2 h-4 w-4" />
-                    </div>
-                </CardContent>
-                </Card>
-            </a>
+          <Link href={feature.href} key={feature.title} className="block group">
+            <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor}`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-lg font-medium font-headline ${feature.color}`}>{feature.title}</CardTitle>
+                <feature.icon className={`h-6 w-6 ${feature.color}`} />
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <div className={`flex items-center pt-4 text-sm font-medium ${feature.color} group-hover:underline`}>
+                    Go to {feature.title} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                </div>
+            </CardContent>
+            </Card>
           </Link>
         ))}
       </div>
