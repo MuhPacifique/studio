@@ -22,7 +22,7 @@ const features = [
     title: "View Medical Tests",
     description: "Access information about available medical tests.",
     href: "/medical-tests",
-    icon: Stethoscope, // Kept Stethoscope as it's fitting
+    icon: Stethoscope, 
     color: "text-accent",
     bgColor: "bg-accent/10 hover:bg-accent/20",
   },
@@ -31,7 +31,7 @@ const features = [
     description: "Get insights based on your symptoms. (AI Powered)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-purple-500", // Using a specific purple for variety
+    color: "text-purple-500", 
     bgColor: "bg-purple-500/10 hover:bg-purple-500/20",
   },
   {
@@ -39,7 +39,7 @@ const features = [
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-orange-500", // Using a specific orange
+    color: "text-orange-500", 
     bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
   },
   {
@@ -47,7 +47,7 @@ const features = [
     description: "Input symptoms for potential disease info. (AI Powered)",
     href: "/test-yourself",
     icon: FlaskConical,
-    color: "text-pink-500", // Using a specific pink
+    color: "text-pink-500", 
     bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
   },
   {
@@ -55,7 +55,7 @@ const features = [
     description: "Consult with doctors online via video call.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-indigo-500", // Using a specific indigo
+    color: "text-indigo-500", 
     bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
   },
 ];
@@ -79,8 +79,7 @@ export default function HomePage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <Link href={feature.href} key={feature.title} legacyBehavior>
-              <a className="block group">
+            <Link href={feature.href} key={feature.title} className="block group">
                 <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor}`}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className={`text-lg font-medium font-headline ${feature.color}`}>{feature.title}</CardTitle>
@@ -93,7 +92,6 @@ export default function HomePage() {
                     </div>
                   </CardContent>
                 </Card>
-              </a>
             </Link>
           ))}
         </div>
@@ -116,3 +114,4 @@ export default function HomePage() {
     </AppLayout>
   );
 }
+
