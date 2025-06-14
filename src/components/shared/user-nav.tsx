@@ -17,17 +17,15 @@ import {
 import { LogIn, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase, Moon, Sun, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// With localStorage removed, auth state is no longer persisted client-side.
-// This component will now mostly reflect a "logged out" state or a very basic
-// visual representation if it were to get user data from a (future) context/backend.
-
 const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
-export function UserNav() {
+// Accept isAuthenticated as a prop
+export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();
-  // Mocked state, assuming user is not authenticated by default as localStorage is gone.
-  // In a real app, this would come from a global state/context updated after API calls.
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Use the prop for authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated);
+  
+  // These would ideally come from a user context/store after login
   const [userName, setUserName] = useState<string | null>(null);
   const [userType, setUserType] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
@@ -37,46 +35,47 @@ export function UserNav() {
 
    useEffect(() => {
     // Set initial theme based on OS preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setCurrentTheme('dark');
-      document.documentElement.classList.add('dark');
-    } else {
-      setCurrentTheme('light');
-      document.documentElement.classList.remove('dark');
+    if (typeof window !== "undefined") {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setCurrentTheme('dark');
+        document.documentElement.classList.add('dark');
+      } else {
+        setCurrentTheme('light');
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, []);
+  
+  // Update local auth state if the prop changes (e.g., after a mock login elsewhere)
+  useEffect(() => {
+    setIsAuthenticated(propIsAuthenticated);
+    if (propIsAuthenticated) {
+        // Simulate fetching/setting user details if authenticated
+        // In a real app, this data would come from a context or API call
+        setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); // "Prototype User"
+        setUserType("patient"); // Default to patient for demo
+        setProfileImageUrl(""); // Or a placeholder
+    } else {
+        setUserName(null);
+        setUserType(null);
+        setProfileImageUrl(null);
+    }
+  }, [propIsAuthenticated]);
+
 
   const toggleTheme = () => {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setCurrentTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    // Note: Theme persistence via localStorage was removed.
   };
 
-  // Simulate fetching user data or checking session on mount (conceptual)
-  useEffect(() => {
-    // In a real app, you'd check a token or make an API call here.
-    // For this prototype, we'll assume logged out state.
+  const handleLogout = () => {
+    // This mock logout only affects UI. Real logout needs backend.
     setIsAuthenticated(false); 
     setUserName(null);
     setUserType(null);
-    setProfileImageUrl(null);
-    setInitials("U");
-
-    // If you wanted to test the logged-in UI without localStorage:
-    // setIsAuthenticated(true);
-    // setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); // "Prototype User"
-    // setUserType("patient");
-    // setProfileImageUrl(""); // Or a placeholder
-    // setInitials("UP");
-  }, []);
-
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUserName(null);
-    setUserType(null);
-    // In a real app, this would also call a backend logout endpoint.
+    // For prototype, AppLayout will handle redirection if needed.
+    // Or directly redirect to welcome.
     router.push('/welcome');
   };
   
@@ -110,11 +109,12 @@ export function UserNav() {
               <LogIn className="mr-2 h-4 w-4" /> {t('Injira', 'Injira')}
             </Link>
           </Button>
-          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+          {/* Registration button might be redundant if /welcome is the main entry */}
+          {/* <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/welcome">
               <UserPlus className="mr-2 h-4 w-4" /> {t('Iyandikishe', 'Iyandikishe')}
             </Link>
-          </Button>
+          </Button> */}
         </>
       ) : (
         <DropdownMenu>
