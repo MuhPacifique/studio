@@ -7,12 +7,12 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MessageSquareQuote, Search, PlusCircle, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Loader2, MessageSquareQuote, Search, PlusCircle, ThumbsUp, MessageSquare, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 interface ForumPost {
   id: string;
@@ -23,15 +23,17 @@ interface ForumPost {
   category: string;
   timestamp: string;
   summary: string;
+  fullContent?: string; // Added for detail page
   likes: number;
-  comments: number;
+  commentsCount: number; // Renamed for clarity
   aiHint: string;
+  tags?: string[];
 }
 
-const mockForumPosts: ForumPost[] = [
-  { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', likes: 15, comments: 4, aiHint: 'community support people' },
-  { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', likes: 22, comments: 8, aiHint: 'anxious person thinking' },
-  { id: 'fp3', title: 'Healthy recipes for a low-sodium diet?', author: 'Carlos G.', authorAvatar: 'https://placehold.co/40x40.png?text=CG', authorInitials: 'CG', category: 'Nutrition', timestamp: '1 week ago', summary: 'Doctor recommended a low-sodium diet. Sharing and looking for tasty recipe ideas!', likes: 30, comments: 12, aiHint: 'healthy cooking vegetables' },
+const initialMockForumPosts: ForumPost[] = [
+  { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs...", likes: 15, commentsCount: 4, aiHint: 'community support people', tags: ['chronic pain', 'support', 'wellness'] },
+  { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed.", likes: 22, commentsCount: 8, aiHint: 'anxious person thinking', tags: ['anxiety', 'medical tests', 'mental health'] },
+  { id: 'fp3', title: 'Healthy recipes for a low-sodium diet?', author: 'Carlos G.', authorAvatar: 'https://placehold.co/40x40.png?text=CG', authorInitials: 'CG', category: 'Nutrition', timestamp: '1 week ago', summary: 'Doctor recommended a low-sodium diet. Sharing and looking for tasty recipe ideas!', fullContent: "Collection of low-sodium recipes, tips for flavoring food without salt, and links to useful resources.", likes: 30, commentsCount: 12, aiHint: 'healthy cooking vegetables', tags: ['nutrition', 'low-sodium', 'recipes', 'diet'] },
 ];
 
 export default function PatientForumsPage() {
@@ -40,6 +42,7 @@ export default function PatientForumsPage() {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [posts, setPosts] = useState<ForumPost[]>(initialMockForumPosts);
 
   useEffect(() => {
     setIsClient(true);
@@ -61,10 +64,16 @@ export default function PatientForumsPage() {
     }
   }, [isClient, router, toast]);
 
-  const filteredPosts = mockForumPosts.filter(post =>
+  const handleLike = (postId: string) => {
+    setPosts(posts.map(post => post.id === postId ? { ...post, likes: post.likes + 1 } : post));
+    toast({ title: "Post Liked (Mock)" });
+  };
+
+  const filteredPosts = posts.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.summary.toLowerCase().includes(searchTerm.toLowerCase())
+    post.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   if (!isClient || !isAuthenticated) {
@@ -92,7 +101,7 @@ export default function PatientForumsPage() {
             <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                placeholder="Search forums..." 
+                placeholder="Search forums by title, category, tag..." 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -117,10 +126,12 @@ export default function PatientForumsPage() {
 
       <div className="space-y-6">
         {filteredPosts.map(post => (
-          <Card key={post.id} className="shadow-lg hover-lift">
+          <Card key={post.id} className="shadow-lg hover-lift group transition-all duration-300 ease-in-out hover:border-primary/50">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="font-headline text-xl hover:text-primary transition-colors cursor-pointer">{post.title}</CardTitle>
+                <Link href={`/community-support/forums/${post.id}`} className="block">
+                    <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors cursor-pointer">{post.title}</CardTitle>
+                </Link>
                 <Badge variant="outline">{post.category}</Badge>
               </div>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground pt-1">
@@ -132,27 +143,46 @@ export default function PatientForumsPage() {
                 <span>•</span>
                 <span>{post.timestamp}</span>
               </div>
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-2">
+                    {post.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                    ))}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-foreground/80">{post.summary}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center border-t pt-3">
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={() => handleLike(post.id)}>
                     <ThumbsUp className="mr-1.5 h-4 w-4"/> {post.likes} Likes
                 </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                    <MessageSquare className="mr-1.5 h-4 w-4"/> {post.comments} Comments
-                </Button>
+                <Link href={`/community-support/forums/${post.id}#comments`} className="inline-flex items-center">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                        <MessageSquare className="mr-1.5 h-4 w-4"/> {post.commentsCount} Comments
+                    </Button>
+                </Link>
               </div>
-              <Button variant="outline" size="sm" className="transition-transform hover:scale-105 active:scale-95">Read More & Reply</Button>
+              <Link href={`/community-support/forums/${post.id}`}>
+                <Button variant="outline" size="sm" className="transition-transform group-hover:scale-105 active:scale-95 hover:bg-primary/10 hover:border-primary">
+                  Read More & Reply <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         ))}
         {filteredPosts.length === 0 && (
-            <p className="col-span-full text-center text-muted-foreground py-8">No forum posts found matching your search.</p>
+            <Card className="shadow-md">
+                <CardContent className="py-10 text-center">
+                    <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No forum posts found matching your search criteria.</p>
+                </CardContent>
+            </Card>
         )}
       </div>
     </AppLayout>
   );
 }
+

@@ -7,11 +7,12 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Users2, Search, PlusCircle, UserPlus, ArrowRight } from 'lucide-react';
+import { Loader2, Users2, Search, PlusCircle, UserPlus, ArrowRight, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface SupportGroup {
   id: string;
@@ -22,13 +23,15 @@ interface SupportGroup {
   memberCount: number;
   category: string;
   isPrivate: boolean;
+  isJoined?: boolean; // Added for mock state
+  isRequested?: boolean; // Added for mock state
 }
 
-const mockSupportGroups: SupportGroup[] = [
-  { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', isPrivate: false },
-  { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', isPrivate: true },
-  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', isPrivate: false },
-  { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false },
+const initialMockSupportGroups: SupportGroup[] = [
+  { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', isPrivate: false, isJoined: false },
+  { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', isPrivate: true, isJoined: false },
+  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', isPrivate: false, isJoined: true }, // Example of already joined
+  { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false, isJoined: false },
 ];
 
 export default function SupportGroupsPage() {
@@ -37,6 +40,7 @@ export default function SupportGroupsPage() {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [groups, setGroups] = useState<SupportGroup[]>(initialMockSupportGroups);
 
   useEffect(() => {
     setIsClient(true);
@@ -58,7 +62,30 @@ export default function SupportGroupsPage() {
     }
   }, [isClient, router, toast]);
 
-  const filteredGroups = mockSupportGroups.filter(group =>
+  const handleJoinGroup = (groupId: string) => {
+    setGroups(prevGroups => 
+      prevGroups.map(group => {
+        if (group.id === groupId) {
+          if (group.isPrivate && !group.isRequested) {
+            toast({ title: "Request Sent (Mock)", description: `Your request to join "${group.name}" has been sent.`});
+            return { ...group, isRequested: true };
+          } else if (!group.isPrivate && !group.isJoined) {
+            toast({ title: "Group Joined (Mock)", description: `You have joined "${group.name}".`});
+            return { ...group, isJoined: true, memberCount: group.memberCount + 1 };
+          }
+        }
+        return group;
+      })
+    );
+    // In a real app, you might navigate after joining, or the button would change to "View Group"
+    // For this mock, we'll let the button text update and then clicking it again could navigate
+    const group = groups.find(g => g.id === groupId);
+    if(group && (group.isJoined || (!group.isPrivate && !group.isRequested))) {
+        router.push(`/community-support/support-groups/${groupId}`);
+    }
+  };
+
+  const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -114,18 +141,22 @@ export default function SupportGroupsPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredGroups.map(group => (
-          <Card key={group.id} className="flex flex-col shadow-lg hover-lift group">
-            <Image 
-              src={group.imageUrl} 
-              alt={group.name} 
-              width={400} 
-              height={200} 
-              className="w-full h-48 object-cover rounded-t-lg"
-              data-ai-hint={group.aiHint} 
-            />
+          <Card key={group.id} className="flex flex-col shadow-lg hover-lift group transition-all duration-300 ease-in-out hover:border-primary/50">
+             <Link href={`/community-support/support-groups/${group.id}`} className="block">
+                <Image 
+                src={group.imageUrl} 
+                alt={group.name} 
+                width={400} 
+                height={200} 
+                className="w-full h-48 object-cover rounded-t-lg group-hover:opacity-90 transition-opacity"
+                data-ai-hint={group.aiHint} 
+                />
+            </Link>
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
+                <Link href={`/community-support/support-groups/${group.id}`} className="block">
+                    <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
+                </Link>
                 {group.isPrivate && <Badge variant="secondary">Private</Badge>}
                 {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">Public</Badge>}
               </div>
@@ -138,14 +169,26 @@ export default function SupportGroupsPage() {
               <div className="flex items-center text-sm text-muted-foreground">
                 <Users2 className="mr-1.5 h-4 w-4" /> {group.memberCount} members
               </div>
-              <Button variant="default" size="sm" className="transition-transform group-hover:scale-105 active:scale-95">
-                {group.isPrivate ? 'Request to Join' : 'Join Group'} <UserPlus className="ml-2 h-4 w-4" />
+              <Button 
+                variant={group.isJoined ? "outline" : "default"} 
+                size="sm" 
+                className="transition-transform group-hover:scale-105 active:scale-95"
+                onClick={() => handleJoinGroup(group.id)}
+                disabled={group.isJoined && group.isPrivate && group.isRequested}
+              >
+                {group.isJoined ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <UserPlus className="ml-2 h-4 w-4" />}
+                {group.isJoined ? (group.isPrivate ? 'View Group' : 'View Group') : (group.isPrivate ? (group.isRequested ? 'Requested' : 'Request to Join') : 'Join Group')}
               </Button>
             </CardFooter>
           </Card>
         ))}
         {filteredGroups.length === 0 && (
-            <p className="col-span-full text-center text-muted-foreground py-8">No support groups found matching your search.</p>
+             <Card className="md:col-span-2 lg:col-span-3 shadow-md">
+                <CardContent className="py-10 text-center">
+                    <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No support groups found matching your search criteria.</p>
+                </CardContent>
+            </Card>
         )}
       </div>
     </AppLayout>
