@@ -27,7 +27,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="kn" suppressHydrationWarning> {/* Default to Kinyarwanda, will be updated by useEffect */}
+    <html lang="kn" suppressHydrationWarning>{/* Default to Kinyarwanda, will be updated by useEffect */}
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
