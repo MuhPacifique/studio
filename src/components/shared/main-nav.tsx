@@ -18,7 +18,9 @@ import {
   ClipboardList,
   Users,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -47,7 +49,7 @@ const navItems: NavItem[] = [
   { href: '/online-consultation', label: 'Online Consultation', icon: Video },
   { href: '/payment', label: 'Make Payment', icon: CreditCard },
   { 
-    href: '/admin/dashboard', 
+    href: '#admin-section', // Changed to # to prevent navigation if only used as a trigger
     label: 'Admin Section', 
     icon: LayoutDashboard, 
     adminOnly: true,
@@ -56,11 +58,12 @@ const navItems: NavItem[] = [
       { href: '/admin/users', label: 'Manage Users', icon: Users },
       { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill },
       { href: '/admin/services', label: 'Manage Services', icon: Settings },
+      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope },
+      { href: '/admin/settings', label: 'System Settings', icon: Settings },
     ]
   },
 ];
 
-// Mock authentication state for determining admin access
 const useAuth = () => {
   const [userType, setUserType] = useState<'patient' | 'admin' | null>(null);
   useEffect(() => {
@@ -80,6 +83,14 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   const { userType } = useAuth();
   const [openSubMenus, setOpenSubMenus] = React.useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    // Pre-open admin submenu if current path is an admin path
+    const isAdminPath = navItems.find(item => item.label === 'Admin Section' && item.subItems?.some(sub => pathname.startsWith(sub.href)));
+    if (isAdminPath) {
+      setOpenSubMenus(prev => ({ ...prev, 'Admin Section': true }));
+    }
+  }, [pathname]);
+
   const toggleSubMenu = (label: string) => {
     setOpenSubMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
@@ -93,7 +104,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
     >
       <SidebarMenu>
         {filteredNavItems.map((item) => (
-          <SidebarMenuItem key={item.href}>
+          <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
               <Link href={item.href}>
                 <SidebarMenuButton
@@ -102,11 +113,11 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   isActive={pathname === item.href}
                   tooltip={item.label}
                   className={cn(
-                    "justify-start w-full",
+                    "justify-start w-full transition-colors duration-150 ease-in-out",
                     pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   <span className="truncate">{item.label}</span>
                 </SidebarMenuButton>
               </Link>
@@ -119,15 +130,18 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   tooltip={item.label}
                   onClick={() => toggleSubMenu(item.label)}
                   className={cn(
-                    "justify-start w-full",
+                    "justify-between w-full transition-colors duration-150 ease-in-out", // Ensure justify-between for arrow
                      item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex items-center truncate">
+                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {openSubMenus[item.label] ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />}
                 </SidebarMenuButton>
                 {openSubMenus[item.label] && (
-                  <SidebarMenuSub>
+                  <SidebarMenuSub className="mt-1">
                     {item.subItems.map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
                          <Link href={subItem.href}>
@@ -135,11 +149,12 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                              size="md"
                              isActive={pathname === subItem.href}
                              className={cn(
-                               pathname === subItem.href ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                               "transition-colors duration-150 ease-in-out",
+                               pathname === subItem.href ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                              )}
                            >
-                             <subItem.icon className="mr-2 h-4 w-4" />
-                             {subItem.label}
+                             <subItem.icon className="mr-2 h-4 w-4 flex-shrink-0" />
+                             <span className="truncate">{subItem.label}</span>
                            </SidebarMenuSubButton>
                          </Link>
                        </SidebarMenuSubItem>
