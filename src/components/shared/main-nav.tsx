@@ -27,7 +27,7 @@ import {
   Users2,
   CalendarPlus, 
   CalendarCheck2,
-  FileHeart // New icon for My Health
+  FileHeart 
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -44,7 +44,7 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   doctorOnly?: boolean;
-  patientOnly?: boolean; // For patient/seeker specific items
+  patientOnly?: boolean; 
   subItems?: NavItem[];
   requiresAuth?: boolean;
 }
@@ -69,10 +69,9 @@ const navItems: NavItem[] = [
     label: 'My Health', 
     icon: FileHeart, 
     requiresAuth: true,
-    patientOnly: true, // Assuming prescriptions are primarily for patients
+    patientOnly: true, 
     subItems: [
       { href: '/my-health/prescriptions', label: 'My Prescriptions', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
-      // Add more "My Health" items like Medical Records if needed
     ]
   },
   { 
@@ -109,7 +108,6 @@ const navItems: NavItem[] = [
     subItems: [
         { href: '/doctor/dashboard', label: 'Doctor Overview', icon: LayoutDashboard, doctorOnly: true, requiresAuth: true },
         { href: '/doctor/prescribe', label: 'Prescribe / Advise', icon: ClipboardListIcon, doctorOnly: true, requiresAuth: true },
-        // Add more doctor-specific sub-items here
     ]
   },
   { 
@@ -147,11 +145,10 @@ const useAuth = () => {
       
       if (mockAuth) {
         setIsAuthenticated(true);
-        // Prioritize mockAuth if it's 'admin' or 'doctor', otherwise use selectedRole
         if (mockAuth === 'admin') setUserType('admin');
         else if (mockAuth === 'doctor') setUserType('doctor');
         else if (storedRole) setUserType(storedRole);
-        else setUserType('patient'); // Fallback for general authenticated user
+        else setUserType('patient'); 
       } else {
         setUserType(null);
         setIsAuthenticated(false);
@@ -198,17 +195,12 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
     if (!isAuthenticated) return false; 
     if (item.adminOnly && userType !== 'admin') return false;
     if (item.doctorOnly && userType !== 'doctor') return false;
-    // Show 'patientOnly' items if user is patient or seeker, and not admin or doctor
     if (item.patientOnly && (!isPatientOrSeeker || userType === 'admin' || userType === 'doctor')) return false;
     
-    // If item is not adminOnly, not doctorOnly, and not patientOnly, show to all authenticated users
     if (!item.adminOnly && !item.doctorOnly && !item.patientOnly) return true;
 
-    // If it's an admin item and user is admin
     if (item.adminOnly && userType === 'admin') return true;
-    // If it's a doctor item and user is doctor
     if (item.doctorOnly && userType === 'doctor') return true;
-    // If it's a patient/seeker item and user is patient/seeker
     if (item.patientOnly && isPatientOrSeeker) return true;
 
     return false; 
@@ -223,7 +215,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   asChild
                   variant="default"
@@ -271,7 +263,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href} passHref legacyBehavior>
+                         <Link href={subItem.href}>
                            <SidebarMenuSubButton
                              asChild
                              size="md"
