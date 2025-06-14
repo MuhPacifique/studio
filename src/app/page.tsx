@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2 } from 'lucide-react'; 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList as ClipboardListIcon, CalendarCheck2, ShieldQuestion, FileHeart, TrendingUp } from 'lucide-react'; 
 import { PageHeader } from '@/components/shared/page-header';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -19,70 +19,79 @@ const features = [
     icon: Pill,
     color: "text-primary", 
     bgColor: "bg-primary/10 hover:bg-primary/20",
+    borderColor: "border-primary/30",
   },
   {
     title: "View Medical Tests",
     description: "Access information about available medical tests.",
     href: "/medical-tests",
-    icon: ClipboardList, 
+    icon: ClipboardListIcon, 
     color: "text-accent", 
     bgColor: "bg-accent/10 hover:bg-accent/20",
+    borderColor: "border-accent/30",
   },
   {
     title: "Book Appointments",
     description: "Schedule consultations with healthcare professionals.",
     href: "/appointments/book",
     icon: CalendarCheck2,
-    color: "text-primary", 
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-green-600 dark:text-green-400", // Specific color
+    bgColor: "bg-green-500/10 hover:bg-green-500/20",
+    borderColor: "border-green-500/30",
   },
   {
     title: "Health Resources",
     description: "Articles and tips for a healthier lifestyle.",
     href: "/health-resources/articles", 
     icon: LifeBuoy,
-    color: "text-accent",
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    color: "text-blue-600 dark:text-blue-400", // Specific color
+    bgColor: "bg-blue-500/10 hover:bg-blue-500/20",
+    borderColor: "border-blue-500/30",
   },
   {
-    title: "Community & Support",
+    title: "Community Support",
     description: "Connect with forums and support groups.",
     href: "/community-support/forums", 
     icon: Users2,
-    color: "text-primary",
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-purple-600 dark:text-purple-400", // Specific color
+    bgColor: "bg-purple-500/10 hover:bg-purple-500/20",
+    borderColor: "border-purple-500/30",
   },
   {
     title: "Symptom Analyzer",
     description: "Get insights based on your symptoms. (AI Powered)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-accent", 
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    color: "text-teal-600 dark:text-teal-400", // Specific color
+    bgColor: "bg-teal-500/10 hover:bg-teal-500/20",
+    borderColor: "border-teal-500/30",
   },
   {
     title: "Medical FAQ",
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-primary", 
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-indigo-600 dark:text-indigo-400", // Specific color
+    bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
+    borderColor: "border-indigo-500/30",
   },
   {
     title: "Test Yourself",
     description: "Input symptoms for potential disease info. (AI Powered)",
     href: "/test-yourself",
-    icon: FlaskConical,
-    color: "text-accent", 
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    icon: ShieldQuestion, // Changed icon
+    color: "text-pink-600 dark:text-pink-400", // Specific color
+    bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
+    borderColor: "border-pink-500/30",
   },
   {
     title: "Online Consultation",
     description: "Consult with doctors online via video call.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-primary", 
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-orange-600 dark:text-orange-400", // Specific color
+    bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
+    borderColor: "border-orange-500/30",
   },
 ];
 
@@ -102,12 +111,12 @@ export default function HomePage() {
       const authStatus = localStorage.getItem('mockAuth');
       const storedUserName = localStorage.getItem('mockUserName');
       if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "Please log in to access the dashboard.",
-        });
-        router.replace('/welcome'); // Redirect to welcome page
+        // toast({ // Welcome page will handle this now
+        //   variant: "destructive",
+        //   title: "Access Denied",
+        //   description: "Please log in to access the dashboard.",
+        // });
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
         setUserName(storedUserName || (authStatus === 'admin' ? 'Admin User' : 'Valued User'));
@@ -130,7 +139,7 @@ export default function HomePage() {
     <AppLayout>
       <PageHeader title={`Welcome, ${userName}!`} />
       <div className="space-y-8">
-        <Card className="shadow-lg bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20 hover-lift">
+        <Card className="shadow-lg bg-gradient-to-r from-primary/10 via-background to-accent/10 border-primary/20 hover-lift">
           <CardHeader>
             <CardTitle className="text-2xl font-headline gradient-text">Your Integrated Health Companion</CardTitle>
             <CardDescription className="text-foreground/80">
@@ -145,19 +154,19 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {features.map((feature) => (
              <Link href={feature.href} key={feature.title} className="block group">
-                <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor} h-full flex flex-col hover-lift`}>
+                <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor} h-full flex flex-col hover-lift border ${feature.borderColor}`}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className={`text-lg font-medium font-headline ${feature.color}`}>{feature.title}</CardTitle>
-                    <feature.icon className={`h-7 w-7 ${feature.color} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                    <feature.icon className={`h-7 w-7 ${feature.color} opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-6`} />
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground">{feature.description}</p>
                   </CardContent>
-                   <CardContent className="pt-2">
+                   <CardFooter className="pt-2">
                      <div className={`flex items-center text-sm font-medium ${feature.color} group-hover:underline`}>
                         Explore <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                       </div>
-                   </CardContent>
+                   </CardFooter>
                 </Card>
             </Link>
           ))}
@@ -165,7 +174,7 @@ export default function HomePage() {
 
         <Card className="shadow-lg hover-lift">
           <CardHeader>
-            <CardTitle className="font-headline">Need to make a payment?</CardTitle>
+            <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Need to make a payment?</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <p className="text-muted-foreground mb-4 sm:mb-0">Securely process your payments for services and orders in RWF.</p>

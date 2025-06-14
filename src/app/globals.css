@@ -19,95 +19,95 @@ body {
 @layer base {
   :root {
     --background: 0 0% 100%; /* White */
-    --foreground: 0 0% 3.9%; /* Black */
+    --foreground: 224 71.4% 4.1%; /* Dark Blue-Black */
     
     --card: 0 0% 100%; /* White */
-    --card-foreground: 0 0% 3.9%; /* Black */
+    --card-foreground: 224 71.4% 4.1%; /* Dark Blue-Black */
     
     --popover: 0 0% 100%; /* White */
-    --popover-foreground: 0 0% 3.9%; /* Black */
+    --popover-foreground: 224 71.4% 4.1%; /* Dark Blue-Black */
     
-    --primary: 142.1 76.2% 36.3%; /* Green */
-    --primary-foreground: 0 0% 98%; /* White (for text on primary green) */
+    --primary: 142.1 70.6% 45.3%; /* Vibrant Green */
+    --primary-foreground: 0 0% 98%; /* Almost White (for text on primary green) */
     
-    --secondary: 0 0% 96.1%; /* Light Gray (almost white) */
-    --secondary-foreground: 0 0% 9%; /* Dark Gray */
+    --secondary: 220 13% 91%; /* Light Cool Gray */
+    --secondary-foreground: 220 9% 38%; /* Medium Cool Gray */
     
-    --muted: 0 0% 96.1%; /* Light Gray */
-    --muted-foreground: 0 0% 45.1%; /* Medium Gray */
+    --muted: 220 13% 91%; /* Light Cool Gray */
+    --muted-foreground: 220 9% 45%; /* Medium Cool Gray */
     
-    --accent: 142.1 70.6% 45.3%; /* Slightly lighter Green */
-    --accent-foreground: 0 0% 98%; /* White */
+    --accent: 205 90% 47%; /* Bright Blue */
+    --accent-foreground: 0 0% 98%; /* Almost White (for text on accent blue) */
     
-    --destructive: 0 0% 3.9%; /* Black (for contrast on light backgrounds, or for text on error items) */
-    --destructive-foreground: 0 0% 98%; /* White (for text on dark error items) */
+    --destructive: 0 72.2% 50.6%; /* Red */
+    --destructive-foreground: 0 0% 98%; /* Almost White (for text on red) */
     
-    --border: 0 0% 89.8%; /* Light Gray Border */
-    --input: 0 0% 93%;    /* Slightly darker light gray for input BG */
-    --ring: 142.1 76.2% 36.3%; /* Green for Focus Rings */
+    --border: 220 13% 85%; /* Cool Gray Border */
+    --input: 220 13% 88%;    /* Slightly darker cool gray for input BG */
+    --ring: 142.1 70.6% 45.3%; /* Vibrant Green for Focus Rings */
     
-    --chart-1: 142.1 76.2% 36.3%; /* Green */
-    --chart-2: 142.1 70.6% 45.3%; /* Lighter Green */
-    --chart-3: 142.1 65% 55%;   /* Even Lighter Green */
-    --chart-4: 0 0% 20%;         /* Dark Gray */
-    --chart-5: 0 0% 40%;         /* Medium Gray */
+    --chart-1: 142.1 70.6% 45.3%; /* Vibrant Green */
+    --chart-2: 205 90% 47%;   /* Bright Blue */
+    --chart-3: 170 60% 45%;   /* Tealish Green */
+    --chart-4: 30 90% 55%;    /* Orange */
+    --chart-5: 260 70% 55%;   /* Purple */
     --radius: 0.5rem;
 
     /* Sidebar light theme */
-    --sidebar-background: 0 0% 98%; /* Very Light Gray (Almost White) */
-    --sidebar-foreground: 0 0% 3.9%; /* Black */
-    --sidebar-primary: 142.1 76.2% 36.3%; /* Green (active item background) */
-    --sidebar-primary-foreground: 0 0% 98%; /* White (active item text) */
-    --sidebar-accent: 0 0% 92%; /* Light Gray (hover) */
-    --sidebar-accent-foreground: 142.1 70.6% 30.3%; /* Darker Green (hover text) */
-    --sidebar-border: 0 0% 89.8%; /* Light Gray Border */
-    --sidebar-ring: 142.1 70.6% 45.3%; /* Light Green */
+    --sidebar-background: 220 14% 97%; /* Very Light Cool Gray (Almost White) */
+    --sidebar-foreground: 224 71.4% 4.1%; /* Dark Blue-Black */
+    --sidebar-primary: 142.1 70.6% 45.3%; /* Vibrant Green (active item background) */
+    --sidebar-primary-foreground: 0 0% 98%; /* Almost White (active item text) */
+    --sidebar-accent: 220 13% 91%; /* Light Cool Gray (hover) */
+    --sidebar-accent-foreground: 142.1 70.6% 35.3%; /* Darker Green (hover text) */
+    --sidebar-border: 220 13% 85%; /* Cool Gray Border */
+    --sidebar-ring: 205 90% 47%; /* Bright Blue */
   }
 
   .dark {
-    --background: 0 0% 3.9%; /* Black */
-    --foreground: 0 0% 98%; /* White */
+    --background: 224 71.4% 4.1%; /* Dark Blue-Black */
+    --foreground: 0 0% 98%; /* Almost White */
     
-    --card: 0 0% 5.9%; /* Very Dark Gray (Near Black) */
-    --card-foreground: 0 0% 98%; /* White */
+    --card: 224 71.4% 6.1%; /* Slightly Lighter Dark Blue-Black */
+    --card-foreground: 0 0% 98%; /* Almost White */
     
-    --popover: 0 0% 5.9%; /* Very Dark Gray */
-    --popover-foreground: 0 0% 98%; /* White */
+    --popover: 224 71.4% 6.1%; /* Slightly Lighter Dark Blue-Black */
+    --popover-foreground: 0 0% 98%; /* Almost White */
 
-    --primary: 142.1 70.6% 45.3%; /* Lighter Green for Dark Mode */
-    --primary-foreground: 0 0% 3.9%; /* Black (for contrast on bright green) */
+    --primary: 142.1 70.6% 45.3%; /* Vibrant Green (same as light for consistency) */
+    --primary-foreground: 0 0% 98%; /* Almost White */
 
-    --secondary: 0 0% 14.9%; /* Dark Gray */
-    --secondary-foreground: 0 0% 98%; /* White */
+    --secondary: 220 15% 15%; /* Dark Cool Gray */
+    --secondary-foreground: 220 10% 75%; /* Light Cool Gray Text */
 
-    --muted: 0 0% 14.9%; /* Darker Gray */
-    --muted-foreground: 0 0% 63.9%; /* Medium Gray */
+    --muted: 220 15% 15%; /* Dark Cool Gray */
+    --muted-foreground: 220 10% 55%; /* Medium Cool Gray Text */
 
-    --accent: 142.1 76.2% 36.3%; /* Original Green for Dark Mode Accent */
-    --accent-foreground: 0 0% 98%; /* White */
+    --accent: 205 90% 57%; /* Slightly Brighter Blue for Dark Mode */
+    --accent-foreground: 0 0% 98%; /* Almost White */
 
-    --destructive: 0 0% 98%; /* White (for contrast on dark backgrounds) */
-    --destructive-foreground: 0 0% 3.9%; /* Black (for text on light error items) */
+    --destructive: 0 62.8% 50.6%; /* Red (same as light for consistency) */
+    --destructive-foreground: 0 0% 98%; /* Almost White */
 
-    --border: 0 0% 14.9%; /* Dark Gray Border */
-    --input: 0 0% 10%;   /* Very Dark Gray Input BG */
-    --ring: 142.1 70.6% 45.3%; /* Lighter Green for Focus Rings */
+    --border: 220 15% 20%; /* Darker Cool Gray Border */
+    --input: 220 15% 18%;   /* Even Darker Cool Gray Input BG */
+    --ring: 142.1 70.6% 45.3%; /* Vibrant Green for Focus Rings */
 
-    --chart-1: 142.1 70.6% 45.3%; /* Lighter Green */
-    --chart-2: 142.1 76.2% 36.3%; /* Original Green */
-    --chart-3: 142.1 80% 25%;   /* Darker Green */
-    --chart-4: 0 0% 80%;         /* Light Gray */
-    --chart-5: 0 0% 60%;         /* Medium Gray */
+    --chart-1: 142.1 70.6% 45.3%; /* Vibrant Green */
+    --chart-2: 205 90% 57%;   /* Brighter Blue */
+    --chart-3: 170 60% 50%;   /* Tealish Green */
+    --chart-4: 30 90% 60%;    /* Orange */
+    --chart-5: 260 70% 60%;   /* Purple */
     
     /* Sidebar dark theme */
-    --sidebar-background: 0 0% 8%; /* Dark Gray, not pure black */
+    --sidebar-background: 224 71.4% 8%; /* Dark Blue-Black, slightly lighter than main bg */
     --sidebar-foreground: 0 0% 95%; /* Off-White */
-    --sidebar-primary: 142.1 70.6% 45.3%; /* Lighter Green (active item background) */
-    --sidebar-primary-foreground: 0 0% 3.9%; /* Black (active item text) */
-    --sidebar-accent: 0 0% 12%; /* Slightly Lighter Dark Gray (hover) */
+    --sidebar-primary: 142.1 70.6% 45.3%; /* Vibrant Green (active item background) */
+    --sidebar-primary-foreground: 0 0% 98%; /* Almost White (active item text) */
+    --sidebar-accent: 220 15% 15%; /* Dark Cool Gray (hover) */
     --sidebar-accent-foreground: 142.1 70.6% 55.3%; /* Brighter Green (hover text) */
-    --sidebar-border: 0 0% 10%; /* Darker Gray */
-    --sidebar-ring: 142.1 70.6% 50.3%; /* Bright Green */
+    --sidebar-border: 220 15% 12%; /* Darker Cool Gray Border */
+    --sidebar-ring: 205 90% 57%; /* Brighter Blue */
   }
 }
 
@@ -129,3 +129,4 @@ body {
 .hover-lift {
   @apply transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl;
 }
+

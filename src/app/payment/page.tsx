@@ -13,22 +13,30 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Smartphone, DollarSign, Loader2 } from 'lucide-react';
+import { CreditCard, Smartphone, DollarSign, Loader2, Building, Landmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const paymentSchema = z.object({
   amount: z.coerce.number().min(100, { message: "Amount must be at least 100 RWF." }),
-  paymentMethod: z.enum(["creditCard", "mobileMoney", "other"], {
+  paymentMethod: z.enum(["creditCard", "mobileMoney", "bankTransfer"], {
     required_error: "You need to select a payment method.",
   }),
+  reason: z.string().min(5, {message: "Please provide a reason for payment (e.g., Order #123, Consultation Fee)."}),
   cardNumber: z.string().optional(),
   expiryDate: z.string().optional(),
   cvv: z.string().optional(),
+  cardHolderName: z.string().optional(),
   mobileNumber: z.string().optional(),
+  mobileProvider: z.string().optional(),
+  bankName: z.string().optional(),
+  accountNumber: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === "creditCard") {
+    if (!data.cardHolderName || data.cardHolderName.trim().length < 2) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Card holder name is required.", path: ["cardHolderName"] });
+    }
     if (!data.cardNumber || !/^\d{16}$/.test(data.cardNumber)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid card number (must be 16 digits).", path: ["cardNumber"] });
     }
@@ -40,9 +48,19 @@ const paymentSchema = z.object({
     }
   }
   if (data.paymentMethod === "mobileMoney") {
-    // Basic Rwandan phone number check (starts with 07, typically 10 digits)
     if (!data.mobileNumber || !/^07[2389]\d{7}$/.test(data.mobileNumber)) { 
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid Rwandan mobile number (e.g., 07XXXXXXXX).", path: ["mobileNumber"] });
+    }
+    if (!data.mobileProvider) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select a mobile money provider.", path: ["mobileProvider"] });
+    }
+  }
+  if (data.paymentMethod === "bankTransfer") {
+    if (!data.bankName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select your bank.", path: ["bankName"] });
+    }
+     if (!data.accountNumber || data.accountNumber.trim().length < 5) { // Basic check
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Valid account number is required.", path: ["accountNumber"] });
     }
   }
 });
@@ -60,6 +78,7 @@ export default function PaymentPage() {
     defaultValues: {
       amount: 5000, 
       paymentMethod: undefined,
+      reason: "",
     },
   });
 
@@ -90,9 +109,9 @@ export default function PaymentPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast({
       title: "Payment Processed (Mock)",
-      description: `Successfully processed ${data.amount.toLocaleString()} RWF via ${data.paymentMethod}. This is a demo, no actual payment was made.`,
+      description: `Successfully processed ${data.amount.toLocaleString()} RWF via ${data.paymentMethod} for: ${data.reason}. This is a demo, no actual payment was made.`,
     });
-    form.reset();
+    form.reset({amount: 5000, paymentMethod: data.paymentMethod, reason: ""}); // Keep payment method, reset others
   };
 
   if (!isClient || !isAuthenticated) {
@@ -117,19 +136,34 @@ export default function PaymentPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount (RWF)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="Enter amount in RWF" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Amount (RWF)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="Enter amount in RWF" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="reason"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Reason for Payment</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g. Order #123, Consultation" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -139,27 +173,38 @@ export default function PaymentPage() {
                     <FormLabel>Payment Method</FormLabel>
                     <FormControl>
                       <RadioGroup
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            // Reset other payment method fields when selection changes
+                            form.setValue("cardNumber", "");
+                            form.setValue("expiryDate", "");
+                            form.setValue("cvv", "");
+                            form.setValue("cardHolderName", "");
+                            form.setValue("mobileNumber", "");
+                            form.setValue("mobileProvider", undefined);
+                            form.setValue("bankName", undefined);
+                            form.setValue("accountNumber", "");
+                        }}
                         defaultValue={field.value}
-                        className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+                        className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4"
                       >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
                             <RadioGroupItem value="creditCard" />
                           </FormControl>
-                          <FormLabel className="font-normal flex items-center"><CreditCard className="mr-2 h-5 w-5 text-blue-500" /> Credit/Debit Card</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><CreditCard className="mr-2 h-5 w-5 text-blue-500" /> Credit/Debit Card</FormLabel>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
                             <RadioGroupItem value="mobileMoney" />
                           </FormControl>
-                          <FormLabel className="font-normal flex items-center"><Smartphone className="mr-2 h-5 w-5 text-green-500" /> Mobile Money</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><Smartphone className="mr-2 h-5 w-5 text-green-500" /> Mobile Money</FormLabel>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                         <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
-                            <RadioGroupItem value="other" />
+                            <RadioGroupItem value="bankTransfer" />
                           </FormControl>
-                          <FormLabel className="font-normal">Other</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><Landmark className="mr-2 h-5 w-5 text-purple-500" /> Bank Transfer</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -169,8 +214,15 @@ export default function PaymentPage() {
               />
 
               {paymentMethod === 'creditCard' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
-                  <h3 className="text-lg font-medium">Card Details</h3>
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                  <h3 className="text-lg font-medium flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary" />Card Details</h3>
+                  <FormField control={form.control} name="cardHolderName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Card Holder Name</FormLabel>
+                      <FormControl><Input placeholder="Name as it appears on card" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
                   <FormField control={form.control} name="cardNumber" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Card Number</FormLabel>
@@ -198,8 +250,8 @@ export default function PaymentPage() {
               )}
 
               {paymentMethod === 'mobileMoney' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
-                   <h3 className="text-lg font-medium">Mobile Money Details</h3>
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                   <h3 className="text-lg font-medium flex items-center"><Smartphone className="mr-2 h-5 w-5 text-primary" />Mobile Money Details</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mobile Number (e.g. 078xxxxxxx)</FormLabel>
@@ -207,30 +259,60 @@ export default function PaymentPage() {
                       <FormMessage />
                     </FormItem>
                   )}/>
-                   <FormItem>
-                      <FormLabel>Provider</FormLabel>
-                       <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select mobile money provider" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mtn">MTN Mobile Money</SelectItem>
-                          <SelectItem value="airtel">Airtel Money</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
+                   <FormField control={form.control} name="mobileProvider" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Provider</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select mobile money provider" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="MTN">MTN Mobile Money</SelectItem>
+                            <SelectItem value="Airtel">Airtel Money</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
                 </div>
               )}
               
-              {paymentMethod === 'other' && (
-                 <div className="p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
-                    <p className="text-muted-foreground">Please contact support for other payment methods.</p>
+              {paymentMethod === 'bankTransfer' && (
+                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                    <h3 className="text-lg font-medium flex items-center"><Landmark className="mr-2 h-5 w-5 text-primary"/>Bank Transfer Details</h3>
+                    <p className="text-sm text-muted-foreground">Mock bank details: Bank of Kigali, Account: 00123456789, Name: MediServe Hub. Use your payment reason as reference.</p>
+                     <FormField control={form.control} name="bankName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Bank</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select your bank" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="BK">Bank of Kigali</SelectItem>
+                                <SelectItem value="Equity">Equity Bank</SelectItem>
+                                <SelectItem value="I&M">I&M Bank</SelectItem>
+                                <SelectItem value="Cogebanque">Cogebanque</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="accountNumber" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Your Account Number (for reference)</FormLabel>
+                        <FormControl><Input placeholder="Enter your account number" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}/>
+                    <FormDescription>This is for mock purposes only.</FormDescription>
                  </div>
               )}
 
 
-              <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting || !paymentMethod}>
-                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processing...</> : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
+              <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95 text-lg py-6" disabled={form.formState.isSubmitting || !paymentMethod}>
+                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Processing...</> : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
               </Button>
             </form>
           </Form>
