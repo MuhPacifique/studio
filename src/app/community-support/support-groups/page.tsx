@@ -127,7 +127,7 @@ export default function SupportGroupsPage() {
               <div className="flex justify-between items-start">
                 <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
                 {group.isPrivate && <Badge variant="secondary">Private</Badge>}
-                {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-500">Public</Badge>}
+                {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">Public</Badge>}
               </div>
               <Badge variant="outline" className="w-fit mt-1">{group.category}</Badge>
             </CardHeader>

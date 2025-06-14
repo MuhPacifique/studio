@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        form.setValue("profileImageUrl", reader.result as string); // For mock
+        form.setValue("profileImageUrl", reader.result as string); 
       };
       reader.readAsDataURL(file);
     }
@@ -113,7 +113,7 @@ export default function AdminUsersPage() {
       ...data,
       id: `usr${Date.now()}`,
       joinedDate: new Date().toISOString().split('T')[0],
-      profileImageUrl: imagePreview || data.profileImageUrl, // Use preview if available
+      profileImageUrl: imagePreview || data.profileImageUrl, 
     };
     setUsersList(prev => [newUser, ...prev]);
     toast({ title: "User Added", description: `${data.name} has been added.` });
@@ -161,12 +161,12 @@ export default function AdminUsersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleAddUserClick}>
+          <Button onClick={handleAddUserClick} className="transition-transform hover:scale-105 active:scale-95">
             <UserPlus className="mr-2 h-4 w-4" /> Add New User
           </Button>
         </div>
       </PageHeader>
-      <Card className="shadow-xl">
+      <Card className="shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline">User List</CardTitle>
           <CardDescription>View, edit, or remove user accounts.</CardDescription>
@@ -186,10 +186,10 @@ export default function AdminUsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className="hover:bg-muted/20">
                   <TableCell>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(user.name)}`} alt={user.name} data-ai-hint="user avatar professional"/>
+                    <Avatar className="h-10 w-10 border-2 border-primary/30">
+                      <AvatarImage src={user.profileImageUrl || undefined} alt={user.name} data-ai-hint="user avatar professional"/>
                       <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                     </Avatar>
                   </TableCell>
@@ -200,17 +200,17 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={user.status === 'Active' ? 'bg-accent text-accent-foreground' : 'bg-muted-foreground text-background'}
+                      className={user.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:bg-green-500/30 dark:text-green-300 border border-green-500/50' : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/50'}
                     >
                       {user.status}
                     </Badge>
                   </TableCell>
                   <TableCell>{user.joinedDate}</TableCell>
                   <TableCell className="space-x-2">
-                    <Button variant="outline" size="icon" aria-label="Edit user" onClick={() => handleEditUserClick(user)}>
+                    <Button variant="outline" size="icon" aria-label="Edit user" onClick={() => handleEditUserClick(user)} className="hover:border-primary hover:text-primary transition-colors">
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button variant="destructive" size="icon" aria-label="Delete user" onClick={() => handleDeleteUserClick(user.id)}>
+                    <Button variant="destructive" size="icon" aria-label="Delete user" onClick={() => handleDeleteUserClick(user.id)} className="hover:opacity-80 transition-opacity">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -234,9 +234,9 @@ export default function AdminUsersPage() {
           </DialogHeader>
           <form onSubmit={form.handleSubmit(editingUser ? handleEditUserSubmit : handleAddUserSubmit)} className="space-y-4 py-4">
             <div className="flex flex-col items-center space-y-2">
-                <Avatar className="h-24 w-24">
-                    <AvatarImage src={imagePreview || form.watch("profileImageUrl") || `https://placehold.co/96x96.png?text=${form.watch("name") ? getInitials(form.watch("name")) : 'U' }`} alt="Profile Preview"/>
-                    <AvatarFallback>{form.watch("name") ? getInitials(form.watch("name")) : "U"}</AvatarFallback>
+                <Avatar className="h-24 w-24 border-4 border-primary/50 shadow-md">
+                    <AvatarImage src={imagePreview || form.watch("profileImageUrl") || undefined} alt="Profile Preview" data-ai-hint="user placeholder"/>
+                    <AvatarFallback className="text-3xl">{form.watch("name") ? getInitials(form.watch("name")) : "U"}</AvatarFallback>
                 </Avatar>
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                     <Camera className="mr-2 h-4 w-4"/> Change Photo (Mock)
@@ -253,9 +253,8 @@ export default function AdminUsersPage() {
                   name="profileImageUrl"
                   render={({ field }) => (
                     <FormItem className="w-full hidden"> {/* Hidden, managed by preview logic */}
-                      <FormControl>
-                        <Input {...field} placeholder="Image URL (mock)" />
-                      </FormControl>
+                      <Label htmlFor="profileImageUrl-input" className="sr-only">Profile Image URL</Label>
+                      <Input id="profileImageUrl-input" {...field} placeholder="Image URL (mock)" />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -314,7 +313,7 @@ export default function AdminUsersPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => editingUser ? setIsEditDialogOpen(false) : setIsAddDialogOpen(false)}>Cancel</Button>
-              <Button type="submit"><Save className="mr-2 h-4 w-4" /> {editingUser ? 'Save Changes' : 'Add User'}</Button>
+              <Button type="submit" className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" /> {editingUser ? 'Save Changes' : 'Add User'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -330,7 +329,7 @@ export default function AdminUsersPage() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDeleteUser}>Delete User</Button>
+            <Button variant="destructive" onClick={confirmDeleteUser} className="transition-transform hover:scale-105 active:scale-95">Delete User</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -338,5 +337,3 @@ export default function AdminUsersPage() {
     </AppLayout>
   );
 }
-
-    

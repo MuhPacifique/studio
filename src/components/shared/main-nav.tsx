@@ -15,7 +15,7 @@ import {
   CreditCard,
   LayoutDashboard,
   ActivitySquare,
-  ClipboardList,
+  ClipboardList as ClipboardListIcon, // Renamed to avoid conflict
   Users,
   Settings,
   BookOpen, 
@@ -25,8 +25,9 @@ import {
   ChevronRight,
   MessageCircleQuestion, 
   Users2,
-  CalendarPlus, // For Book Appointment
-  CalendarCheck2 // For My Appointments
+  CalendarPlus, 
+  CalendarCheck2,
+  FileHeart // New icon for My Health
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -43,22 +44,35 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   doctorOnly?: boolean;
+  patientOnly?: boolean; // For patient/seeker specific items
   subItems?: NavItem[];
   requiresAuth?: boolean;
 }
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: Home, requiresAuth: true },
-  { href: '/medicines', label: 'Order Medicines', icon: Pill, requiresAuth: true },
-  { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardList, requiresAuth: true },
+  { href: '/medicines', label: 'Order Medicines', icon: Pill, requiresAuth: true, patientOnly: true },
+  { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
   { 
     href: '#appointments', 
     label: 'Appointments', 
     icon: CalendarCheck2, 
     requiresAuth: true,
+    patientOnly: true,
     subItems: [
-      { href: '/appointments/book', label: 'Book Appointment', icon: CalendarPlus, requiresAuth: true },
-      { href: '/appointments/my-appointments', label: 'My Appointments', icon: CalendarCheck2, requiresAuth: true },
+      { href: '/appointments/book', label: 'Book Appointment', icon: CalendarPlus, requiresAuth: true, patientOnly: true },
+      { href: '/appointments/my-appointments', label: 'My Appointments', icon: CalendarCheck2, requiresAuth: true, patientOnly: true },
+    ]
+  },
+  { 
+    href: '#my-health', 
+    label: 'My Health', 
+    icon: FileHeart, 
+    requiresAuth: true,
+    patientOnly: true, // Assuming prescriptions are primarily for patients
+    subItems: [
+      { href: '/my-health/prescriptions', label: 'My Prescriptions', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
+      // Add more "My Health" items like Medical Records if needed
     ]
   },
   { 
@@ -85,13 +99,18 @@ const navItems: NavItem[] = [
   { href: '/faq', label: 'Medical FAQ', icon: MessageSquareQuote, requiresAuth: true },
   { href: '/test-yourself', label: 'Test Yourself', icon: FlaskConical, requiresAuth: true },
   { href: '/online-consultation', label: 'Online Consultation', icon: Video, requiresAuth: true },
-  { href: '/payment', label: 'Make Payment', icon: CreditCard, requiresAuth: true },
+  { href: '/payment', label: 'Make Payment', icon: CreditCard, requiresAuth: true, patientOnly: true },
   { 
-    href: '/doctor/dashboard', // Placeholder for Doctor specific top-level nav
+    href: '/doctor/dashboard', 
     label: 'Doctor Portal', 
     icon: Stethoscope, 
-    doctorOnly: true, // Will only show if userType is 'doctor'
+    doctorOnly: true, 
     requiresAuth: true, 
+    subItems: [
+        { href: '/doctor/dashboard', label: 'Doctor Overview', icon: LayoutDashboard, doctorOnly: true, requiresAuth: true },
+        { href: '/doctor/prescribe', label: 'Prescribe / Advise', icon: ClipboardListIcon, doctorOnly: true, requiresAuth: true },
+        // Add more doctor-specific sub-items here
+    ]
   },
   { 
     href: '#admin-section', 
@@ -128,13 +147,11 @@ const useAuth = () => {
       
       if (mockAuth) {
         setIsAuthenticated(true);
-        if (mockAuth === 'admin') {
-            setUserType('admin');
-        } else if (storedRole) {
-            setUserType(storedRole);
-        } else {
-            setUserType('patient'); // Fallback if authenticated but no specific role set
-        }
+        // Prioritize mockAuth if it's 'admin' or 'doctor', otherwise use selectedRole
+        if (mockAuth === 'admin') setUserType('admin');
+        else if (mockAuth === 'doctor') setUserType('doctor');
+        else if (storedRole) setUserType(storedRole);
+        else setUserType('patient'); // Fallback for general authenticated user
       } else {
         setUserType(null);
         setIsAuthenticated(false);
@@ -173,16 +190,28 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
       </div>
     );
   }
+  
+  const isPatientOrSeeker = userType === 'patient' || userType === 'seeker';
 
   const filteredNavItems = navItems.filter(item => {
-    if (!item.requiresAuth && !isAuthenticated) return true; // Show if no auth needed
-    if (!isAuthenticated) return false; // Hide if auth needed but not authenticated
+    if (!item.requiresAuth && !isAuthenticated) return true; 
+    if (!isAuthenticated) return false; 
     if (item.adminOnly && userType !== 'admin') return false;
     if (item.doctorOnly && userType !== 'doctor') return false;
-    if (!item.adminOnly && !item.doctorOnly) return true; // General items for authenticated users
+    // Show 'patientOnly' items if user is patient or seeker, and not admin or doctor
+    if (item.patientOnly && (!isPatientOrSeeker || userType === 'admin' || userType === 'doctor')) return false;
+    
+    // If item is not adminOnly, not doctorOnly, and not patientOnly, show to all authenticated users
+    if (!item.adminOnly && !item.doctorOnly && !item.patientOnly) return true;
+
+    // If it's an admin item and user is admin
     if (item.adminOnly && userType === 'admin') return true;
+    // If it's a doctor item and user is doctor
     if (item.doctorOnly && userType === 'doctor') return true;
-    return false;
+    // If it's a patient/seeker item and user is patient/seeker
+    if (item.patientOnly && isPatientOrSeeker) return true;
+
+    return false; 
   });
 
   return (
@@ -194,7 +223,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href}>
+              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   variant="default"
@@ -225,10 +254,10 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                      item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <div className="flex items-center truncate">
+                  <span className="flex items-center truncate">
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>
-                  </div>
+                  </span>
                   {openSubMenus[item.label] ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />}
                 </SidebarMenuButton>
                 {openSubMenus[item.label] && (
@@ -238,10 +267,11 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                         if (!isAuthenticated) return false;
                         if (subItem.adminOnly && userType !== 'admin') return false;
                         if (subItem.doctorOnly && userType !== 'doctor') return false;
+                         if (subItem.patientOnly && (!isPatientOrSeeker || userType === 'admin' || userType === 'doctor')) return false;
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href}>
+                         <Link href={subItem.href} passHref legacyBehavior>
                            <SidebarMenuSubButton
                              asChild
                              size="md"
@@ -251,7 +281,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                                pathname === subItem.href ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                              )}
                            >
-                             <span>
+                             <span className="flex items-center">
                               <subItem.icon className="mr-2 h-4 w-4 flex-shrink-0" />
                               <span className="truncate">{subItem.label}</span>
                              </span>

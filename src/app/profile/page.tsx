@@ -24,32 +24,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
-  phone: z.string().optional(),
-  dob: z.string().optional(), 
+  phone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: "Invalid Rwandan phone number if provided (e.g., 078xxxxxxx or +25078xxxxxxx)." }),
+  dob: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)), { message: "Invalid date format."}), 
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
   bio: z.string().max(200, "Bio must be 200 characters or less.").optional(),
-  profileImageUrl: z.string().url().optional().or(z.literal("")), // For mock image URL
+  profileImageUrl: z.string().url().optional().or(z.literal("")), 
   
-  // Preferences
   preferredLanguage: z.string().optional(),
   enableMarketingEmails: z.boolean().optional(),
   enableAppNotifications: z.boolean().optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
 
-  // Emergency Contact
   emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
+  emergencyContactPhone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: "Invalid Rwandan phone number for emergency contact." }),
 
-  // Security (Placeholders, not functional for mock)
-  currentPassword: z.string().optional(),
-  newPassword: z.string().optional(),
+  currentPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: "Password must be at least 6 characters."}),
+  newPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: "New password must be at least 6 characters."}),
   confirmNewPassword: z.string().optional(),
   enableTwoFactor: z.boolean().optional(),
 }).refine(data => {
-    if (data.newPassword && !data.confirmNewPassword) return false; 
-    if (data.newPassword && data.newPassword !== data.confirmNewPassword) return false;
+    if (data.newPassword && !data.confirmNewPassword) {
+        return false; 
+    }
+    if (data.newPassword && data.newPassword !== data.confirmNewPassword) {
+        return false;
+    }
     return true;
 }, {
     message: "New passwords do not match or confirmation is missing.",
@@ -145,10 +146,13 @@ export default function ProfilePage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        // For mock purposes, we can set a placeholder or the data URL to form state
-        // In a real app, you'd upload this file and get back a URL
-        form.setValue("profileImageUrl", reader.result as string); // Or a placeholder after "upload"
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue("profileImageUrl", result); 
+        localStorage.setItem('mockUserProfileImage', result); // Update local storage immediately for UserNav
+        
+        // Dispatch a storage event to notify UserNav to update
+        window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage' }));
       };
       reader.readAsDataURL(file);
     }
@@ -165,11 +169,17 @@ export default function ProfilePage() {
     localStorage.setItem('mockUserCity', updatedData.city || "");
     localStorage.setItem('mockUserCountry', updatedData.country || "Rwanda");
     localStorage.setItem('mockUserBio', updatedData.bio || "");
-    if (imagePreview) {
+    
+    if (imagePreview) { // If a new image was previewed, it's already in localStorage from handleImageChange
         localStorage.setItem('mockUserProfileImage', imagePreview);
-    } else if (updatedData.profileImageUrl === "") {
+    } else if (updatedData.profileImageUrl === "") { // If URL was cleared and no new preview
         localStorage.removeItem('mockUserProfileImage');
     }
+    // Ensure mockUserProfileImage is updated for UserNav
+    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage' }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserName' }));
+
+
     localStorage.setItem('mockUserLang', updatedData.preferredLanguage || "en");
     localStorage.setItem('mockUserMarketing', String(updatedData.enableMarketingEmails || false));
     localStorage.setItem('mockUserAppNotifs', String(updatedData.enableAppNotifications !== false));
@@ -211,7 +221,7 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
               <div className="relative group">
                 <Avatar className="h-32 w-32 border-4 border-primary shadow-md">
-                  <AvatarImage src={imagePreview || form.watch("profileImageUrl") || `https://placehold.co/128x128.png?text=${initials}`} alt={form.watch("fullName")} />
+                  <AvatarImage src={imagePreview || form.watch("profileImageUrl") || undefined} alt={form.watch("fullName")} data-ai-hint="person professional"/>
                   <AvatarFallback className="text-4xl text-primary font-semibold">{initials}</AvatarFallback>
                 </Avatar>
                 <Button 
@@ -359,10 +369,10 @@ export default function ProfilePage() {
               <CardTitle className="font-headline text-lg">Account Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <FileText className="mr-2 h-4 w-4" /> My Medical Records (Mock) </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <FileClock className="mr-2 h-4 w-4" /> My Order History (Mock) </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <History className="mr-2 h-4 w-4" /> Login History (Mock) </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <MessageCircle className="mr-2 h-4 w-4" /> Communication History </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover-lift"> <FileText className="mr-2 h-4 w-4" /> My Medical Records (Mock) </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover-lift"> <FileClock className="mr-2 h-4 w-4" /> My Order History (Mock) </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover-lift"> <History className="mr-2 h-4 w-4" /> Login History (Mock) </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover-lift"> <MessageCircle className="mr-2 h-4 w-4" /> Communication History </Button>
             </CardContent>
           </Card>
            <Card className="shadow-xl hover-lift border-destructive/30">
@@ -370,8 +380,8 @@ export default function ProfilePage() {
               <CardTitle className="font-headline text-lg text-destructive">Data & Privacy</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-destructive hover:text-destructive/80"><Database className="mr-2 h-4 w-4"/> Export My Data (Mock)</Button>
-              <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-80">
+               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-destructive hover:text-destructive/80 hover-lift"><Database className="mr-2 h-4 w-4"/> Export My Data (Mock)</Button>
+              <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-80 hover-lift">
                 <Edit3 className="mr-2 h-4 w-4" /> Deactivate Account (Mock)
               </Button>
                <p className="text-xs text-muted-foreground mt-2">Deactivating your account is irreversible. Please be certain.</p>
@@ -382,5 +392,3 @@ export default function ProfilePage() {
     </AppLayout>
   );
 }
-
-    

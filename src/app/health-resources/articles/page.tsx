@@ -115,7 +115,7 @@ export default function EducationalArticlesPage() {
             </CardContent>
             <CardFooter className="flex justify-between items-center border-t pt-4">
               <p className="text-xs text-muted-foreground">{article.readTime}</p>
-              <Button variant="ghost" size="sm" className="text-primary group-hover:underline">
+              <Button variant="ghost" size="sm" className="text-primary group-hover:underline transition-transform hover:scale-105 active:scale-95">
                 Read More <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
               </Button>
             </CardFooter>

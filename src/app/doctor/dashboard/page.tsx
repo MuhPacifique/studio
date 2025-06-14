@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CalendarDays, Users, MessageSquare, PhoneCall, Settings, BarChart3, FileText, AlertTriangle, ArrowRight, Bell } from 'lucide-react';
+import { Loader2, CalendarDays, Users, MessageSquare, PhoneCall, Settings, BarChart3, FileText, AlertTriangle, ArrowRight, Bell, ClipboardPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,7 +32,8 @@ const mockMetrics: DoctorDashboardMetric[] = [
 
 const quickActions = [
     { label: "View My Schedule", href: "#schedule", icon: CalendarDays },
-    { label: "Start Next Consultation", href: "/online-consultation", icon: PhoneCall }, // Link to actual consultation page
+    { label: "Prescribe / Advise Patient", href: "/doctor/prescribe", icon: ClipboardPlus },
+    { label: "Start Next Consultation", href: "/online-consultation", icon: PhoneCall }, 
     { label: "Access Patient Records", href: "#records", icon: FileText },
     { label: "Update Availability", href: "#availability", icon: Settings },
 ];
@@ -54,7 +55,7 @@ export default function DoctorDashboardPage() {
       const storedRole = localStorage.getItem('selectedRole');
       const storedUserName = localStorage.getItem('mockUserName');
 
-      if (authStatus && storedRole === 'doctor') {
+      if (authStatus && (storedRole === 'doctor' || authStatus === 'doctor')) { // Also check mockAuth directly for doctor
         setIsAuthenticatedDoctor(true);
         setDoctorName(storedUserName || "Doctor");
       } else {
@@ -83,7 +84,7 @@ export default function DoctorDashboardPage() {
     <AppLayout>
       <PageHeader 
         title={`Welcome, ${doctorName}!`} 
-        breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Doctor Dashboard"}]}
+        breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Doctor Portal"}]}
       >
         <Button variant="outline" className="transition-transform hover:scale-105 active:scale-95">
             <Bell className="mr-2 h-4 w-4"/> Notifications <Badge className="ml-2">3</Badge>
@@ -122,7 +123,7 @@ export default function DoctorDashboardPage() {
                     <Button 
                         key={action.label} 
                         variant="outline" 
-                        className="w-full justify-start text-left h-auto py-3 transition-all hover:bg-primary/5 hover:border-primary group"
+                        className="w-full justify-start text-left h-auto py-3 transition-all hover:bg-primary/5 hover:border-primary group hover-lift"
                         onClick={() => action.href.startsWith("/") ? router.push(action.href) : toast({title: "Navigating (Mock)", description: `To ${action.label}`})}
                     >
                         <action.icon className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse"/>
@@ -140,14 +141,14 @@ export default function DoctorDashboardPage() {
                 <CardTitle className="font-headline text-accent">System Alerts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-                <div className="flex items-start p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                <div className="flex items-start p-3 bg-destructive/10 border border-destructive/20 rounded-md hover-lift">
                     <AlertTriangle className="h-5 w-5 text-destructive mr-3 mt-0.5 flex-shrink-0"/>
                     <div>
                         <p className="font-medium text-destructive">Urgent: Patient Record Update Required</p>
                         <p className="text-xs text-destructive/80">Patient ID: P00123 - Lab results available.</p>
                     </div>
                 </div>
-                 <div className="flex items-start p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
+                 <div className="flex items-start p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md hover-lift">
                     <Bell className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0"/>
                     <div>
                         <p className="font-medium text-yellow-700">Reminder: CME Training Due</p>
@@ -160,21 +161,19 @@ export default function DoctorDashboardPage() {
 
       {/* Placeholder sections for other features */}
       <div className="mt-8 space-y-6">
-            <Card id="schedule" className="shadow-lg">
+            <Card id="schedule" className="shadow-lg hover-lift">
                 <CardHeader><CardTitle className="font-headline">My Schedule (Mock)</CardTitle></CardHeader>
                 <CardContent><p className="text-muted-foreground">Full calendar view and appointment management will appear here.</p></CardContent>
             </Card>
-             <Card id="messages" className="shadow-lg">
+             <Card id="messages" className="shadow-lg hover-lift">
                 <CardHeader><CardTitle className="font-headline">Patient Messages (Mock)</CardTitle></CardHeader>
                 <CardContent><p className="text-muted-foreground">Secure messaging interface with patients will appear here.</p></CardContent>
             </Card>
-            <Card id="consultations" className="shadow-lg">
+            <Card id="consultations" className="shadow-lg hover-lift">
                 <CardHeader><CardTitle className="font-headline">Consultation History & Notes (Mock)</CardTitle></CardHeader>
                 <CardContent><p className="text-muted-foreground">Records of past consultations and notes will appear here.</p></CardContent>
             </Card>
       </div>
-
-
     </AppLayout>
   );
 }

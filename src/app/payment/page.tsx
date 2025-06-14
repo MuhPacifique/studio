@@ -32,15 +32,16 @@ const paymentSchema = z.object({
   mobileProvider: z.string().optional(),
   bankName: z.string().optional(),
   accountNumber: z.string().optional(),
+  userReference: z.string().optional(), // For bank transfer
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === "creditCard") {
     if (!data.cardHolderName || data.cardHolderName.trim().length < 2) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Card holder name is required.", path: ["cardHolderName"] });
     }
-    if (!data.cardNumber || !/^\d{16}$/.test(data.cardNumber)) {
+    if (!data.cardNumber || !/^\d{16}$/.test(data.cardNumber.replace(/\s/g, '')) ) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid card number (must be 16 digits).", path: ["cardNumber"] });
     }
-    if (!data.expiryDate || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiryDate)) {
+    if (!data.expiryDate || !/^(0[1-9]|1[0-2])\s*\/\s*\d{2}$/.test(data.expiryDate)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid expiry date (MM/YY).", path: ["expiryDate"] });
     }
     if (!data.cvv || !/^\d{3,4}$/.test(data.cvv)) {
@@ -59,8 +60,8 @@ const paymentSchema = z.object({
     if (!data.bankName) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select your bank.", path: ["bankName"] });
     }
-     if (!data.accountNumber || data.accountNumber.trim().length < 5) { // Basic check
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Valid account number is required.", path: ["accountNumber"] });
+     if (!data.userReference || data.userReference.trim().length < 3) { 
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Valid payment reference is required.", path: ["userReference"] });
     }
   }
 });
@@ -79,6 +80,14 @@ export default function PaymentPage() {
       amount: 5000, 
       paymentMethod: undefined,
       reason: "",
+      cardHolderName: "",
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      mobileNumber: "",
+      mobileProvider: undefined,
+      bankName: undefined,
+      userReference: "",
     },
   });
 
@@ -111,7 +120,19 @@ export default function PaymentPage() {
       title: "Payment Processed (Mock)",
       description: `Successfully processed ${data.amount.toLocaleString()} RWF via ${data.paymentMethod} for: ${data.reason}. This is a demo, no actual payment was made.`,
     });
-    form.reset({amount: 5000, paymentMethod: data.paymentMethod, reason: ""}); // Keep payment method, reset others
+    form.reset({
+        amount: 5000, 
+        paymentMethod: data.paymentMethod, 
+        reason: "",
+        cardHolderName: "",
+        cardNumber: "",
+        expiryDate: "",
+        cvv: "",
+        mobileNumber: "",
+        mobileProvider: undefined,
+        bankName: undefined,
+        userReference: "",
+    });
   };
 
   if (!isClient || !isAuthenticated) {
@@ -175,15 +196,18 @@ export default function PaymentPage() {
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
-                            // Reset other payment method fields when selection changes
-                            form.setValue("cardNumber", "");
-                            form.setValue("expiryDate", "");
-                            form.setValue("cvv", "");
-                            form.setValue("cardHolderName", "");
-                            form.setValue("mobileNumber", "");
-                            form.setValue("mobileProvider", undefined);
-                            form.setValue("bankName", undefined);
-                            form.setValue("accountNumber", "");
+                            form.reset({
+                                ...form.getValues(), // keep existing values like amount and reason
+                                paymentMethod: value as PaymentFormValues["paymentMethod"],
+                                cardNumber: "",
+                                expiryDate: "",
+                                cvv: "",
+                                cardHolderName: "",
+                                mobileNumber: "",
+                                mobileProvider: undefined,
+                                bankName: undefined,
+                                userReference: "",
+                            });
                         }}
                         defaultValue={field.value}
                         className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4"
@@ -214,7 +238,7 @@ export default function PaymentPage() {
               />
 
               {paymentMethod === 'creditCard' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
                   <h3 className="text-lg font-medium flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary" />Card Details</h3>
                   <FormField control={form.control} name="cardHolderName" render={({ field }) => (
                     <FormItem>
@@ -250,7 +274,7 @@ export default function PaymentPage() {
               )}
 
               {paymentMethod === 'mobileMoney' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
                    <h3 className="text-lg font-medium flex items-center"><Smartphone className="mr-2 h-5 w-5 text-primary" />Mobile Money Details</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
@@ -278,9 +302,21 @@ export default function PaymentPage() {
               )}
               
               {paymentMethod === 'bankTransfer' && (
-                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
+                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner animate-pulse-border">
                     <h3 className="text-lg font-medium flex items-center"><Landmark className="mr-2 h-5 w-5 text-primary"/>Bank Transfer Details</h3>
-                    <p className="text-sm text-muted-foreground">Mock bank details: Bank of Kigali, Account: 00123456789, Name: MediServe Hub. Use your payment reason as reference.</p>
+                    <Alert>
+                        <AlertTitle className="font-semibold">Bank Transfer Instructions</AlertTitle>
+                        <AlertDescription className="text-sm">
+                            <p>Please transfer the amount to:</p>
+                            <ul className="list-disc list-inside mt-1">
+                                <li>Bank: MediServe Trust Bank</li>
+                                <li>Account Name: MediServe Hub Rwanda Ltd</li>
+                                <li>Account Number: <span className="font-mono">1000123456789 RWF</span></li>
+                                <li>Swift/BIC: <span className="font-mono">MTRWRW</span></li>
+                            </ul>
+                            <p className="mt-2">Use the payment reason you entered above as the transaction reference.</p>
+                        </AlertDescription>
+                    </Alert>
                      <FormField control={form.control} name="bankName" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Your Bank</FormLabel>
@@ -293,20 +329,24 @@ export default function PaymentPage() {
                                 <SelectItem value="Equity">Equity Bank</SelectItem>
                                 <SelectItem value="I&M">I&M Bank</SelectItem>
                                 <SelectItem value="Cogebanque">Cogebanque</SelectItem>
+                                <SelectItem value="GTBank">GTBank</SelectItem>
+                                <SelectItem value="Access">Access Bank</SelectItem>
+                                <SelectItem value="Ecobank">Ecobank</SelectItem>
+                                <SelectItem value="Urwego">Urwego Bank</SelectItem>
                                 <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}/>
-                    <FormField control={form.control} name="accountNumber" render={({ field }) => (
+                    <FormField control={form.control} name="userReference" render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Your Account Number (for reference)</FormLabel>
-                        <FormControl><Input placeholder="Enter your account number" {...field} /></FormControl>
+                        <FormLabel>Your Transaction Reference</FormLabel>
+                        <FormControl><Input placeholder="Enter reference used for your transfer" {...field} /></FormControl>
+                        <FormDescription>Enter the reference you used when making the bank transfer.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}/>
-                    <FormDescription>This is for mock purposes only.</FormDescription>
                  </div>
               )}
 

@@ -148,15 +148,15 @@ export default function MedicinesPage() {
   const getStatusBadgeClass = (status: Order['status']) => {
     switch (status) {
       case 'Delivered':
-        return 'bg-green-500 text-white'; // Using explicit color for demo
+        return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600';
       case 'Processing':
-        return 'bg-yellow-500 text-black'; 
+        return 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-700/30 dark:text-yellow-300 dark:border-yellow-600';
       case 'Shipped':
-        return 'bg-blue-500 text-white';
+        return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-700/30 dark:text-blue-300 dark:border-blue-600';
       case 'Pending':
-        return 'bg-muted text-muted-foreground';
+        return 'bg-muted text-muted-foreground border-border';
       default:
-        return 'bg-secondary text-secondary-foreground';
+        return 'bg-secondary text-secondary-foreground border-border';
     }
   };
 
@@ -284,7 +284,7 @@ export default function MedicinesPage() {
                   <span>Total:</span>
                   <span className="text-primary">{cartTotal.toLocaleString()} RWF</span>
                 </div>
-                <Button className="w-full transition-transform hover:scale-105 active:scale-95">Proceed to Checkout</Button>
+                <Button className="w-full transition-transform hover:scale-105 active:scale-95" onClick={() => router.push('/payment')}>Proceed to Checkout</Button>
               </CardFooter>
             )}
           </Card>
@@ -294,14 +294,14 @@ export default function MedicinesPage() {
       <div className="mt-12">
         <h2 className="text-2xl font-semibold mb-6 font-headline">My Orders</h2>
         {mockOrders.length > 0 ? (
-          <Card className="shadow-lg">
+          <Card className="shadow-lg hover-lift">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Total</TableHead>
+                    <TableHead>Total (RWF)</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Items</TableHead>
                   </TableRow>
@@ -311,10 +311,10 @@ export default function MedicinesPage() {
                     <TableRow key={order.id} className="hover:bg-muted/30">
                       <TableCell className="font-medium">{order.id}</TableCell>
                       <TableCell>{order.date}</TableCell>
-                      <TableCell>{order.total.toLocaleString()} RWF</TableCell>
+                      <TableCell>{order.total.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge 
-                          variant={order.status === 'Delivered' ? 'default' : order.status === 'Processing' ? 'secondary' : 'outline'}
+                          variant="outline"
                           className={getStatusBadgeClass(order.status)}
                         >
                           {order.status}
@@ -334,4 +334,3 @@ export default function MedicinesPage() {
     </AppLayout>
   );
 }
-

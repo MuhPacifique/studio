@@ -16,7 +16,7 @@ interface MedicalTest {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Price in RWF
   turnaroundTime: string; 
   preparation?: string; 
   imageUrl: string;
@@ -30,7 +30,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test1',
     name: 'Complete Blood Count (CBC)',
     description: 'Measures various components of your blood, including red and white blood cells, hemoglobin, and platelets.',
-    price: 7500,
+    price: 7500, // Price in RWF
     turnaroundTime: '24 hours',
     preparation: 'No special preparation needed.',
     imageUrl: 'https://placehold.co/400x300.png',
@@ -42,7 +42,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test2',
     name: 'Lipid Panel',
     description: 'Measures fats and fatty substances used as a source of energy by your body. Lipids include cholesterol, triglycerides, HDL, and LDL.',
-    price: 12000,
+    price: 12000, // Price in RWF
     turnaroundTime: '48 hours',
     preparation: 'Fasting for 9-12 hours is typically required.',
     imageUrl: 'https://placehold.co/400x300.png',
@@ -54,7 +54,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test3',
     name: 'Thyroid Stimulating Hormone (TSH) Test',
     description: 'Measures the amount of TSH in your blood. TSH is produced by the pituitary gland and helps regulate thyroid function.',
-    price: 9000,
+    price: 9000, // Price in RWF
     turnaroundTime: '2-3 days',
     imageUrl: 'https://placehold.co/400x300.png',
     aiHint: 'hormone test endocrinology',
@@ -65,7 +65,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test4',
     name: 'Urinalysis',
     description: 'A test of your urine. It\'s used to detect and manage a wide range of disorders, such as urinary tract infections, kidney disease, and diabetes.',
-    price: 5000,
+    price: 5000, // Price in RWF
     turnaroundTime: '24 hours',
     preparation: 'Provide a clean-catch urine sample.',
     imageUrl: 'https://placehold.co/400x300.png',
