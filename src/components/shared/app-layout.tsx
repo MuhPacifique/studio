@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   SidebarProvider,
@@ -20,6 +20,20 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck } from 'lucide-react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) {
+      setPreferredLanguage(lang);
+    }
+  }, []);
+  
+  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+
+
   return (
     <SidebarProvider defaultOpen>
       <Sidebar variant="sidebar" collapsible="icon" side="left" className="border-r">
@@ -35,7 +49,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter className="p-4 border-t border-sidebar-border">
            <Button variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             <ShieldCheck className="mr-2 h-5 w-5" />
-            <span>Privacy & Security</span>
+            <span>{isClient ? t('Privacy & Security', 'Ubuzima Bwite & Umutekano') : 'Privacy & Security'}</span>
           </Button>
         </SidebarFooter>
         <SidebarRail />
@@ -45,7 +59,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="container flex h-16 items-center justify-between max-w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
               <SidebarTrigger className="md:hidden mr-2" />
-              {/* Breadcrumbs or dynamic page title can go here if needed */}
             </div>
             <UserNav />
           </div>

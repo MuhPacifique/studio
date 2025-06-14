@@ -25,6 +25,7 @@ const useAuth = () => {
   const [userName, setUserName] = React.useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
   const [isClient, setIsClient] = React.useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
   const router = useRouter(); 
 
   React.useEffect(() => {
@@ -38,6 +39,8 @@ const useAuth = () => {
         const storedUserName = localStorage.getItem('mockUserName');
         const storedRole = localStorage.getItem('selectedRole') as Role | null;
         const storedProfileImage = localStorage.getItem('mockUserProfileImage');
+        const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+        if(lang) setPreferredLanguage(lang);
 
         if (mockAuth) {
           setIsAuthenticated(true);
@@ -67,7 +70,8 @@ const useAuth = () => {
           event.key === 'mockAuth' ||
           event.key === 'mockUserName' ||
           event.key === 'selectedRole' ||
-          event.key === 'mockUserProfileImage' 
+          event.key === 'mockUserProfileImage' ||
+          event.key === 'mockUserLang' 
         ) {
           updateAuthState();
         }
@@ -87,27 +91,31 @@ const useAuth = () => {
         'mockUserPhone', 'mockUserProfileImage', 'mockUserDOB', 
         'mockUserAddress', 'mockUserCity', 'mockUserCountry', 'mockUserBio',
         'mockUserLang', 'mockUserMarketing', 'mockUserAppNotifs', 'mockUserTheme',
-        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA', 'theme' // also clear theme on logout
+        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA', 'theme'
       ];
       keysToRemove.forEach(key => localStorage.removeItem(key));
-      document.documentElement.classList.remove('dark'); // Reset theme preference visually
+      document.documentElement.classList.remove('dark'); 
+      document.documentElement.lang = 'kn'; // Reset lang to Kinyarwanda on logout
 
       setIsAuthenticated(false);
       setUserType(null);
       setUserName(null);
       setProfileImageUrl(null);
+      setPreferredLanguage('kn');
       
       router.push('/welcome'); 
     }
   };
 
-  return { isAuthenticated, userType, userName, profileImageUrl, logout, isClient };
+  return { isAuthenticated, userType, userName, profileImageUrl, logout, isClient, preferredLanguage };
 };
 
 export function UserNav() {
-  const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient } = useAuth();
+  const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient, preferredLanguage } = useAuth();
   const [initials, setInitials] = React.useState("U");
   const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+  
+  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
 
   useEffect(() => {
     if (isClient) {
@@ -156,7 +164,7 @@ export function UserNav() {
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        aria-label={currentTheme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+        aria-label={currentTheme === 'dark' ? t("Switch to light mode", "Hindura Uburyo bw'Urumuri") : t("Switch to dark mode", "Hindura Uburyo bw'Umwijima")}
         className="text-foreground hover:bg-accent hover:text-accent-foreground"
       >
         {currentTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -165,12 +173,12 @@ export function UserNav() {
         <>
           <Button variant="outline" asChild className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
             <Link href="/welcome">
-              <LogIn className="mr-2 h-4 w-4" /> Login
+              <LogIn className="mr-2 h-4 w-4" /> {t('Login', 'Injira')}
             </Link>
           </Button>
           <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/welcome">
-              <UserPlus className="mr-2 h-4 w-4" /> Register
+              <UserPlus className="mr-2 h-4 w-4" /> {t('Register', 'Iyandikishe')}
             </Link>
           </Button>
         </>
@@ -189,7 +197,11 @@ export function UserNav() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{userName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {userType ? userType.charAt(0).toUpperCase() + userType.slice(1) : 'User'}
+                  {userType === 'patient' ? t('Patient', 'Umurwayi') :
+                   userType === 'doctor' ? t('Doctor', 'Muganga') :
+                   userType === 'admin' ? t('Administrator', 'Umunyamabanga') :
+                   userType === 'seeker' ? t('Health Seeker', 'Ushaka Ubujyanama') :
+                   t('User', 'Ukoresha')}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -198,14 +210,14 @@ export function UserNav() {
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <UserCircle className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
+                  <span>{t('My Profile', 'Umwirondoro Wanjye')}</span>
                 </Link>
               </DropdownMenuItem>
               {userType === 'admin' && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
+                    <span>{t('Admin Dashboard', 'Imbonerahamwe y\'Ubuyobozi')}</span>
                   </Link>
                 </DropdownMenuItem>
               )}
@@ -213,7 +225,7 @@ export function UserNav() {
                 <DropdownMenuItem asChild>
                   <Link href="/doctor/dashboard">
                     <Briefcase className="mr-2 h-4 w-4" />
-                    <span>Doctor Dashboard</span>
+                    <span>{t('Doctor Dashboard', 'Imbonerahamwe ya Muganga')}</span>
                   </Link>
                 </DropdownMenuItem>
               )}
@@ -221,7 +233,7 @@ export function UserNav() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive group">
               <LogOut className="mr-2 h-4 w-4 group-hover:text-destructive" />
-              <span>Log out</span>
+              <span>{t('Log out', 'Sohoka')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

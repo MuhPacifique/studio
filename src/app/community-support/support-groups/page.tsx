@@ -34,11 +34,16 @@ const initialMockSupportGroups: SupportGroup[] = [
   { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false, isJoined: false },
 ];
 
+// Translation helper
+const t = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+
 export default function SupportGroupsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [groups, setGroups] = useState<SupportGroup[]>(() => {
     if (typeof window !== 'undefined') {
@@ -50,6 +55,8 @@ export default function SupportGroupsPage() {
 
   useEffect(() => {
     setIsClient(true);
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) setCurrentLanguage(lang);
   }, []);
 
   useEffect(() => {
@@ -58,15 +65,15 @@ export default function SupportGroupsPage() {
       if (!authStatus) {
         toast({
           variant: "destructive",
-          title: "Access Denied",
-          description: "Please log in to access support groups.",
+          title: t("Access Denied", "Ntabwo Wemerewe", currentLanguage),
+          description: t("Please log in to access support groups.", "Nyamuneka injira kugirango ubashe kugera ku matsinda y'ubufasha.", currentLanguage),
         });
         router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
     }
-  }, [isClient, router, toast]);
+  }, [isClient, router, toast, currentLanguage]);
 
   useEffect(() => {
     if (isClient) {
@@ -78,15 +85,15 @@ export default function SupportGroupsPage() {
     setGroups(prevGroups => 
       prevGroups.map(group => {
         if (group.id === groupId) {
-          if (group.isJoined) { // If already joined, navigate to group page
+          if (group.isJoined) { 
             router.push(`/community-support/support-groups/${groupId}`);
             return group;
           }
           if (group.isPrivate && !group.isRequested) {
-            toast({ title: "Request Sent (Mock)", description: `Your request to join "${group.name}" has been sent.`});
+            toast({ title: t("Request Sent", "Icyifuzo Cyoherejwe", currentLanguage), description: t(`Your request to join "${group.name}" has been sent.`, `Icyifuzo cyawe cyo kwinjira muri "${group.name}" cyoherejwe.`, currentLanguage)});
             return { ...group, isRequested: true };
           } else if (!group.isPrivate && !group.isJoined) {
-            toast({ title: "Group Joined (Mock)", description: `You have joined "${group.name}".`});
+            toast({ title: t("Group Joined", "Uramaze Kwinjira mu Itsinda", currentLanguage), description: t(`You have joined "${group.name}".`, `Wamaze kwinjira muri "${group.name}".`, currentLanguage)});
             return { ...group, isJoined: true, memberCount: group.memberCount + 1 };
           }
         }
@@ -106,7 +113,7 @@ export default function SupportGroupsPage() {
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen bg-background text-foreground">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading Support Groups...</p>
+          <p className="text-muted-foreground">{t("Loading Support Groups...", "Gutegura Amatsinda y'Ubufasha...", currentLanguage)}</p>
         </div>
       </AppLayout>
     );
@@ -115,25 +122,25 @@ export default function SupportGroupsPage() {
   return (
     <AppLayout>
       <PageHeader 
-        title="Support Groups" 
+        title={t("Support Groups", "Amatsinda y'Ubufasha", currentLanguage)}
         breadcrumbs={[
-          {label: "Dashboard", href: "/"}, 
-          {label: "Community & Support"}, 
-          {label: "Support Groups"}
+          {label: t("Dashboard", "Imbonerahamwe", currentLanguage), href: "/"}, 
+          {label: t("Community & Support", "Ubufatanye & Ubufasha", currentLanguage)}, 
+          {label: t("Support Groups", "Amatsinda y'Ubufasha", currentLanguage)}
         ]}
       >
          <div className="flex items-center space-x-2">
             <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                placeholder="Search groups..." 
+                placeholder={t("Search groups...", "Shakisha amatsinda...", currentLanguage)} 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <Button className="transition-transform hover:scale-105 active:scale-95">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Group
+                <PlusCircle className="mr-2 h-4 w-4" /> {t("Create New Group", "Kora Itsinda Rishya", currentLanguage)}
             </Button>
         </div>
       </PageHeader>
@@ -141,10 +148,10 @@ export default function SupportGroupsPage() {
       <Card className="mb-6 shadow-lg bg-primary/5 hover-lift dark:bg-primary/10 dark:border-primary/20">
         <CardHeader>
             <CardTitle className="font-headline text-primary flex items-center">
-                <Users2 className="mr-2 h-6 w-6"/> Find Your Community
+                <Users2 className="mr-2 h-6 w-6"/> {t("Find Your Community", "Shaka Umuryango Wawe", currentLanguage)}
             </CardTitle>
             <CardDescription>
-                Join support groups to connect with others who share similar health journeys, interests, or challenges.
+                {t("Join support groups to connect with others who share similar health journeys, interests, or challenges.", "Injira mu matsinda y'ubufasha kugirango uhure n'abandi mufite ingendo z'ubuzima, ibyo mukunda, cyangwa imbogamizi zisa.", currentLanguage)}
             </CardDescription>
         </CardHeader>
       </Card>
@@ -170,8 +177,8 @@ export default function SupportGroupsPage() {
                 <Link href={`/community-support/support-groups/${group.id}`} className="block">
                     <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
                 </Link>
-                {group.isPrivate && <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">Private</Badge>}
-                {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">Public</Badge>}
+                {group.isPrivate && <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">{t("Private", "Rwihishwa", currentLanguage)}</Badge>}
+                {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">{t("Public", "Rusange", currentLanguage)}</Badge>}
               </div>
               <Badge variant="outline" className="w-fit mt-1">{group.category}</Badge>
             </CardHeader>
@@ -180,7 +187,7 @@ export default function SupportGroupsPage() {
             </CardContent>
             <CardFooter className="flex justify-between items-center border-t pt-4">
               <div className="flex items-center text-sm text-muted-foreground">
-                <Users2 className="mr-1.5 h-4 w-4" /> {group.memberCount} members
+                <Users2 className="mr-1.5 h-4 w-4" /> {group.memberCount} {t("members", "abanyamuryango", currentLanguage)}
               </div>
               <Button 
                 variant={group.isJoined ? "outline" : "default"} 
@@ -190,7 +197,7 @@ export default function SupportGroupsPage() {
                 disabled={group.isPrivate && group.isRequested && !group.isJoined}
               >
                 {group.isJoined ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <UserPlus className="mr-2 h-4 w-4" />}
-                {group.isJoined ? 'View Group' : (group.isPrivate ? (group.isRequested ? 'Requested' : 'Request to Join') : 'Join Group')}
+                {group.isJoined ? t('View Group', 'Reba Itsinda', currentLanguage) : (group.isPrivate ? (group.isRequested ? t('Requested', 'Byasabwe', currentLanguage) : t('Request to Join', 'Saba Kwinjira', currentLanguage)) : t('Join Group', 'Injira mu Itsinda', currentLanguage))}
               </Button>
             </CardFooter>
           </Card>
@@ -199,7 +206,7 @@ export default function SupportGroupsPage() {
              <Card className="md:col-span-2 lg:col-span-3 shadow-md">
                 <CardContent className="py-10 text-center">
                     <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No support groups found matching your search criteria.</p>
+                    <p className="text-muted-foreground">{t("No support groups found matching your search criteria.", "Nta matsinda y'ubufasha ahuye n'ibyo washakishije yabonetse.", currentLanguage)}</p>
                 </CardContent>
             </Card>
         )}

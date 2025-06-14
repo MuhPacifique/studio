@@ -14,7 +14,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-// Re-using the mock data structure and a subset of data for demonstration
 interface ForumPost {
   id: string;
   title: string;
@@ -40,13 +39,13 @@ interface Comment {
   text: string;
 }
 
-const mockForumPosts: ForumPost[] = [
+// Default data if localStorage is empty
+const defaultForumPosts: ForumPost[] = [
   { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs and include lists:\n\n*   Mindfulness techniques\n*   Gentle exercises\n*   Dietary considerations\n\nPlease share what has helped you!", likes: 15, commentsCount: 4, aiHint: 'community support people', tags: ['chronic pain', 'support', 'wellness'] },
   { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed. It's important to remember you're not alone in this.", likes: 22, commentsCount: 8, aiHint: 'anxious person thinking', tags: ['anxiety', 'medical tests', 'mental health'] },
-  { id: 'fp3', title: 'Healthy recipes for a low-sodium diet?', author: 'Carlos G.', authorAvatar: 'https://placehold.co/40x40.png?text=CG', authorInitials: 'CG', category: 'Nutrition', timestamp: '1 week ago', summary: 'Doctor recommended a low-sodium diet. Sharing and looking for tasty recipe ideas!', fullContent: "Collection of low-sodium recipes, tips for flavoring food without salt (herbs, spices, citrus), and links to useful resources. Let's compile a great list together!", likes: 30, commentsCount: 12, aiHint: 'healthy cooking vegetables', tags: ['nutrition', 'low-sodium', 'recipes', 'diet'] },
 ];
 
-const mockComments: { [postId: string]: Comment[] } = {
+const defaultComments: { [postId: string]: Comment[] } = {
   fp1: [
     { id: 'c1', author: 'Eva S.', authorAvatar: 'https://placehold.co/40x40.png?text=ES', authorInitials: 'ES', timestamp: '1 day ago', text: 'Great post! I find gentle yoga very helpful for my chronic back pain.' },
     { id: 'c2', author: 'David L.', authorAvatar: 'https://placehold.co/40x40.png?text=DL', authorInitials: 'DL', timestamp: '18 hours ago', text: 'Has anyone tried acupuncture? Curious about its effectiveness.' },
@@ -54,14 +53,16 @@ const mockComments: { [postId: string]: Comment[] } = {
   fp2: [
     { id: 'c3', author: 'Sarah P.', authorAvatar: 'https://placehold.co/40x40.png?text=SP', authorInitials: 'SP', timestamp: '3 hours ago', text: 'Deep breathing exercises and listening to calming music help me a lot.' },
   ],
-  fp3: [],
 };
 
+// Translation helper
+const t = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 export default function ForumPostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -74,59 +75,88 @@ export default function ForumPostDetailPage() {
 
   useEffect(() => {
     setIsClient(true);
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) setCurrentLanguage(lang);
   }, []);
 
   useEffect(() => {
     if (isClient) {
       const authStatus = localStorage.getItem('mockAuth');
       if (!authStatus) {
-        toast({ variant: "destructive", title: "Access Denied", description: "Please log in to view forum posts." });
+        toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe", currentLanguage), description: t("Please log in to view forum posts.", "Nyamuneka injira kugirango ubashe kureba inkuru zo mu biganiro.", currentLanguage) });
         router.replace('/welcome');
         return;
       }
       setIsAuthenticated(true);
       
-      const foundPost = mockForumPosts.find(p => p.id === postId);
+      const savedPostsString = localStorage.getItem('forumPosts');
+      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
+      const foundPost = allPosts.find(p => p.id === postId);
+
       if (foundPost) {
         setPost(foundPost);
-        setComments(mockComments[postId] || []);
+        const savedCommentsString = localStorage.getItem('forumComments');
+        const allComments: { [postId: string]: Comment[] } = savedCommentsString ? JSON.parse(savedCommentsString) : defaultComments;
+        setComments(allComments[postId] || []);
       } else {
-        toast({ variant: "destructive", title: "Post not found" });
+        toast({ variant: "destructive", title: t("Post not found", "Inkuru ntiyabonetse", currentLanguage) });
         router.push('/community-support/forums');
       }
     }
-  }, [isClient, router, toast, postId]);
+  }, [isClient, router, toast, postId, currentLanguage]);
 
   const handleLikePost = () => {
     if (post) {
-      setPost({ ...post, likes: post.likes + 1 });
-      toast({ title: "Post Liked (Mock)" });
+      const updatedPost = { ...post, likes: post.likes + 1 };
+      setPost(updatedPost);
+      
+      const savedPostsString = localStorage.getItem('forumPosts');
+      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
+      const updatedPosts = allPosts.map(p => p.id === postId ? updatedPost : p);
+      localStorage.setItem('forumPosts', JSON.stringify(updatedPosts));
+      
+      toast({ title: t("Post Liked", "Inkuru Yakunzwe", currentLanguage) });
     }
   };
   
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) {
-        toast({variant: "destructive", title: "Cannot submit empty comment"});
+        toast({variant: "destructive", title: t("Cannot submit empty comment", "Ntushobora kohereza igitecyerezo kirimo ubusa", currentLanguage)});
         return;
     }
     setIsSubmittingComment(true);
-    // Mock comment submission
-    setTimeout(() => {
-      const commentToAdd: Comment = {
-        id: `c${Date.now()}`,
-        author: localStorage.getItem('mockUserName') || 'You', // Mock author
-        authorAvatar: 'https://placehold.co/40x40.png?text=U',
-        authorInitials: (localStorage.getItem('mockUserName') || 'U').substring(0,2).toUpperCase(),
-        timestamp: 'Just now',
-        text: newComment,
-      };
-      setComments(prev => [...prev, commentToAdd]);
-      if(post) setPost({...post, commentsCount: post.commentsCount + 1});
-      setNewComment('');
-      setIsSubmittingComment(false);
-      toast({ title: "Comment Added (Mock)" });
-    }, 1000);
+    
+    const commentToAdd: Comment = {
+      id: `c${Date.now()}`,
+      author: localStorage.getItem('mockUserName') || t('Anonymous User', 'Ukoresha utazwi', currentLanguage),
+      authorAvatar: 'https://placehold.co/40x40.png?text=U',
+      authorInitials: (localStorage.getItem('mockUserName') || "U").substring(0,2).toUpperCase(),
+      timestamp: t('Just now', 'Nonaha', currentLanguage),
+      text: newComment,
+    };
+
+    const updatedComments = [...comments, commentToAdd];
+    setComments(updatedComments);
+
+    if(post) {
+      const updatedPost = {...post, commentsCount: post.commentsCount + 1};
+      setPost(updatedPost);
+
+      const savedPostsString = localStorage.getItem('forumPosts');
+      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
+      const updatedAllPosts = allPosts.map(p => p.id === postId ? updatedPost : p);
+      localStorage.setItem('forumPosts', JSON.stringify(updatedAllPosts));
+    }
+    
+    const savedCommentsString = localStorage.getItem('forumComments');
+    const allComments: { [postId: string]: Comment[] } = savedCommentsString ? JSON.parse(savedCommentsString) : defaultComments;
+    allComments[postId] = updatedComments;
+    localStorage.setItem('forumComments', JSON.stringify(allComments));
+
+    setNewComment('');
+    setIsSubmittingComment(false);
+    toast({ title: t("Comment Added", "Igitecyerezo Cyongeweho", currentLanguage) });
   };
 
 
@@ -135,7 +165,7 @@ export default function ForumPostDetailPage() {
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading post details...</p>
+          <p className="text-muted-foreground">{t("Loading post details...", "Gutegura amakuru y'inkuru...", currentLanguage)}</p>
         </div>
       </AppLayout>
     );
@@ -146,9 +176,9 @@ export default function ForumPostDetailPage() {
       <PageHeader 
         title={post.title}
         breadcrumbs={[
-          {label: "Dashboard", href: "/"}, 
-          {label: "Community & Support", href: "/community-support/forums"}, 
-          {label: "Patient Forums", href: "/community-support/forums"},
+          {label: t("Dashboard", "Imbonerahamwe", currentLanguage), href: "/"}, 
+          {label: t("Community & Support", "Ubufatanye & Ubufasha", currentLanguage), href: "/community-support/forums"}, 
+          {label: t("Patient Forums", "Ibiganiro by'Abarwayi", currentLanguage), href: "/community-support/forums"},
           {label: post.title.substring(0,30) + "..."}
         ]}
       />
@@ -164,7 +194,7 @@ export default function ForumPostDetailPage() {
               <AvatarImage src={post.authorAvatar} alt={post.author} data-ai-hint={post.aiHint} />
               <AvatarFallback>{post.authorInitials}</AvatarFallback>
             </Avatar>
-            <span>Posted by <span className="font-medium text-foreground">{post.author}</span></span>
+            <span>{t('Posted by', 'Byanditswe na', currentLanguage)} <span className="font-medium text-foreground">{post.author}</span></span>
             <span>•</span>
             <CalendarDays className="h-4 w-4" />
             <span>{post.timestamp}</span>
@@ -182,10 +212,10 @@ export default function ForumPostDetailPage() {
         </CardContent>
         <CardFooter className="border-t pt-4 flex justify-start space-x-4">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={handleLikePost}>
-            <ThumbsUp className="mr-1.5 h-4 w-4"/> {post.likes} Likes
+            <ThumbsUp className="mr-1.5 h-4 w-4"/> {post.likes} {t("Likes", "Abakunze", currentLanguage)}
           </Button>
            <div className="flex items-center text-sm text-muted-foreground">
-              <MessageSquare className="mr-1.5 h-4 w-4"/> {post.commentsCount} Comments
+              <MessageSquare className="mr-1.5 h-4 w-4"/> {post.commentsCount} {t("Comments", "Ibitecyerezo", currentLanguage)}
             </div>
         </CardFooter>
       </Card>
@@ -195,7 +225,7 @@ export default function ForumPostDetailPage() {
       <Card id="comments" className="shadow-lg hover-lift">
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center">
-            <MessageSquare className="mr-2 h-5 w-5 text-primary"/> Comments ({comments.length})
+            <MessageSquare className="mr-2 h-5 w-5 text-primary"/> {t("Comments", "Ibitecyerezo", currentLanguage)} ({comments.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -216,18 +246,18 @@ export default function ForumPostDetailPage() {
               </div>
             ))
           ) : (
-            <p className="text-muted-foreground">No comments yet. Be the first to reply!</p>
+            <p className="text-muted-foreground">{t("No comments yet. Be the first to reply!", "Nta bitecyerezo birahaba. Ba uwa mbere mu gusubiza!", currentLanguage)}</p>
           )}
         </CardContent>
         <CardFooter className="border-t pt-6">
           <form onSubmit={handleAddComment} className="w-full space-y-3">
             <div>
               <label htmlFor="newComment" className="block text-sm font-medium text-foreground mb-1">
-                Leave a Reply
+                {t("Leave a Reply", "Siga Igitecyerezo", currentLanguage)}
               </label>
               <Textarea
                 id="newComment"
-                placeholder="Write your comment here..."
+                placeholder={t("Write your comment here...", "Andika igitecyerezo cyawe hano...", currentLanguage)}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={4}
@@ -236,7 +266,7 @@ export default function ForumPostDetailPage() {
             </div>
             <Button type="submit" className="transition-transform hover:scale-105 active:scale-95" disabled={isSubmittingComment}>
               {isSubmittingComment ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
-              {isSubmittingComment ? 'Submitting...' : 'Post Comment'}
+              {isSubmittingComment ? t('Submitting...', 'Kohereza...', currentLanguage) : t('Post Comment', 'Ohereza Igitecyerezo', currentLanguage)}
             </Button>
           </form>
         </CardFooter>

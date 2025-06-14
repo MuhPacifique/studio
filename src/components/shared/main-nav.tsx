@@ -41,7 +41,7 @@ import {
 interface NavItem {
   href: string;
   label: string;
-  labelKn: string; // Kinyarwanda label
+  labelKn: string; 
   icon: React.ElementType;
   adminOnly?: boolean;
   doctorOnly?: boolean;
@@ -52,7 +52,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', labelKn: 'Imbonerahamwe', icon: Home, requiresAuth: true },
-  { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imithi', icon: Pill, requiresAuth: true, patientOnly: true },
+  { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imiti', icon: Pill, requiresAuth: true, patientOnly: true },
   { href: '/medical-tests', label: 'Medical Tests', labelKn: 'Ibipimo bya Muganga', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
   { 
     href: '#appointments', 
@@ -100,7 +100,7 @@ const navItems: NavItem[] = [
     ]
   },
   { href: '/symptom-analyzer', label: 'Symptom Analyzer', labelKn: 'Isesengura ry\'Ibimenyetso', icon: ActivitySquare, requiresAuth: true },
-  { href: '/faq', label: 'Medical FAQ', labelKn: 'FAQ y\'Ubuzima', icon: MessageSquareQuote, requiresAuth: true },
+  { href: '/faq', label: 'Medical FAQ', labelKn: 'Ibibazo Bikunze Kubazwa', icon: MessageSquareQuote, requiresAuth: true },
   { href: '/test-yourself', label: 'Test Yourself', labelKn: 'Isúzumé Ubwawe', icon: FlaskConical, requiresAuth: true },
   { href: '/online-consultation', label: 'Online Consultation', labelKn: 'Ubujyanama kuri Interineti', icon: Video, requiresAuth: true },
   { href: '/payment', label: 'Make Payment', labelKn: 'Kwishyura', icon: CreditCard, requiresAuth: true, patientOnly: true },
@@ -140,7 +140,7 @@ const useAuth = () => {
   const [userType, setUserType] = useState<UserRole>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn'); // Default to Kinyarwanda
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
 
   useEffect(() => {
     setIsClient(true);
@@ -165,8 +165,17 @@ const useAuth = () => {
       if (storedLang) {
         setPreferredLanguage(storedLang);
       } else {
-        localStorage.setItem('mockUserLang', 'kn'); // Set default if not present
+        localStorage.setItem('mockUserLang', 'kn'); 
       }
+
+      const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'mockUserLang') {
+          setPreferredLanguage((event.newValue as 'en' | 'kn') || 'kn');
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+
     }
   }, [isClient]);
   return { userType, isAuthenticated, isClient, preferredLanguage };

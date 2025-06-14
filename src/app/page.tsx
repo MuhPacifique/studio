@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2, ShieldQuestion, FileHeart, TrendingUp } from 'lucide-react'; 
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2, ShieldQuestion, FileHeart } from 'lucide-react'; 
 import { PageHeader } from '@/components/shared/page-header';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -156,11 +156,17 @@ export default function HomePage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
 
-  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
-
   useEffect(() => {
     setIsClient(true);
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) {
+      setPreferredLanguage(lang);
+    } else {
+      localStorage.setItem('mockUserLang', 'kn'); // Set default if not present
+    }
   }, []);
+  
+  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
 
   useEffect(() => {
     if (isClient) {
@@ -177,11 +183,11 @@ export default function HomePage() {
         router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
-        setUserName(storedUserName || (authStatus === 'admin' ? 'Admin User' : (authStatus === 'doctor' ? 'Doctor User' : 'Valued User')));
+        setUserName(storedUserName || (authStatus === 'admin' ? t('Admin User', 'Umunyamabanga Mukuru') : (authStatus === 'doctor' ? t('Doctor User', 'Muganga Mukuru') : t('Valued User', 'Ukoresha w\'Agaciro'))));
         setUserRole(authStatus); 
       }
     }
-  }, [isClient, router, toast]);
+  }, [isClient, router, toast, preferredLanguage]); // Added preferredLanguage as dependency
 
   if (!isClient || !isAuthenticated) {
     return (
