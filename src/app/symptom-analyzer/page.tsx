@@ -36,7 +36,7 @@ export default function SymptomAnalyzerPage() {
           title: "Access Denied",
           description: "Please log in to use the Symptom Analyzer.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -98,7 +98,7 @@ export default function SymptomAnalyzerPage() {
       </Alert>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="shadow-xl">
+        <Card className="shadow-xl hover-lift">
           <CardHeader>
             <CardTitle className="font-headline flex items-center"><ActivitySquare className="mr-2 h-6 w-6 text-primary" /> Describe Your Symptoms</CardTitle>
             <CardDescription>
@@ -115,7 +115,7 @@ export default function SymptomAnalyzerPage() {
                 className="resize-none"
                 aria-label="Symptom Description Input"
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -132,7 +132,7 @@ export default function SymptomAnalyzerPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-xl">
+        <Card className="shadow-xl hover-lift">
           <CardHeader>
             <CardTitle className="font-headline">Analysis Results</CardTitle>
             <CardDescription>

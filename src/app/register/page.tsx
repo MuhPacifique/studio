@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -38,6 +38,17 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem('selectedRole');
+    if (!role || role === 'admin') { // Admin cannot register via public form
+      toast({ variant: "destructive", title: "Role not selected", description: "Please select a role before registering." });
+      router.replace('/welcome'); 
+    } else {
+      setSelectedRole(role);
+    }
+  }, [router, toast]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -53,29 +64,42 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormValues) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Mock storing user info for dashboard access
-    localStorage.setItem('mockAuth', 'patient');
+    const roleToRegister = localStorage.getItem('selectedRole') || 'patient'; // Fallback, though useEffect should prevent this
+
+    localStorage.setItem('mockAuth', roleToRegister);
     localStorage.setItem('mockUserName', data.fullName);
     localStorage.setItem('mockUserEmail', data.email);
     localStorage.setItem('mockUserPhone', data.phone);
     
     toast({
       title: "Registration Successful",
-      description: "Your account has been created. Welcome!",
+      description: `Your ${roleToRegister} account has been created. Welcome, ${data.fullName}!`,
     });
-    router.push('/'); // Redirect to dashboard
+    router.push('/'); 
   };
 
+  const pageTitle = selectedRole ? `Create ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Account` : "Create Account";
+
+
+  if (!selectedRole) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
+         <p>Redirecting to role selection...</p>
+      </div>
+    );
+  }
+
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background p-4">
-      <Link href="/" className="mb-8 flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
+      <Link href="/welcome" className="mb-8 flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
         <LogoIcon className="h-8 w-8" />
         <span className="text-2xl font-bold font-headline">MediServe Hub</span>
       </Link>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Create Patient Account</CardTitle>
-          <CardDescription>Join MediServe Hub today. A verification code will be (mock) sent to your phone.</CardDescription>
+          <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
+          <CardDescription>Join MediServe Hub today. A (mock) verification code will be sent to your phone.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -154,11 +178,16 @@ export default function RegisterPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="text-center text-sm">
+        <CardFooter className="flex flex-col space-y-2 text-center text-sm">
           <p>
             Already have an account?{' '}
             <Link href="/login" className="font-medium text-primary hover:underline">
               Log in here
+            </Link>
+          </p>
+          <p>
+            <Link href="/welcome" className="font-medium text-primary hover:underline">
+              Back to Role Selection
             </Link>
           </p>
         </CardFooter>

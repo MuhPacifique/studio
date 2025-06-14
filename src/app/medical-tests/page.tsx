@@ -83,7 +83,7 @@ export default function MedicalTestsPage() {
           title: "Access Denied",
           description: "Please log in to view medical tests.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -106,7 +106,7 @@ export default function MedicalTestsPage() {
       <PageHeader title="Available Medical Tests" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Medical Tests"}]}/>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {mockMedicalTests.map((test) => (
-          <Card key={test.id} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card key={test.id} className="flex flex-col shadow-lg hover-lift">
             <Image
               src={test.imageUrl}
               alt={test.name}
@@ -133,7 +133,7 @@ export default function MedicalTestsPage() {
               </div>
             </CardContent>
             <CardContent className="border-t pt-4">
-                <Button className="w-full">
+                <Button className="w-full transition-transform hover:scale-105 active:scale-95">
                     <ClipboardList className="mr-2 h-4 w-4" /> Book This Test
                 </Button>
             </CardContent>

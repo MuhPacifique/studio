@@ -51,7 +51,7 @@ export default function SupportGroupsPage() {
           title: "Access Denied",
           description: "Please log in to access support groups.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -101,7 +101,7 @@ export default function SupportGroupsPage() {
         </div>
       </PageHeader>
 
-      <Card className="mb-6 shadow-lg bg-primary/5">
+      <Card className="mb-6 shadow-lg bg-primary/5 hover-lift">
         <CardHeader>
             <CardTitle className="font-headline text-primary flex items-center">
                 <Users2 className="mr-2 h-6 w-6"/> Find Your Community

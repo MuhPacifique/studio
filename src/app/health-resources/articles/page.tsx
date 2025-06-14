@@ -4,13 +4,14 @@
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, BookOpen, Search, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 interface Article {
   id: string;
@@ -49,7 +50,7 @@ export default function EducationalArticlesPage() {
           title: "Access Denied",
           description: "Please log in to view educational articles.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -96,7 +97,7 @@ export default function EducationalArticlesPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredArticles.map(article => (
-          <Card key={article.id} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300 group">
+          <Card key={article.id} className="flex flex-col shadow-lg hover-lift group">
             <Image 
               src={article.imageUrl} 
               alt={article.title} 

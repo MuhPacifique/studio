@@ -73,7 +73,7 @@ export default function MedicinesPage() {
           title: "Access Denied",
           description: "Please log in to order medicines.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -144,9 +144,9 @@ export default function MedicinesPage() {
       case 'Delivered':
         return 'bg-accent text-accent-foreground';
       case 'Processing':
-        return 'bg-yellow-500 text-black';
+        return 'bg-yellow-500 text-black'; // Custom color for processing
       case 'Shipped':
-        return 'bg-blue-500 text-white';
+        return 'bg-blue-500 text-white'; // Custom color for shipped
       case 'Pending':
         return 'bg-muted text-muted-foreground';
       default:
@@ -186,7 +186,7 @@ export default function MedicinesPage() {
           {filteredMedicines.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredMedicines.map((med) => (
-                <Card key={med.id} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card key={med.id} className="flex flex-col shadow-lg hover-lift">
                   <CardHeader className="p-0">
                     <Image
                       src={med.imageUrl}
@@ -211,7 +211,7 @@ export default function MedicinesPage() {
                   <CardFooter className="p-4">
                     <Button 
                       onClick={() => addToCart(med)} 
-                      className="w-full"
+                      className="w-full transition-transform hover:scale-105 active:scale-95"
                       disabled={med.stock === 0 || (cart.find(item => item.id === med.id)?.quantity ?? 0) >= med.stock}
                     >
                       <ShoppingCart className="mr-2 h-4 w-4" /> 
@@ -261,7 +261,7 @@ export default function MedicinesPage() {
                   <span>Total:</span>
                   <span>${cartTotal.toFixed(2)}</span>
                 </div>
-                <Button className="w-full">Proceed to Checkout</Button>
+                <Button className="w-full transition-transform hover:scale-105 active:scale-95">Proceed to Checkout</Button>
               </CardFooter>
             )}
           </Card>

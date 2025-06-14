@@ -14,31 +14,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings } from 'lucide-react'; // Added Settings for Profile
+import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase } from 'lucide-react'; 
 import { useRouter } from 'next/navigation';
 
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState<'patient' | 'admin' | null>(null); 
+  const [userType, setUserType] = useState<'patient' | 'admin' | 'doctor' | 'seeker' | null>(null); 
   const [userName, setUserName] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false); // To handle SSR/hydration issues
+  const [isClient, setIsClient] = useState(false); 
 
   useEffect(() => {
-    setIsClient(true); // Component has mounted
+    setIsClient(true); 
   }, []);
 
   useEffect(() => {
-    if (isClient) { // Only access localStorage on the client
+    if (isClient) { 
       const mockAuth = localStorage.getItem('mockAuth');
-      if (mockAuth === 'patient') {
+      const storedUserName = localStorage.getItem('mockUserName');
+      const storedRole = localStorage.getItem('selectedRole') as Role | null;
+
+      if (mockAuth) {
         setIsAuthenticated(true);
-        setUserType('patient');
-        setUserName('Patty Patient'); // Mock name
-      } else if (mockAuth === 'admin') {
-        setIsAuthenticated(true);
-        setUserType('admin');
-        setUserName('Admin User'); // Mock name
+        setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
+        if (mockAuth === 'admin') {
+          setUserType('admin');
+        } else if (storedRole) {
+          setUserType(storedRole);
+        } else {
+           setUserType('patient'); // Default if role somehow not set but authenticated
+        }
       } else {
         setIsAuthenticated(false);
         setUserType(null);
@@ -48,9 +53,10 @@ const useAuth = () => {
   }, [isClient]);
 
 
-  const login = (type: 'patient' | 'admin', name: string) => {
+  const login = (type: 'patient' | 'admin' | 'doctor' | 'seeker', name: string) => {
     if (isClient) {
-      localStorage.setItem('mockAuth', type);
+      localStorage.setItem('mockAuth', type); // 'mockAuth' signifies general auth status
+      localStorage.setItem('selectedRole', type); // 'selectedRole' stores the specific role
       setIsAuthenticated(true);
       setUserType(type);
       setUserName(name);
@@ -60,15 +66,19 @@ const useAuth = () => {
   const logout = () => {
     if (isClient) {
       localStorage.removeItem('mockAuth');
+      localStorage.removeItem('mockUserName');
+      localStorage.removeItem('selectedRole');
       setIsAuthenticated(false);
       setUserType(null);
       setUserName(null);
-      window.location.href = '/login'; // Redirect to login after logout
+      window.location.href = '/welcome'; // Redirect to welcome page after logout
     }
   };
 
   return { isAuthenticated, userType, userName, login, logout, isClient };
 };
+
+type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
 
 
 export function UserNav() {
@@ -88,7 +98,6 @@ export function UserNav() {
   }, [userName]);
 
   if (!isClient) {
-    // Render a placeholder or nothing during SSR and initial client render
     return (
         <div className="flex items-center space-x-2">
             <Button variant="ghost" className="h-10 w-10 rounded-full animate-pulse bg-muted"></Button>
@@ -101,12 +110,12 @@ export function UserNav() {
     return (
       <div className="flex items-center space-x-2">
         <Button variant="outline" asChild>
-          <Link href="/login">
+          <Link href="/welcome">
             <LogIn className="mr-2 h-4 w-4" /> Login
           </Link>
         </Button>
         <Button asChild>
-          <Link href="/register">
+          <Link href="/welcome">
             <UserPlus className="mr-2 h-4 w-4" /> Register
           </Link>
         </Button>
@@ -119,7 +128,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
-            <AvatarImage src={`https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar" />
+            <AvatarImage src={`https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar professional" />
             <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -129,7 +138,7 @@ export function UserNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{userName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {userType === 'admin' ? 'Administrator' : 'Patient'}
+              {userType ? userType.charAt(0).toUpperCase() + userType.slice(1) : 'User'}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -146,6 +155,14 @@ export function UserNav() {
               <Link href="/admin/dashboard">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {userType === 'doctor' && (
+            <DropdownMenuItem asChild>
+              <Link href="/doctor/dashboard">
+                <Briefcase className="mr-2 h-4 w-4" />
+                <span>Doctor Dashboard</span>
               </Link>
             </DropdownMenuItem>
           )}

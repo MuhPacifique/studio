@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MessageCircleQuestion, Search, PlusCircle, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Loader2, MessageSquareQuote, Search, PlusCircle, ThumbsUp, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,9 +29,9 @@ interface ForumPost {
 }
 
 const mockForumPosts: ForumPost[] = [
-  { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', likes: 15, comments: 4, aiHint: 'community support people' },
-  { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', likes: 22, comments: 8, aiHint: 'anxious person thinking' },
-  { id: 'fp3', title: 'Healthy recipes for a low-sodium diet?', author: 'Carlos G.', authorAvatar: 'https://placehold.co/40x40.png', authorInitials: 'CG', category: 'Nutrition', timestamp: '1 week ago', summary: 'Doctor recommended a low-sodium diet. Sharing and looking for tasty recipe ideas!', likes: 30, comments: 12, aiHint: 'healthy cooking vegetables' },
+  { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', likes: 15, comments: 4, aiHint: 'community support people' },
+  { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', likes: 22, comments: 8, aiHint: 'anxious person thinking' },
+  { id: 'fp3', title: 'Healthy recipes for a low-sodium diet?', author: 'Carlos G.', authorAvatar: 'https://placehold.co/40x40.png?text=CG', authorInitials: 'CG', category: 'Nutrition', timestamp: '1 week ago', summary: 'Doctor recommended a low-sodium diet. Sharing and looking for tasty recipe ideas!', likes: 30, comments: 12, aiHint: 'healthy cooking vegetables' },
 ];
 
 export default function PatientForumsPage() {
@@ -54,7 +54,7 @@ export default function PatientForumsPage() {
           title: "Access Denied",
           description: "Please log in to access patient forums.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -104,10 +104,10 @@ export default function PatientForumsPage() {
         </div>
       </PageHeader>
       
-      <Card className="mb-6 shadow-lg bg-primary/5">
+      <Card className="mb-6 shadow-lg bg-primary/5 hover-lift">
         <CardHeader>
             <CardTitle className="font-headline text-primary flex items-center">
-                <MessageCircleQuestion className="mr-2 h-6 w-6"/> Welcome to the Forums!
+                <MessageSquareQuote className="mr-2 h-6 w-6"/> Welcome to the Forums!
             </CardTitle>
             <CardDescription>
                 Connect with other patients, share experiences, and find support. Please remember to be respectful and that this is not a substitute for professional medical advice.

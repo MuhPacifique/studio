@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList } from 'lucide-react'; // Added ClipboardList
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2 } from 'lucide-react'; 
 import { PageHeader } from '@/components/shared/page-header';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -29,52 +29,60 @@ const features = [
     bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
+    title: "Book Appointments",
+    description: "Schedule consultations with healthcare professionals.",
+    href: "/appointments/book",
+    icon: CalendarCheck2,
+    color: "text-primary", 
+    bgColor: "bg-primary/10 hover:bg-primary/20",
+  },
+  {
     title: "Health Resources",
     description: "Articles and tips for a healthier lifestyle.",
-    href: "/health-resources/articles", // Points to first sub-item
+    href: "/health-resources/articles", 
     icon: LifeBuoy,
-    color: "text-primary",
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
     title: "Community & Support",
     description: "Connect with forums and support groups.",
-    href: "/community-support/forums", // Points to first sub-item
+    href: "/community-support/forums", 
     icon: Users2,
-    color: "text-accent",
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    color: "text-primary",
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
     title: "Symptom Analyzer",
     description: "Get insights based on your symptoms. (AI Powered)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-primary", 
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-accent", 
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
     title: "Medical FAQ",
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-accent", 
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    color: "text-primary", 
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
     title: "Test Yourself",
     description: "Input symptoms for potential disease info. (AI Powered)",
     href: "/test-yourself",
     icon: FlaskConical,
-    color: "text-primary", 
-    bgColor: "bg-primary/10 hover:bg-primary/20",
+    color: "text-accent", 
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
     title: "Online Consultation",
     description: "Consult with doctors online via video call.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-accent", 
-    bgColor: "bg-accent/10 hover:bg-accent/20",
+    color: "text-primary", 
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
 ];
 
@@ -99,10 +107,10 @@ export default function HomePage() {
           title: "Access Denied",
           description: "Please log in to access the dashboard.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); // Redirect to welcome page
       } else {
         setIsAuthenticated(true);
-        setUserName(storedUserName || (authStatus === 'admin' ? 'Admin User' : 'Valued Patient'));
+        setUserName(storedUserName || (authStatus === 'admin' ? 'Admin User' : 'Valued User'));
       }
     }
   }, [isClient, router, toast]);

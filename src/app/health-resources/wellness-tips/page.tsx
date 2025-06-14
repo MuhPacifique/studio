@@ -47,7 +47,7 @@ export default function WellnessTipsPage() {
           title: "Access Denied",
           description: "Please log in to view wellness tips.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -86,10 +86,9 @@ export default function WellnessTipsPage() {
       
       <div className="space-y-6">
         {Object.entries(groupedTips).map(([category, tips]) => (
-          <Card key={category} className="shadow-lg">
+          <Card key={category} className="shadow-lg hover-lift">
             <CardHeader>
               <CardTitle className="font-headline text-xl flex items-center text-primary">
-                {/* You might want more specific icons per category later */}
                 {category === 'Physical' && <HeartPulse className="mr-2 h-5 w-5" />}
                 {category === 'Mental' && <Lightbulb className="mr-2 h-5 w-5" />}
                 {category === 'Nutrition' && <Leaf className="mr-2 h-5 w-5" />}
@@ -101,9 +100,9 @@ export default function WellnessTipsPage() {
               <Accordion type="single" collapsible className="w-full">
                 {tips.map((tip) => (
                   <AccordionItem value={tip.id} key={tip.id}>
-                    <AccordionTrigger className="hover:no-underline">
+                    <AccordionTrigger className="hover:no-underline group">
                       <div className="flex items-center">
-                        <tip.icon className="mr-3 h-5 w-5 text-accent flex-shrink-0" />
+                        <tip.icon className="mr-3 h-5 w-5 text-accent flex-shrink-0 group-hover:animate-pulse" />
                         <span className="font-medium">{tip.title}</span>
                       </div>
                     </AccordionTrigger>

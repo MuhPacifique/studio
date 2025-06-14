@@ -23,8 +23,10 @@ import {
   LifeBuoy, 
   ChevronDown,
   ChevronRight,
-  MessageCircleQuestion, // Placeholder for Forums
-  Users2 // Placeholder for Support Groups
+  MessageCircleQuestion, 
+  Users2,
+  CalendarPlus, // For Book Appointment
+  CalendarCheck2 // For My Appointments
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -40,6 +42,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   adminOnly?: boolean;
+  doctorOnly?: boolean;
   subItems?: NavItem[];
   requiresAuth?: boolean;
 }
@@ -48,6 +51,16 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: Home, requiresAuth: true },
   { href: '/medicines', label: 'Order Medicines', icon: Pill, requiresAuth: true },
   { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardList, requiresAuth: true },
+  { 
+    href: '#appointments', 
+    label: 'Appointments', 
+    icon: CalendarCheck2, 
+    requiresAuth: true,
+    subItems: [
+      { href: '/appointments/book', label: 'Book Appointment', icon: CalendarPlus, requiresAuth: true },
+      { href: '/appointments/my-appointments', label: 'My Appointments', icon: CalendarCheck2, requiresAuth: true },
+    ]
+  },
   { 
     href: '#health-resources', 
     label: 'Health Resources', 
@@ -74,23 +87,33 @@ const navItems: NavItem[] = [
   { href: '/online-consultation', label: 'Online Consultation', icon: Video, requiresAuth: true },
   { href: '/payment', label: 'Make Payment', icon: CreditCard, requiresAuth: true },
   { 
+    href: '/doctor/dashboard', // Placeholder for Doctor specific top-level nav
+    label: 'Doctor Portal', 
+    icon: Stethoscope, 
+    doctorOnly: true, // Will only show if userType is 'doctor'
+    requiresAuth: true, 
+  },
+  { 
     href: '#admin-section', 
     label: 'Admin Section', 
     icon: LayoutDashboard, 
     adminOnly: true,
+    requiresAuth: true,
     subItems: [
-      { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
-      { href: '/admin/users', label: 'Manage Users', icon: Users, adminOnly: true },
-      { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill, adminOnly: true },
-      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true },
-      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope, adminOnly: true },
-      { href: '/admin/settings', label: 'System Settings', icon: Settings, adminOnly: true },
+      { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true, requiresAuth: true },
+      { href: '/admin/users', label: 'Manage Users', icon: Users, adminOnly: true, requiresAuth: true },
+      { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill, adminOnly: true, requiresAuth: true },
+      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true, requiresAuth: true },
+      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope, adminOnly: true, requiresAuth: true },
+      { href: '/admin/settings', label: 'System Settings', icon: Settings, adminOnly: true, requiresAuth: true },
     ]
   },
 ];
 
+type UserRole = 'patient' | 'admin' | 'doctor' | 'seeker' | null;
+
 const useAuth = () => {
-  const [userType, setUserType] = useState<'patient' | 'admin' | null>(null);
+  const [userType, setUserType] = useState<UserRole>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
@@ -101,12 +124,17 @@ const useAuth = () => {
   useEffect(() => {
     if (isClient) {
       const mockAuth = localStorage.getItem('mockAuth');
-      if (mockAuth === 'admin') {
-        setUserType('admin');
+      const storedRole = localStorage.getItem('selectedRole') as UserRole;
+      
+      if (mockAuth) {
         setIsAuthenticated(true);
-      } else if (mockAuth === 'patient') {
-        setUserType('patient');
-        setIsAuthenticated(true);
+        if (mockAuth === 'admin') {
+            setUserType('admin');
+        } else if (storedRole) {
+            setUserType(storedRole);
+        } else {
+            setUserType('patient'); // Fallback if authenticated but no specific role set
+        }
       } else {
         setUserType(null);
         setIsAuthenticated(false);
@@ -139,7 +167,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   if (!isClient) {
     return (
       <div className={cn("flex flex-col space-y-1 p-2", className)}>
-        {[...Array(10)].map((_, i) => ( // Increased skeleton items
+        {[...Array(12)].map((_, i) => ( 
           <div key={i} className="h-8 w-full bg-sidebar-accent/30 rounded-md animate-pulse"></div>
         ))}
       </div>
@@ -147,13 +175,14 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   }
 
   const filteredNavItems = navItems.filter(item => {
-    if (item.adminOnly) {
-      return userType === 'admin';
-    }
-    if (item.requiresAuth) {
-      return isAuthenticated;
-    }
-    return true;
+    if (!item.requiresAuth && !isAuthenticated) return true; // Show if no auth needed
+    if (!isAuthenticated) return false; // Hide if auth needed but not authenticated
+    if (item.adminOnly && userType !== 'admin') return false;
+    if (item.doctorOnly && userType !== 'doctor') return false;
+    if (!item.adminOnly && !item.doctorOnly) return true; // General items for authenticated users
+    if (item.adminOnly && userType === 'admin') return true;
+    if (item.doctorOnly && userType === 'doctor') return true;
+    return false;
   });
 
   return (
@@ -204,7 +233,13 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 </SidebarMenuButton>
                 {openSubMenus[item.label] && (
                   <SidebarMenuSub className="mt-1">
-                    {item.subItems.filter(subItem => !subItem.adminOnly || userType === 'admin').map((subItem) => (
+                    {item.subItems.filter(subItem => {
+                        if (!subItem.requiresAuth && !isAuthenticated) return true;
+                        if (!isAuthenticated) return false;
+                        if (subItem.adminOnly && userType !== 'admin') return false;
+                        if (subItem.doctorOnly && userType !== 'doctor') return false;
+                        return true;
+                    }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
                          <Link href={subItem.href}>
                            <SidebarMenuSubButton

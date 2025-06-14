@@ -40,8 +40,9 @@ const paymentSchema = z.object({
     }
   }
   if (data.paymentMethod === "mobileMoney") {
-    if (!data.mobileNumber || !/^\d{9,15}$/.test(data.mobileNumber)) { // Rwanda mobile numbers are typically 10 digits like 07XXXXXXXX
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid mobile number.", path: ["mobileNumber"] });
+    // Basic Rwandan phone number check (starts with 07, typically 10 digits)
+    if (!data.mobileNumber || !/^07[2389]\d{7}$/.test(data.mobileNumber)) { 
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid Rwandan mobile number (e.g., 07XXXXXXXX).", path: ["mobileNumber"] });
     }
   }
 });
@@ -57,7 +58,7 @@ export default function PaymentPage() {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: 5000, // Default amount in RWF
+      amount: 5000, 
       paymentMethod: undefined,
     },
   });
@@ -77,7 +78,7 @@ export default function PaymentPage() {
           title: "Access Denied",
           description: "Please log in to make a payment.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -108,7 +109,7 @@ export default function PaymentPage() {
   return (
     <AppLayout>
       <PageHeader title="Online Payment" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Payment"}]} />
-      <Card className="w-full max-w-2xl mx-auto shadow-xl">
+      <Card className="w-full max-w-2xl mx-auto shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />Secure Payment Gateway</CardTitle>
           <CardDescription>Complete your payment for services or orders in RWF. This is a demonstration and no real transaction will occur.</CardDescription>
@@ -201,7 +202,7 @@ export default function PaymentPage() {
                    <h3 className="text-lg font-medium">Mobile Money Details</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mobile Number (e.g. 07xxxxxxx)</FormLabel>
+                      <FormLabel>Mobile Number (e.g. 078xxxxxxx)</FormLabel>
                       <FormControl><Input type="tel" placeholder="Enter mobile number" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -228,8 +229,8 @@ export default function PaymentPage() {
               )}
 
 
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || !paymentMethod}>
-                {form.formState.isSubmitting ? 'Processing...' : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
+              <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting || !paymentMethod}>
+                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processing...</> : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
               </Button>
             </form>
           </Form>

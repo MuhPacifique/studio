@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -24,7 +24,7 @@ import { Phone } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  // phone: z.string().optional().refine(val => !val || val.length >= 10, { message: "Phone number must be at least 10 digits if provided."}),
+  phone: z.string().optional().refine(val => !val || val.length >= 10, { message: "Phone number must be at least 10 digits if provided."}),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -33,12 +33,22 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem('selectedRole');
+    if (!role) {
+      router.replace('/welcome'); // If no role selected, go back to role selection
+    } else {
+      setSelectedRole(role);
+    }
+  }, [router]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
-      // phone: "",
+      phone: "",
       password: "",
     },
   });
@@ -46,37 +56,57 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Mock success/failure (still primarily email/password based for simplicity of mock)
-    if (data.email === "patient@example.com" && data.password === "password") {
+    const role = localStorage.getItem('selectedRole') || 'patient'; // Default to patient if somehow not set
+
+    // Mock success/failure 
+    // For demo, let's assume a generic patient login and a specific doctor login.
+    let loginSuccess = false;
+    let userName = "User";
+
+    if (role === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
+        loginSuccess = true;
+        userName = "Dr. Alex Smith";
+    } else if (role !== 'admin' && data.email === "patient@example.com" && data.password === "password") {
+        loginSuccess = true;
+        userName = "Patty Patient";
+    } else if (role === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
+        loginSuccess = true;
+        userName = "Sam Seeker";
+    }
+
+
+    if (loginSuccess) {
       toast({
         title: "Login Successful",
-        description: "Welcome back!",
+        description: `Welcome back, ${userName}!`,
       });
-      localStorage.setItem('mockAuth', 'patient');
-      localStorage.setItem('mockUserName', 'Patty Patient'); // Example name
+      localStorage.setItem('mockAuth', role); // Use selected role for mockAuth
+      localStorage.setItem('mockUserName', userName); 
       localStorage.setItem('mockUserEmail', data.email);
-      // localStorage.setItem('mockUserPhone', data.phone || "");
+      localStorage.setItem('mockUserPhone', data.phone || "");
       router.push('/');
     } else {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid email or password.",
+        description: "Invalid credentials for the selected role.",
       });
       form.setError("email", { type: "manual", message: " " });
-      form.setError("password", { type: "manual", message: "Invalid email or password." });
+      form.setError("password", { type: "manual", message: "Invalid credentials." });
     }
   };
 
+  const pageTitle = selectedRole ? `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Login` : "Login";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-background p-4">
-      <Link href="/" className="mb-8 flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
+      <Link href="/welcome" className="mb-8 flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
         <LogoIcon className="h-8 w-8" />
         <span className="text-2xl font-bold font-headline">MediServe Hub</span>
       </Link>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Patient Login</CardTitle>
+          <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
           <CardDescription>Access your MediServe Hub account. You may receive a (mock) verification code.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,15 +125,14 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              {/* Phone number field for login can be added here if desired, modifying schema and logic */}
-              {/* <FormField
+              <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                      Phone Number (Optional)
+                      Phone Number (Optional for login, for verification)
                     </FormLabel>
                     <FormControl>
                       <Input type="tel" placeholder="+250 7XX XXX XXX" {...field} />
@@ -111,7 +140,7 @@ export default function LoginPage() {
                     <FormMessage />
                   </FormItem>
                 )}
-              /> */}
+              />
               <FormField
                 control={form.control}
                 name="password"
@@ -133,15 +162,14 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm">
           <p>
-            Don't have an account?{' '}
+            Need an account?{' '}
             <Link href="/register" className="font-medium text-primary hover:underline">
               Register here
             </Link>
           </p>
            <p>
-            Are you an admin?{' '}
-            <Link href="/admin/login" className="font-medium text-primary hover:underline">
-              Admin Login
+            <Link href="/welcome" className="font-medium text-primary hover:underline">
+              Back to Role Selection
             </Link>
           </p>
         </CardFooter>

@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -49,7 +49,7 @@ export default function FaqPage() {
           title: "Access Denied",
           description: "Please log in to access the Medical FAQ.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
       }
@@ -110,7 +110,7 @@ export default function FaqPage() {
         </AlertDescription>
       </Alert>
 
-      <Card className="mb-8 shadow-xl">
+      <Card className="mb-8 shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><HelpCircle className="mr-2 h-6 w-6 text-primary" /> Ask a Medical Question</CardTitle>
           <CardDescription>
@@ -127,7 +127,7 @@ export default function FaqPage() {
               className="flex-grow"
               aria-label="Medical Question Input"
             />
-            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto transition-transform hover:scale-105 active:scale-95">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -162,7 +162,7 @@ export default function FaqPage() {
         </div>
       )}
 
-      <Card className="shadow-xl">
+      <Card className="shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><MessageSquareQuote className="mr-2 h-6 w-6 text-primary" /> Commonly Asked Questions</CardTitle>
         </CardHeader>
@@ -171,8 +171,8 @@ export default function FaqPage() {
             <Accordion type="single" collapsible className="w-full">
               {displayedFaqs.map((faq, index) => (
                 <AccordionItem value={`item-${index}`} key={index}>
-                  <AccordionTrigger className="text-left hover:no-underline font-medium">
-                    {faq.question}
+                  <AccordionTrigger className="text-left hover:no-underline font-medium group">
+                    <span className="group-hover:text-primary transition-colors">{faq.question}</span>
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground whitespace-pre-wrap">
                     {faq.answer}

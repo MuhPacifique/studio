@@ -10,16 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase } from 'lucide-react';
+import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -31,10 +32,30 @@ const profileSchema = z.object({
   country: z.string().optional(),
   bio: z.string().max(200, "Bio must be 200 characters or less.").optional(),
   preferredLanguage: z.string().optional(),
+  
+  // Preferences
   enableMarketingEmails: z.boolean().optional(),
+  enableAppNotifications: z.boolean().optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+
+  // Emergency Contact
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
+
+  // Security (Placeholders, not functional for mock)
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmNewPassword: z.string().optional(),
+  enableTwoFactor: z.boolean().optional(),
+}).refine(data => {
+    if (data.newPassword && !data.confirmNewPassword) return false; // If new password, confirm is needed
+    if (data.newPassword && data.newPassword !== data.confirmNewPassword) return false; // Passwords must match
+    return true;
+}, {
+    message: "New passwords do not match or confirmation is missing.",
+    path: ["confirmNewPassword"], 
 });
+
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -55,8 +76,11 @@ export default function ProfilePage() {
     bio: "",
     preferredLanguage: "en",
     enableMarketingEmails: false,
+    enableAppNotifications: true,
+    theme: "system",
     emergencyContactName: "",
-    emergencyContactPhone: ""
+    emergencyContactPhone: "",
+    enableTwoFactor: false,
   });
 
   const form = useForm<ProfileFormValues>({
@@ -80,21 +104,24 @@ export default function ProfilePage() {
           title: "Access Denied",
           description: "Please log in to view your profile.",
         });
-        router.replace('/login');
+        router.replace('/welcome'); // Redirect to welcome page
       } else {
         const userData: ProfileFormValues = {
           fullName: authStatus === 'admin' ? "Admin User" : storedUserName,
           email: authStatus === 'admin' ? "admin@mediservehub.com" : storedUserEmail,
-          phone: localStorage.getItem('mockUserPhone') || "",
-          dob: localStorage.getItem('mockUserDOB') || "",
-          address: localStorage.getItem('mockUserAddress') || "",
-          city: localStorage.getItem('mockUserCity') || "",
+          phone: localStorage.getItem('mockUserPhone') || "0788123456",
+          dob: localStorage.getItem('mockUserDOB') || "1990-01-01",
+          address: localStorage.getItem('mockUserAddress') || "KG 123 St",
+          city: localStorage.getItem('mockUserCity') || "Kigali",
           country: localStorage.getItem('mockUserCountry') || "Rwanda",
-          bio: localStorage.getItem('mockUserBio') || "Passionate about health and wellness.",
+          bio: localStorage.getItem('mockUserBio') || "Passionate about health and wellness. Exploring new ways to stay fit and informed.",
           preferredLanguage: localStorage.getItem('mockUserLang') || "en",
           enableMarketingEmails: localStorage.getItem('mockUserMarketing') === 'true',
-          emergencyContactName: localStorage.getItem('mockUserEmergencyName') || "",
-          emergencyContactPhone: localStorage.getItem('mockUserEmergencyPhone') || "",
+          enableAppNotifications: localStorage.getItem('mockUserAppNotifs') !== 'false', // default true
+          theme: (localStorage.getItem('mockUserTheme') as ProfileFormValues['theme']) || 'system',
+          emergencyContactName: localStorage.getItem('mockUserEmergencyName') || "Jane Doe",
+          emergencyContactPhone: localStorage.getItem('mockUserEmergencyPhone') || "0788654321",
+          enableTwoFactor: localStorage.getItem('mockUser2FA') === 'true',
         };
         setCurrentUser(userData);
         form.reset(userData); 
@@ -119,9 +146,11 @@ export default function ProfilePage() {
     localStorage.setItem('mockUserBio', data.bio || "");
     localStorage.setItem('mockUserLang', data.preferredLanguage || "en");
     localStorage.setItem('mockUserMarketing', String(data.enableMarketingEmails || false));
+    localStorage.setItem('mockUserAppNotifs', String(data.enableAppNotifications !== false));
+    localStorage.setItem('mockUserTheme', data.theme || "system");
     localStorage.setItem('mockUserEmergencyName', data.emergencyContactName || "");
     localStorage.setItem('mockUserEmergencyPhone', data.emergencyContactPhone || "");
-
+    localStorage.setItem('mockUser2FA', String(data.enableTwoFactor || false));
 
     const nameParts = data.fullName.split(' ');
     const firstInitial = nameParts[0]?.[0] || '';
@@ -132,6 +161,7 @@ export default function ProfilePage() {
       title: "Profile Updated (Mock)",
       description: "Your profile information has been saved.",
     });
+     form.reset(data); // Reset form with new values, clearing password fields
   };
 
   if (!isClient || !localStorage.getItem('mockAuth')) {
@@ -154,7 +184,7 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center space-x-4">
               <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
-                <AvatarImage src="https://placehold.co/100x100.png" alt={form.watch("fullName")} data-ai-hint="profile avatar professional" />
+                <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={form.watch("fullName")} data-ai-hint="profile avatar professional" />
                 <AvatarFallback className="text-3xl text-primary font-semibold">{initials}</AvatarFallback>
               </Avatar>
               <div>
@@ -200,10 +230,39 @@ export default function ProfilePage() {
                        <Palette className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /> Preferences
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-6">
-                       <FormField control={form.control} name="preferredLanguage" render={({ field }) => ( <FormItem> <FormLabel>Preferred Language</FormLabel> <FormControl><Input placeholder="e.g., English, Kinyarwanda" {...field} /></FormControl> <FormDescription>We'll try to use this language where possible.</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="preferredLanguage" render={({ field }) => ( <FormItem> <FormLabel>Preferred Language</FormLabel> 
+                         <FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="fr">French</SelectItem>
+                                    <SelectItem value="kin">Kinyarwanda</SelectItem>
+                                </SelectContent>
+                            </Select>
+                         </FormControl> 
+                       <FormDescription>We'll try to use this language where possible.</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="theme" render={({ field }) => ( <FormItem> <FormLabel>Theme</FormLabel> 
+                         <FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select theme" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="light">Light</SelectItem>
+                                    <SelectItem value="dark">Dark</SelectItem>
+                                    <SelectItem value="system">System Default</SelectItem>
+                                </SelectContent>
+                            </Select>
+                         </FormControl> 
+                       <FormDescription>Choose your preferred application theme.</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="enableMarketingEmails" render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5"> <FormLabel>Marketing Emails</FormLabel> <FormDescription>Receive updates on new features and promotions.</FormDescription> </div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="enableAppNotifications" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5"> <FormLabel>In-App Notifications</FormLabel> <FormDescription>Receive important alerts and updates within the app.</FormDescription> </div>
                             <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                           </FormItem>
                         )} />
@@ -219,6 +278,24 @@ export default function ProfilePage() {
                       <FormField control={form.control} name="emergencyContactPhone" render={({ field }) => ( <FormItem> <FormLabel>Contact Phone</FormLabel> <FormControl><Input type="tel" placeholder="Phone number of emergency contact" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                     </AccordionContent>
                   </AccordionItem>
+
+                  <AccordionItem value="securitySettings" className="border-b-0">
+                     <AccordionTrigger className="hover:no-underline text-xl font-semibold text-primary py-3 group">
+                       <LockKeyhole className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /> Security Settings
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-6">
+                      <FormField control={form.control} name="currentPassword" render={({ field }) => ( <FormItem> <FormLabel>Current Password</FormLabel> <FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="newPassword" render={({ field }) => ( <FormItem> <FormLabel>New Password</FormLabel> <FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="confirmNewPassword" render={({ field }) => ( <FormItem> <FormLabel>Confirm New Password</FormLabel> <FormControl><Input type="password" placeholder="Confirm new password" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="enableTwoFactor" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5"> <FormLabel>Two-Factor Authentication</FormLabel> <FormDescription>Enhance your account security (Mock).</FormDescription> </div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )} />
+                    </AccordionContent>
+                  </AccordionItem>
+
                 </Accordion>
                 
                 <div className="flex justify-end pt-6">
@@ -238,21 +315,22 @@ export default function ProfilePage() {
               <CardTitle className="font-headline text-lg">Account Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <Shield className="mr-2 h-4 w-4" /> Change Password </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <Bell className="mr-2 h-4 w-4" /> Notification Preferences </Button>
               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <FileText className="mr-2 h-4 w-4" /> My Medical Records (Mock) </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <FileClock className="mr-2 h-4 w-4" /> My Order History (Mock) </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <History className="mr-2 h-4 w-4" /> Login History (Mock) </Button>
               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary"> <MessageCircle className="mr-2 h-4 w-4" /> Communication History </Button>
             </CardContent>
           </Card>
            <Card className="shadow-xl hover-lift border-destructive/30">
             <CardHeader>
-              <CardTitle className="font-headline text-lg text-destructive">Danger Zone</CardTitle>
+              <CardTitle className="font-headline text-lg text-destructive">Data & Privacy</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-destructive hover:text-destructive/80"><Database className="mr-2 h-4 w-4"/> Export My Data (Mock)</Button>
               <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-80">
                 <Edit3 className="mr-2 h-4 w-4" /> Deactivate Account (Mock)
               </Button>
-               <p className="text-xs text-muted-foreground mt-2">This action is irreversible. Please be certain.</p>
+               <p className="text-xs text-muted-foreground mt-2">Deactivating your account is irreversible. Please be certain.</p>
             </CardContent>
           </Card>
         </div>

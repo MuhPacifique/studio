@@ -28,7 +28,7 @@ body {
     --popover-foreground: 0 0% 3.9%; /* Black */
     
     --primary: 142.1 76.2% 36.3%; /* Green */
-    --primary-foreground: 0 0% 98%; /* White */
+    --primary-foreground: 0 0% 98%; /* White (for text on primary green) */
     
     --secondary: 0 0% 96.1%; /* Light Gray (almost white) */
     --secondary-foreground: 0 0% 9%; /* Dark Gray */
@@ -54,13 +54,13 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar light theme */
-    --sidebar-background: 0 0% 3.9%; /* Black */
-    --sidebar-foreground: 0 0% 98%; /* White */
+    --sidebar-background: 0 0% 98%; /* Very Light Gray (Almost White) */
+    --sidebar-foreground: 0 0% 3.9%; /* Black */
     --sidebar-primary: 142.1 76.2% 36.3%; /* Green (active item background) */
     --sidebar-primary-foreground: 0 0% 98%; /* White (active item text) */
-    --sidebar-accent: 0 0% 15%; /* Dark Gray (hover) */
-    --sidebar-accent-foreground: 142.1 70.6% 45.3%; /* Light Green (hover text) */
-    --sidebar-border: 0 0% 10%; /* Darker Gray */
+    --sidebar-accent: 0 0% 92%; /* Light Gray (hover) */
+    --sidebar-accent-foreground: 142.1 70.6% 30.3%; /* Darker Green (hover text) */
+    --sidebar-border: 0 0% 89.8%; /* Light Gray Border */
     --sidebar-ring: 142.1 70.6% 45.3%; /* Light Green */
   }
 
@@ -100,13 +100,13 @@ body {
     --chart-5: 0 0% 60%;         /* Medium Gray */
     
     /* Sidebar dark theme */
-    --sidebar-background: 0 0% 2%; /* Near Black */
+    --sidebar-background: 0 0% 8%; /* Dark Gray, not pure black */
     --sidebar-foreground: 0 0% 95%; /* Off-White */
     --sidebar-primary: 142.1 70.6% 45.3%; /* Lighter Green (active item background) */
     --sidebar-primary-foreground: 0 0% 3.9%; /* Black (active item text) */
-    --sidebar-accent: 0 0% 10%; /* Dark Gray (hover) */
-    --sidebar-accent-foreground: 142.1 70.6% 50.3%; /* Bright Green (hover text) */
-    --sidebar-border: 0 0% 8%; /* Darker Gray */
+    --sidebar-accent: 0 0% 12%; /* Slightly Lighter Dark Gray (hover) */
+    --sidebar-accent-foreground: 142.1 70.6% 55.3%; /* Brighter Green (hover text) */
+    --sidebar-border: 0 0% 10%; /* Darker Gray */
     --sidebar-ring: 142.1 70.6% 50.3%; /* Bright Green */
   }
 }
