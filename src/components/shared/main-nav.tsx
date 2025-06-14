@@ -166,10 +166,10 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                     pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <>
+                  <span>
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>
-                  </>
+                  </span>
                 </SidebarMenuButton>
               </Link>
             ) : (
@@ -205,10 +205,10 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                                pathname === subItem.href ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                              )}
                            >
-                             <>
+                             <span>
                               <subItem.icon className="mr-2 h-4 w-4 flex-shrink-0" />
                               <span className="truncate">{subItem.label}</span>
-                             </>
+                             </span>
                            </SidebarMenuSubButton>
                          </Link>
                        </SidebarMenuSubItem>
