@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, FlaskConical, ShieldAlert, Lightbulb } from 'lucide-react';
+import { Loader2, FlaskConical, ShieldAlert, Lightbulb, ListChecks, ClipboardPlus, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { testYourself, type TestYourselfOutput } from '@/ai/flows/test-yourself';
 import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function TestYourselfPage() {
   const router = useRouter();
@@ -88,10 +90,10 @@ export default function TestYourselfPage() {
     <AppLayout>
       <PageHeader title="Test Yourself" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Test Yourself"}]} />
       
-      <Alert variant="default" className="mb-6 bg-primary/10 border-primary/30">
+      <Alert variant="default" className="mb-6 bg-primary/10 border-primary/30 dark:bg-primary/20 dark:border-primary/40">
         <ShieldAlert className="h-5 w-5 text-primary" />
         <AlertTitle className="font-headline text-primary">Important Disclaimer</AlertTitle>
-        <AlertDescription className="text-primary/80">
+        <AlertDescription className="text-primary/80 dark:text-primary/90">
           This tool acts like a medical reference manual to cross-reference symptoms and is for informational purposes only. 
           It does NOT provide a diagnosis and is NOT a substitute for professional medical advice. 
           Always consult a qualified healthcare provider for any health concerns. Do not disregard professional medical advice or delay seeking it because of something you have read or inferred from this tool.
@@ -103,7 +105,7 @@ export default function TestYourselfPage() {
           <CardHeader>
             <CardTitle className="font-headline flex items-center"><FlaskConical className="mr-2 h-6 w-6 text-primary" /> Describe Your Symptoms</CardTitle>
             <CardDescription>
-              Enter your symptoms or health concerns. Our AI will provide potential disease information and treatment/prevention suggestions based on a medical reference approach.
+              Enter your symptoms or health concerns. Our AI will provide potential insights based on a medical reference approach.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -120,7 +122,7 @@ export default function TestYourselfPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
+                    Analyzing Symptoms...
                   </>
                 ) : (
                   <>
@@ -137,10 +139,10 @@ export default function TestYourselfPage() {
           <CardHeader>
             <CardTitle className="font-headline">Potential Insights</CardTitle>
             <CardDescription>
-              Information based on your input will appear here.
+              Information based on your input will appear below.
             </CardDescription>
           </CardHeader>
-          <CardContent className="min-h-[200px]">
+          <CardContent className="min-h-[300px] space-y-6">
             {isLoading && (
               <div className="flex flex-col items-center justify-center h-full">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -148,30 +150,70 @@ export default function TestYourselfPage() {
               </div>
             )}
             {result && !isLoading && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-primary">Potential Diseases/Conditions:</h3>
-                  <p className="text-sm whitespace-pre-wrap">{result.potentialDiseases || "No specific potential diseases identified. This could be due to vague symptoms or a need for more specific input. Please remember this is not a diagnosis."}</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-primary">Treatment & Prevention Information:</h3>
-                  <p className="text-sm whitespace-pre-wrap">{result.treatmentPreventionInfo || "General advice: maintain a healthy lifestyle, stay hydrated, get adequate rest, and consult a doctor for personalized advice."}</p>
-                </div>
-              </div>
+              <Accordion type="multiple" defaultValue={['conditions', 'advice', 'disclaimer']} className="w-full">
+                <AccordionItem value="conditions">
+                  <AccordionTrigger className="text-lg font-semibold hover:no-underline group">
+                    <div className="flex items-center">
+                        <ListChecks className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse"/> Potential Conditions
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pl-2 space-y-3">
+                    {result.potentialConditions && result.potentialConditions.length > 0 && result.potentialConditions.some(c => c.name) ? (
+                      result.potentialConditions.filter(c => c.name).map((condition, index) => (
+                        <Card key={index} className="p-3 bg-background/50 dark:bg-muted/20">
+                          <h4 className="font-semibold text-primary">{condition.name}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{condition.description}</p>
+                          {condition.commonSymptoms && condition.commonSymptoms.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-foreground">Common Symptoms:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {condition.commonSymptoms.map(symptom => (
+                                  <Badge key={symptom} variant="secondary" className="text-xs">{symptom}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No specific potential conditions strongly indicated based on the input, or symptoms are very general. This is not a diagnosis.</p>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="advice">
+                   <AccordionTrigger className="text-lg font-semibold hover:no-underline group">
+                        <div className="flex items-center">
+                            <ClipboardPlus className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse"/> General Advice
+                        </div>
+                   </AccordionTrigger>
+                  <AccordionContent className="pt-2 pl-2">
+                    <p className="text-sm whitespace-pre-wrap text-foreground/90">{result.generalAdvice || "Maintain a healthy lifestyle, stay hydrated, get adequate rest, and consult a doctor for personalized advice if symptoms persist or worsen."}</p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="disclaimer">
+                    <AccordionTrigger className="text-lg font-semibold hover:no-underline group">
+                        <div className="flex items-center">
+                             <Info className="mr-3 h-5 w-5 text-destructive group-hover:animate-pulse"/> Important Disclaimer
+                        </div>
+                    </AccordionTrigger>
+                  <AccordionContent className="pt-2 pl-2">
+                    <p className="text-xs text-destructive/80 dark:text-destructive/70 whitespace-pre-wrap">{result.disclaimer}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             )}
             {!result && !isLoading && (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Enter your symptoms and click "Get Potential Insights" to see results.</p>
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                 <FlaskConical className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">Enter your symptoms above and click "Get Potential Insights" to see results from our AI medical reference.</p>
               </div>
             )}
           </CardContent>
-           <CardFooter>
-             <p className="text-xs text-muted-foreground">
-                Disclaimer: The information provided is for educational purposes only and not a medical diagnosis. Always consult a healthcare professional.
-             </p>
-          </CardFooter>
         </Card>
       </div>
     </AppLayout>
   );
 }
+
