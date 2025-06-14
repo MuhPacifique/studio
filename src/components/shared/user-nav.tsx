@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase } from 'lucide-react';
+import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase, Moon, Sun } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
@@ -42,7 +42,7 @@ const useAuth = () => {
         if (mockAuth) {
           setIsAuthenticated(true);
           setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
-          setProfileImageUrl(storedProfileImage); // Load image from localStorage
+          setProfileImageUrl(storedProfileImage); 
           if (mockAuth === 'admin') {
             setUserType('admin');
           } else if (mockAuth === 'doctor') {
@@ -67,7 +67,7 @@ const useAuth = () => {
           event.key === 'mockAuth' ||
           event.key === 'mockUserName' ||
           event.key === 'selectedRole' ||
-          event.key === 'mockUserProfileImage' // Listen for profile image changes
+          event.key === 'mockUserProfileImage' 
         ) {
           updateAuthState();
         }
@@ -87,9 +87,10 @@ const useAuth = () => {
         'mockUserPhone', 'mockUserProfileImage', 'mockUserDOB', 
         'mockUserAddress', 'mockUserCity', 'mockUserCountry', 'mockUserBio',
         'mockUserLang', 'mockUserMarketing', 'mockUserAppNotifs', 'mockUserTheme',
-        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA'
+        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA', 'theme' // also clear theme on logout
       ];
       keysToRemove.forEach(key => localStorage.removeItem(key));
+      document.documentElement.classList.remove('dark'); // Reset theme preference visually
 
       setIsAuthenticated(false);
       setUserType(null);
@@ -106,6 +107,29 @@ const useAuth = () => {
 export function UserNav() {
   const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient } = useAuth();
   const [initials, setInitials] = React.useState("U");
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isClient) {
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) {
+        setCurrentTheme(storedTheme);
+        document.documentElement.classList.toggle('dark', storedTheme === 'dark');
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setCurrentTheme('dark');
+        document.documentElement.classList.add('dark');
+      } else {
+        setCurrentTheme('light');
+      }
+    }
+  }, [isClient]);
+
+  const toggleTheme = () => {
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setCurrentTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
 
   React.useEffect(() => {
     if (userName) {
@@ -126,73 +150,82 @@ export function UserNav() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center space-x-2">
-        <Button variant="outline" asChild>
-          <Link href="/welcome">
-            <LogIn className="mr-2 h-4 w-4" /> Login
-          </Link>
-        </Button>
-        <Button asChild>
-          <Link href="/welcome">
-            <UserPlus className="mr-2 h-4 w-4" /> Register
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
-            <AvatarImage src={profileImageUrl || undefined} alt={userName || "User"} data-ai-hint="user avatar professional" />
-            <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {userType ? userType.charAt(0).toUpperCase() + userType.slice(1) : 'User'}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/profile">
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span>My Profile</span>
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleTheme}
+        aria-label={currentTheme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+        className="text-foreground hover:bg-accent hover:text-accent-foreground"
+      >
+        {currentTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
+      {!isAuthenticated ? (
+        <>
+          <Button variant="outline" asChild className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
+            <Link href="/welcome">
+              <LogIn className="mr-2 h-4 w-4" /> Login
             </Link>
-          </DropdownMenuItem>
-          {userType === 'admin' && (
-            <DropdownMenuItem asChild>
-              <Link href="/admin/dashboard">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                <span>Admin Dashboard</span>
-              </Link>
+          </Button>
+          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Link href="/welcome">
+              <UserPlus className="mr-2 h-4 w-4" /> Register
+            </Link>
+          </Button>
+        </>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
+                <AvatarImage src={profileImageUrl || undefined} alt={userName || "User"} data-ai-hint="user avatar professional"/>
+                <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{userName}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {userType ? userType.charAt(0).toUpperCase() + userType.slice(1) : 'User'}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>My Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              {userType === 'admin' && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {userType === 'doctor' && (
+                <DropdownMenuItem asChild>
+                  <Link href="/doctor/dashboard">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    <span>Doctor Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive group">
+              <LogOut className="mr-2 h-4 w-4 group-hover:text-destructive" />
+              <span>Log out</span>
             </DropdownMenuItem>
-          )}
-          {userType === 'doctor' && (
-            <DropdownMenuItem asChild>
-              <Link href="/doctor/dashboard">
-                <Briefcase className="mr-2 h-4 w-4" />
-                <span>Doctor Dashboard</span>
-              </Link>
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="cursor-pointer hover:bg-destructive/10 hover:text-destructive group">
-          <LogOut className="mr-2 h-4 w-4 group-hover:text-destructive" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }

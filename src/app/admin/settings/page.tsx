@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Bell, CreditCard as PaymentIcon, ShieldCheck, Palette, Server, Save, DatabaseZap, FileJson, Users, BarChartHorizontalBig, KeyRound, DollarSign, UsersRound, Briefcase, BarChartBig } from 'lucide-react';
+import { Bell, CreditCard as PaymentIcon, ShieldCheck, Palette, Server, Save, DatabaseZap, FileJson, Users, BarChartHorizontalBig, KeyRound, DollarSign, UsersRound, Briefcase, BarChartBig, GitBranch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,12 +50,12 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <Label htmlFor="logoUpload">Logo Upload</Label>
-                <Input id="logoUpload" type="file" className="mt-1" />
+                <Input id="logoUpload" type="file" className="mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
                 <p className="text-xs text-muted-foreground mt-1">Recommended format: PNG, SVG. Max size: 1MB.</p>
               </div>
                <div>
                 <Label htmlFor="defaultLanguage">Default Language</Label>
-                 <Select>
+                 <Select defaultValue="en">
                   <SelectTrigger className="w-full mt-1"><SelectValue placeholder="Select default language" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en">English</SelectItem>
@@ -94,7 +94,7 @@ export default function AdminSettingsPage() {
                   </SelectContent>
                  </Select>
               </div>
-               <Button variant="outline" onClick={() => toast({title: "Role Permissions (Mock)", description:"Navigating to role permission editor..."})} className="transition-transform hover:scale-105 active:scale-95 w-full justify-start"><Briefcase className="mr-2 h-4 w-4"/>Manage Role Permissions</Button>
+               <Button variant="outline" onClick={() => toast({title: "Role Permissions (Mock)", description:"Navigating to role permission editor..."})} className="transition-transform hover:scale-105 active:scale-95 w-full justify-start hover:bg-primary/5 hover:border-primary"><Briefcase className="mr-2 h-4 w-4"/>Manage Role Permissions</Button>
               <Button onClick={() => handleSaveChanges("User Management")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />Save User Settings</Button>
             </div>
           </AccordionContent>
@@ -160,7 +160,7 @@ export default function AdminSettingsPage() {
               <div> <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label> <Input id="sessionTimeout" type="number" defaultValue="30" className="mt-1 w-32" /> </div>
               <div className="flex items-center space-x-2"> <Checkbox id="hipaaCompliance" defaultChecked disabled /> <Label htmlFor="hipaaCompliance" className="font-normal">HIPAA Compliance Mode (System Managed)</Label> </div>
               <div> <Label htmlFor="ipWhitelist">IP Whitelist for Admin Access (comma-separated)</Label> <Textarea id="ipWhitelist" placeholder="e.g., 192.168.1.100, 203.0.113.0/24" className="mt-1" rows={2}/> </div>
-              <Button variant="outline" onClick={() => toast({title: "Audit Logs Viewer (Mock)", description:"Displaying audit logs..."})} className="transition-transform hover:scale-105 active:scale-95 w-full justify-start"><BarChartHorizontalBig className="mr-2 h-4 w-4"/>View Audit Logs</Button>
+              <Button variant="outline" onClick={() => toast({title: "Audit Logs Viewer (Mock)", description:"Displaying audit logs..."})} className="transition-transform hover:scale-105 active:scale-95 w-full justify-start hover:bg-primary/5 hover:border-primary"><BarChartHorizontalBig className="mr-2 h-4 w-4"/>View Audit Logs</Button>
               <Button onClick={() => handleSaveChanges("Security")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />Save Security Settings</Button>
             </div>
           </AccordionContent>
@@ -179,6 +179,7 @@ export default function AdminSettingsPage() {
               <div> <Label htmlFor="genkitModel">Genkit Default Model</Label> <Input id="genkitModel" defaultValue="googleai/gemini-2.0-flash" className="mt-1" /> </div>
               <div className="flex items-center space-x-2"> <Switch id="debugMode" /> <Label htmlFor="debugMode">Enable Debug Mode (for developers)</Label> </div>
               <div className="flex items-center space-x-2"> <Switch id="featureFlags" /> <Label htmlFor="featureFlags">Enable Experimental Features</Label> </div>
+              <div> <Label htmlFor="deploymentBranch">Deployment Branch (Mock)</Label> <Input id="deploymentBranch" defaultValue="main" className="mt-1" /> </div>
               <Button variant="destructive" onClick={() => toast({title: "Cache Cleared (Mock)", description: "System cache has been cleared."})} className="transition-transform hover:scale-105 active:scale-95">Clear System Cache</Button>
               <Button onClick={() => handleSaveChanges("Advanced")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />Save Advanced Settings</Button>
             </div>
@@ -197,6 +198,7 @@ export default function AdminSettingsPage() {
               <div> <Label htmlFor="smsGatewayKey">SMS Gateway API Key (e.g. Twilio)</Label> <Input id="smsGatewayKey" type="password" placeholder="Enter SMS Gateway API Key" className="mt-1" /> </div>
               <div> <Label htmlFor="emailServiceKey">Email Service API Key (e.g., SendGrid)</Label> <Input id="emailServiceKey" type="password" placeholder="Enter Email Service API Key" className="mt-1" /> </div>
               <div> <Label htmlFor="emrIntegrationKey">EHR/EMR Integration API Key</Label> <Input id="emrIntegrationKey" type="password" placeholder="Enter EMR API Key" className="mt-1" /> </div>
+              <div> <Label htmlFor="analyticsServiceKey">Analytics Service Key (e.g. Google Analytics)</Label> <Input id="analyticsServiceKey" type="password" placeholder="Enter Analytics Key" className="mt-1" /> </div>
               <Button onClick={() => handleSaveChanges("Integrations")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />Save Integration Settings</Button>
             </div>
           </AccordionContent>
@@ -211,8 +213,8 @@ export default function AdminSettingsPage() {
           </AccordionTrigger>
           <AccordionContent className="px-6 pb-6 pt-0">
             <div className="space-y-4">
-              <Button variant="outline" className="w-full justify-start transition-transform hover:scale-105 active:scale-95" onClick={() => toast({title:"Data Exported (Mock)", description:"User data export initiated."})}><Users className="mr-2 h-4 w-4"/>Export User Data (JSON/CSV)</Button>
-              <Button variant="outline" className="w-full justify-start transition-transform hover:scale-105 active:scale-95" onClick={() => toast({title:"Backup Created (Mock)", description:"System backup successfully created."})}> <DatabaseZap className="mr-2 h-4 w-4"/>Create Full System Backup</Button>
+              <Button variant="outline" className="w-full justify-start transition-transform hover:scale-105 active:scale-95 hover:bg-primary/5 hover:border-primary" onClick={() => toast({title:"Data Exported (Mock)", description:"User data export initiated."})}><Users className="mr-2 h-4 w-4"/>Export User Data (JSON/CSV)</Button>
+              <Button variant="outline" className="w-full justify-start transition-transform hover:scale-105 active:scale-95 hover:bg-primary/5 hover:border-primary" onClick={() => toast({title:"Backup Created (Mock)", description:"System backup successfully created."})}> <DatabaseZap className="mr-2 h-4 w-4"/>Create Full System Backup</Button>
               <div>
                 <Label htmlFor="retentionPolicy">Data Retention Policy (Days)</Label>
                 <Input id="retentionPolicy" type="number" defaultValue="365" className="mt-1 w-32" />

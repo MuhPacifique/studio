@@ -34,7 +34,7 @@ body {
     --secondary-foreground: 220 9% 38%; /* Medium Cool Gray */
     
     --muted: 220 13% 91%; /* Light Cool Gray */
-    --muted-foreground: 220 9% 45%; /* Medium Cool Gray */
+    --muted-foreground: 220 9% 45%; /* Medium Cool Gray Text */
     
     --accent: 205 90% 47%; /* Bright Blue */
     --accent-foreground: 0 0% 98%; /* Almost White (for text on accent blue) */
@@ -54,60 +54,60 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar light theme */
-    --sidebar-background: 220 14% 97%; /* Very Light Cool Gray (Almost White) */
+    --sidebar-background: 240 5% 96%; /* Lighter Gray for light mode sidebar */
     --sidebar-foreground: 224 71.4% 4.1%; /* Dark Blue-Black */
     --sidebar-primary: 142.1 70.6% 45.3%; /* Vibrant Green (active item background) */
     --sidebar-primary-foreground: 0 0% 98%; /* Almost White (active item text) */
-    --sidebar-accent: 220 13% 91%; /* Light Cool Gray (hover) */
+    --sidebar-accent: 220 13% 88%; /* Light Cool Gray (hover) */
     --sidebar-accent-foreground: 142.1 70.6% 35.3%; /* Darker Green (hover text) */
-    --sidebar-border: 220 13% 85%; /* Cool Gray Border */
+    --sidebar-border: 220 13% 80%; /* Cool Gray Border for sidebar */
     --sidebar-ring: 205 90% 47%; /* Bright Blue */
   }
 
   .dark {
-    --background: 224 71.4% 4.1%; /* Dark Blue-Black */
-    --foreground: 0 0% 98%; /* Almost White */
+    --background: 224 71.4% 6.1%; /* Dark Blue-Black */
+    --foreground: 0 0% 95%; /* Almost White */
     
-    --card: 224 71.4% 6.1%; /* Slightly Lighter Dark Blue-Black */
-    --card-foreground: 0 0% 98%; /* Almost White */
+    --card: 224 71.4% 10.1%; /* Slightly Lighter Dark Blue-Black for cards */
+    --card-foreground: 0 0% 95%; /* Almost White */
     
-    --popover: 224 71.4% 6.1%; /* Slightly Lighter Dark Blue-Black */
-    --popover-foreground: 0 0% 98%; /* Almost White */
+    --popover: 224 71.4% 8.1%; /* Darker Popover */
+    --popover-foreground: 0 0% 95%; /* Almost White */
 
-    --primary: 142.1 70.6% 45.3%; /* Vibrant Green (same as light for consistency) */
+    --primary: 142.1 70.6% 50.3%; /* Slightly brighter Green for dark mode */
     --primary-foreground: 0 0% 98%; /* Almost White */
 
-    --secondary: 220 15% 15%; /* Dark Cool Gray */
-    --secondary-foreground: 220 10% 75%; /* Light Cool Gray Text */
+    --secondary: 220 15% 20%; /* Dark Cool Gray */
+    --secondary-foreground: 220 10% 78%; /* Lighter Cool Gray Text */
 
-    --muted: 220 15% 15%; /* Dark Cool Gray */
-    --muted-foreground: 220 10% 55%; /* Medium Cool Gray Text */
+    --muted: 220 15% 18%; /* Dark Cool Gray for muted elements */
+    --muted-foreground: 220 10% 60%; /* Medium Cool Gray Text */
 
-    --accent: 205 90% 57%; /* Slightly Brighter Blue for Dark Mode */
+    --accent: 205 90% 60%; /* Slightly Brighter Blue for Dark Mode */
     --accent-foreground: 0 0% 98%; /* Almost White */
 
-    --destructive: 0 62.8% 50.6%; /* Red (same as light for consistency) */
+    --destructive: 0 62.8% 55.6%; /* Brighter Red for dark mode */
     --destructive-foreground: 0 0% 98%; /* Almost White */
 
-    --border: 220 15% 20%; /* Darker Cool Gray Border */
-    --input: 220 15% 18%;   /* Even Darker Cool Gray Input BG */
-    --ring: 142.1 70.6% 45.3%; /* Vibrant Green for Focus Rings */
+    --border: 220 15% 25%; /* Darker Cool Gray Border */
+    --input: 220 15% 16%;   /* Even Darker Cool Gray Input BG */
+    --ring: 142.1 70.6% 50.3%; /* Brighter Green for Focus Rings */
 
-    --chart-1: 142.1 70.6% 45.3%; /* Vibrant Green */
-    --chart-2: 205 90% 57%;   /* Brighter Blue */
-    --chart-3: 170 60% 50%;   /* Tealish Green */
-    --chart-4: 30 90% 60%;    /* Orange */
-    --chart-5: 260 70% 60%;   /* Purple */
+    --chart-1: 142.1 70.6% 50.3%; /* Vibrant Green */
+    --chart-2: 205 90% 60%;   /* Brighter Blue */
+    --chart-3: 170 60% 55%;   /* Tealish Green */
+    --chart-4: 30 90% 65%;    /* Orange */
+    --chart-5: 260 70% 65%;   /* Purple */
     
     /* Sidebar dark theme */
-    --sidebar-background: 224 71.4% 8%; /* Dark Blue-Black, slightly lighter than main bg */
-    --sidebar-foreground: 0 0% 95%; /* Off-White */
-    --sidebar-primary: 142.1 70.6% 45.3%; /* Vibrant Green (active item background) */
+    --sidebar-background: 224 71.4% 8%; /* Darker Blue-Black for sidebar */
+    --sidebar-foreground: 0 0% 92%; /* Off-White */
+    --sidebar-primary: 142.1 70.6% 50.3%; /* Brighter Green (active item background) */
     --sidebar-primary-foreground: 0 0% 98%; /* Almost White (active item text) */
-    --sidebar-accent: 220 15% 15%; /* Dark Cool Gray (hover) */
-    --sidebar-accent-foreground: 142.1 70.6% 55.3%; /* Brighter Green (hover text) */
-    --sidebar-border: 220 15% 12%; /* Darker Cool Gray Border */
-    --sidebar-ring: 205 90% 57%; /* Brighter Blue */
+    --sidebar-accent: 220 15% 18%; /* Dark Cool Gray (hover) */
+    --sidebar-accent-foreground: 142.1 70.6% 60.3%; /* Even Brighter Green (hover text) */
+    --sidebar-border: 220 15% 15%; /* Darker Cool Gray Border for sidebar */
+    --sidebar-ring: 205 90% 60%; /* Brighter Blue */
   }
 }
 
@@ -127,14 +127,18 @@ body {
 }
 
 .hover-lift {
-  @apply transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl;
+  @apply transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/10;
 }
+.dark .hover-lift {
+   @apply hover:shadow-lg hover:shadow-primary/20;
+}
+
 
 /* Keyframes for border pulse animation (can be used selectively) */
 @keyframes pulse-border {
-  0% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
-  50% { border-color: hsl(var(--primary)); box-shadow: 0 0 15px hsl(var(--primary)/0.5); }
-  100% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
+  0% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.1); }
+  50% { border-color: hsl(var(--primary)); box-shadow: 0 0 10px hsl(var(--primary)/0.3); }
+  100% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.1); }
 }
 .animate-pulse-border {
   animation: pulse-border 2s infinite;

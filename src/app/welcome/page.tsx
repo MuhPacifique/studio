@@ -12,11 +12,11 @@ import { cn } from '@/lib/utils';
 
 type Role = "patient" | "doctor" | "seeker" | "admin";
 
-const roles: { name: Role; title: string; description: string; icon: React.ElementType; color: string, bgColor: string }[] = [
-  { name: "patient", title: "Patient", description: "Access your health records, book appointments, and connect with healthcare providers.", icon: User, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" },
-  { name: "doctor", title: "Doctor", description: "Manage your schedule, consult with patients, and access medical tools.", icon: Briefcase, color: "text-accent", bgColor: "bg-accent/10 hover:bg-accent/20" },
-  { name: "seeker", title: "Health Seeker", description: "Explore health resources, find information, and connect with support communities.", icon: UserCog, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" },
-  { name: "admin", title: "Administrator", description: "Manage platform settings, users, and oversee system operations.", icon: Shield, color: "text-destructive", bgColor: "bg-destructive/10 hover:bg-destructive/20 dark:text-destructive-foreground dark:bg-destructive/20" },
+const roles: { name: Role; title: string; description: string; icon: React.ElementType; color: string, bgColor: string, borderColor: string }[] = [
+  { name: "patient", title: "Patient", description: "Access your health records, book appointments, and connect with healthcare providers.", icon: User, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
+  { name: "doctor", title: "Doctor", description: "Manage your schedule, consult with patients, and access medical tools.", icon: Briefcase, color: "text-accent", bgColor: "bg-accent/5 hover:bg-accent/10", borderColor: "border-accent/20" },
+  { name: "seeker", title: "Health Seeker", description: "Explore health resources, find information, and connect with support communities.", icon: UserCog, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
+  { name: "admin", title: "Administrator", description: "Manage platform settings, users, and oversee system operations.", icon: Shield, color: "text-destructive", bgColor: "bg-destructive/5 hover:bg-destructive/10 dark:text-destructive-foreground dark:bg-destructive/10", borderColor: "border-destructive/20" },
 ];
 
 export default function WelcomePage() {
@@ -25,7 +25,7 @@ export default function WelcomePage() {
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    localStorage.setItem('selectedRole', role); // Store for login/register pages to potentially use
+    localStorage.setItem('selectedRole', role); 
   };
 
   const getLoginPath = () => {
@@ -34,23 +34,22 @@ export default function WelcomePage() {
   };
   
   const getRegisterPath = () => {
-     // Admin registration is typically not a public flow
-    if (selectedRole === "admin") return "#"; // Or disable/hide register for admin
+    if (selectedRole === "admin") return "#"; 
     return "/register";
   };
 
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4 selection:bg-primary selection:text-primary-foreground">
-      <Link href="/" className="mb-8 flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
-        <LogoIcon className="h-10 w-10" />
+      <Link href="/" className="mb-8 flex items-center space-x-3 text-primary hover:text-primary/80 transition-colors group">
+        <LogoIcon className="h-12 w-12 transition-transform duration-500 ease-out group-hover:rotate-[360deg]"/>
         <span className="text-3xl font-bold font-headline">MediServe Hub</span>
       </Link>
       
-      <Card className="w-full max-w-3xl shadow-2xl">
+      <Card className="w-full max-w-3xl shadow-2xl dark:shadow-primary/10">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl sm:text-3xl font-headline gradient-text">Welcome to MediServe Hub!</CardTitle>
-          <CardDescription className="text-md sm:text-lg">
+          <CardDescription className="text-md sm:text-lg text-muted-foreground">
             {selectedRole ? `You've selected: ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}. Now, please login or register.` : "Please select your role to continue."}
           </CardDescription>
         </CardHeader>
@@ -60,12 +59,12 @@ export default function WelcomePage() {
               {roles.map((role) => (
                 <Card 
                   key={role.name} 
-                  className={cn("hover-lift cursor-pointer transition-all duration-300 ease-in-out group", role.bgColor)}
+                  className={cn("hover-lift cursor-pointer transition-all duration-300 ease-in-out group border-2", role.bgColor, role.borderColor, "hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-primary/30")}
                   onClick={() => handleRoleSelect(role.name)}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className={`text-xl font-medium font-headline ${role.color}`}>{role.title}</CardTitle>
-                    <role.icon className={`h-8 w-8 ${role.color} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                    <role.icon className={`h-8 w-8 ${role.color} opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110`} />
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{role.description}</p>
@@ -80,12 +79,12 @@ export default function WelcomePage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Card 
-                    className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-primary/10 hover:bg-primary/20"
+                    className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-primary/30"
                     onClick={() => router.push(getLoginPath())}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-xl font-medium font-headline text-primary">Login</CardTitle>
-                    <LogIn className="h-8 w-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <LogIn className="h-8 w-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110" />
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">Access your existing account.</p>
@@ -97,12 +96,12 @@ export default function WelcomePage() {
                 
                 {selectedRole !== 'admin' && (
                     <Card 
-                        className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20"
+                        className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20 border-2 border-accent/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-accent/30"
                         onClick={() => router.push(getRegisterPath())}
                     >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-xl font-medium font-headline text-accent">Register</CardTitle>
-                        <UserPlus className="h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <UserPlus className="h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110" />
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Create a new account.</p>
@@ -114,7 +113,7 @@ export default function WelcomePage() {
                 )}
                  {selectedRole === 'admin' && (
                     <Card 
-                        className="opacity-50 cursor-not-allowed bg-muted/10"
+                        className="opacity-60 cursor-not-allowed bg-muted/10 border-2 border-muted/30"
                     >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-xl font-medium font-headline text-muted-foreground">Register</CardTitle>
@@ -126,7 +125,7 @@ export default function WelcomePage() {
                     </Card>
                 )}
               </div>
-              <Button variant="outline" onClick={() => setSelectedRole(null)} className="w-full sm:w-auto">
+              <Button variant="outline" onClick={() => setSelectedRole(null)} className="w-full sm:w-auto hover:bg-muted/80 transition-colors">
                 Back to Role Selection
               </Button>
             </div>
