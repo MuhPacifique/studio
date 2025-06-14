@@ -16,9 +16,11 @@ import {
 } from "@/components/ui/chart"
 import { Bar, Line, Pie, ResponsiveContainer, Cell, TooltipProps, CartesianGrid, XAxis, YAxis, LineChart, PieChart, BarChart } from "recharts" 
 import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
+import { useToast } from '@/hooks/use-toast';
+
 
 // Translation helper
-const t = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 const lineChartData = [
   { month: "January", monthKn: "Mutarama", users: 186, revenue: 800000 },
@@ -59,18 +61,18 @@ const pieChartDataKn = [
 
 const lineChartConfig = (lang: 'en' | 'kn') => ({
   users: {
-    label: t("Users", "Abakoresha", lang),
+    label: translate("Users", "Abakoresha", lang),
     color: "hsl(var(--chart-1))",
   },
   revenue: {
-    label: t("Revenue (RWF)", "Amafaranga Yinjiye (RWF)", lang),
+    label: translate("Revenue (RWF)", "Amafaranga Yinjiye (RWF)", lang),
     color: "hsl(var(--chart-2))",
   },
 });
 
 const barChartConfig = (lang: 'en' | 'kn') => ({
   count: {
-    label: t("Service Count", "Umubare wa Serivisi", lang),
+    label: translate("Service Count", "Umubare wa Serivisi", lang),
   }
 });
 
@@ -95,6 +97,9 @@ const CustomTooltip = ({ active, payload, label, lang }: TooltipProps<ValueType,
 
 export default function AdminAnalyticsPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const { toast } = useToast();
+  
+  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
 
   useEffect(() => {
     const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
@@ -106,47 +111,54 @@ export default function AdminAnalyticsPage() {
   const currentLineChartConfig = lineChartConfig(currentLanguage);
   const currentBarChartConfig = barChartConfig(currentLanguage);
 
+  const handleDownloadReport = (reportName: string) => {
+    toast({
+      title: t("Download Started (Mock)", "Kurura Byatangiye (Agateganyo)"),
+      description: t(`The ${reportName} will begin downloading shortly.`, `Raporo ya ${reportName} igiye gutangira kururwa vuba.`),
+    });
+  };
+
 
   return (
     <AppLayout>
       <PageHeader 
-        title={t("Platform Analytics", "Isesengura rya Porogaramu", currentLanguage)} 
+        title={t("Platform Analytics", "Isesengura rya Porogaramu")} 
         breadcrumbs={[
-            {label: t("Dashboard", "Imbonerahamwe", currentLanguage), href: "/"}, 
-            {label: t("Admin", "Ubuyobozi", currentLanguage), href: "/admin/dashboard"}, 
-            {label: t("Analytics", "Isesengura", currentLanguage)}
+            {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
+            {label: t("Admin", "Ubuyobozi"), href: "/admin/dashboard"}, 
+            {label: t("Analytics", "Isesengura")}
         ]}
       />
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card className="shadow-lg hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("Total Revenue", "Amafaranga Yose Yinjiye", currentLanguage)}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Total Revenue", "Amafaranga Yose Yinjiye")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5,600,050 RWF</div>
-            <p className="text-xs text-muted-foreground">{t("+15.2% from last month", "+15.2% ugereranyije n'ukwezi gushize", currentLanguage)}</p>
+            <p className="text-xs text-muted-foreground">{t("+15.2% from last month", "+15.2% ugereranyije n'ukwezi gushize")}</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("Active Users", "Abakoresha Bakora", currentLanguage)}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Active Users", "Abakoresha Bakora")}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">{t("+85 since last week", "+85 kuva mu cyumweru gishize", currentLanguage)}</p>
+            <p className="text-xs text-muted-foreground">{t("+85 since last week", "+85 kuva mu cyumweru gishize")}</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("Platform Activity", "Ibikorwa kuri Porogaramu", currentLanguage)}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Platform Activity", "Ibikorwa kuri Porogaramu")}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{t("567 Actions Today", "Ibikorwa 567 None", currentLanguage)}</div>
-            <p className="text-xs text-muted-foreground">{t("+12% from yesterday", "+12% kuva ejo", currentLanguage)}</p>
+            <div className="text-2xl font-bold">{t("567 Actions Today", "Ibikorwa 567 None")}</div>
+            <p className="text-xs text-muted-foreground">{t("+12% from yesterday", "+12% kuva ejo")}</p>
           </CardContent>
         </Card>
       </div>
@@ -154,12 +166,12 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card className="shadow-xl hover-lift">
           <CardHeader>
-            <CardTitle className="font-headline flex items-center"><LineChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("User Growth & Revenue", "Ukwiyongera kw'Abakoresha & Amafaranga", currentLanguage)}</CardTitle>
-            <CardDescription>{t("Monthly new users and revenue generated.", "Abakoresha bashya ba buri kwezi n'amafaranga yinjiye.", currentLanguage)}</CardDescription>
+            <CardTitle className="font-headline flex items-center"><LineChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("User Growth & Revenue", "Ukwiyongera kw'Abakoresha & Amafaranga")}</CardTitle>
+            <CardDescription>{t("Monthly new users and revenue generated.", "Abakoresha bashya ba buri kwezi n'amafaranga yinjiye.")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={currentLineChartConfig} className="h-[300px] w-full">
-                <LineChart data={lineChartData.map(d => ({...d, month: t(d.month, d.monthKn, currentLanguage)}))} margin={{ top: 5, right: 20, left: -15, bottom: 5 }}>
+                <LineChart data={lineChartData.map(d => ({...d, month: t(d.month, d.monthKn)}))} margin={{ top: 5, right: 20, left: -15, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12}/>
                   <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} tickFormatter={(value) => value.toLocaleString()}/>
@@ -175,8 +187,8 @@ export default function AdminAnalyticsPage() {
 
         <Card className="shadow-xl hover-lift">
           <CardHeader>
-            <CardTitle className="font-headline flex items-center"><PieChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("Service Revenue Distribution", "Ikigabanyo cy'Amafaranga ya Serivisi", currentLanguage)}</CardTitle>
-            <CardDescription>{t("Breakdown of revenue by service type.", "Isesengura ry'amafaranga yinjiye hashingiwe ku bwoko bwa serivisi.", currentLanguage)}</CardDescription>
+            <CardTitle className="font-headline flex items-center"><PieChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("Service Revenue Distribution", "Ikigabanyo cy'Amafaranga ya Serivisi")}</CardTitle>
+            <CardDescription>{t("Breakdown of revenue by service type.", "Isesengura ry'amafaranga yinjiye hashingiwe ku bwoko bwa serivisi.")}</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <ChartContainer config={{}} className="h-[300px] w-full max-w-xs">
@@ -208,8 +220,8 @@ export default function AdminAnalyticsPage() {
       
        <Card className="mt-6 shadow-xl hover-lift">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><BarChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("Service Usage Frequency", "Inshuro Serivisi Zikoreshwa", currentLanguage)}</CardTitle>
-          <CardDescription>{t("Comparison of how frequently different services are used.", "Ugereranya ry'inshuro serivisi zitandukanye zikoreshwa.", currentLanguage)}</CardDescription>
+          <CardTitle className="font-headline flex items-center"><BarChartIconLucide className="mr-2 h-5 w-5 text-primary" />{t("Service Usage Frequency", "Inshuro Serivisi Zikoreshwa")}</CardTitle>
+          <CardDescription>{t("Comparison of how frequently different services are used.", "Ugereranya ry'inshuro serivisi zitandukanye zikoreshwa.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={currentBarChartConfig} className="h-[300px] w-full">
@@ -231,18 +243,18 @@ export default function AdminAnalyticsPage() {
 
       <Card className="mt-6 shadow-xl hover-lift">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><Download className="mr-2 h-5 w-5 text-primary"/>{t("Detailed Reports", "Raporo Zisesuye", currentLanguage)}</CardTitle>
-          <CardDescription>{t("Download comprehensive reports for further analysis.", "Kurura raporo zuzuye kugirango usesengure byimbitse.", currentLanguage)}</CardDescription>
+          <CardTitle className="font-headline flex items-center"><Download className="mr-2 h-5 w-5 text-primary"/>{t("Detailed Reports", "Raporo Zisesuye")}</CardTitle>
+          <CardDescription>{t("Download comprehensive reports for further analysis.", "Kurura raporo zuzuye kugirango usesengure byimbitse.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 sm:space-y-0 sm:flex sm:space-x-2">
-            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors">
-                <Download className="mr-2 h-4 w-4"/>{t("Download User Activity Report (CSV)", "Kurura Raporo y'Ibikorwa by'Abakoresha (CSV)", currentLanguage)}
+            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => handleDownloadReport(t("User Activity Report", "Raporo y'Ibikorwa by'Abakoresha"))}>
+                <Download className="mr-2 h-4 w-4"/>{t("Download User Activity Report (CSV)", "Kurura Raporo y'Ibikorwa by'Abakoresha (CSV)")}
             </Button>
-            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors">
-                <Download className="mr-2 h-4 w-4"/>{t("Download Financial Report (PDF)", "Kurura Raporo y'Imari (PDF)", currentLanguage)}
+            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => handleDownloadReport(t("Financial Report", "Raporo y'Imari"))}>
+                <Download className="mr-2 h-4 w-4"/>{t("Download Financial Report (PDF)", "Kurura Raporo y'Imari (PDF)")}
             </Button>
-            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors">
-                <Download className="mr-2 h-4 w-4"/>{t("Download Inventory Stock Report (Excel)", "Kurura Raporo y'Ububiko (Excel)", currentLanguage)}
+            <Button variant="outline" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => handleDownloadReport(t("Inventory Stock Report", "Raporo y'Ububiko"))}>
+                <Download className="mr-2 h-4 w-4"/>{t("Download Inventory Stock Report (Excel)", "Kurura Raporo y'Ububiko (Excel)")}
             </Button>
         </CardContent>
       </Card>

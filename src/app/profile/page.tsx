@@ -21,21 +21,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const profileSchema = z.object({
-  fullName: z.string().min(2, "Izina ryuzuye rigomba kuba nibura inyuguti 2."),
-  email: z.string().email("Email yanditse nabi."),
-  phone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: "Nimero ya telefone y'u Rwanda yanditse nabi (urugero: 078xxxxxxx)." }),
+const profileSchema = (lang: 'en' | 'kn') => z.object({
+  fullName: z.string().min(2, lang === 'kn' ? "Izina ryuzuye rigomba kuba nibura inyuguti 2." : "Full name must be at least 2 characters."),
+  email: z.string().email(lang === 'kn' ? "Email yanditse nabi." : "Invalid email address."),
+  phone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: lang === 'kn' ? "Nimero ya telefone y'u Rwanda yanditse nabi (urugero: 078xxxxxxx)." : "Invalid Rwandan phone number (e.g., 078xxxxxxx)." }),
   dob: z.string().optional().refine(val => {
     if (!val) return true; 
     const date = new Date(val);
     const year = date.getFullYear();
     return !isNaN(date.getTime()) && year > 1900 && year < new Date().getFullYear();
-  }, { message: "Itariki y'amavuko yanditse nabi cyangwa umwaka uri hanze y'igihe."}), 
+  }, { message: lang === 'kn' ? "Itariki y'amavuko yanditse nabi cyangwa umwaka uri hanze y'igihe." : "Invalid date of birth or year out of range."}), 
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  bio: z.string().max(200, "Amagambo akuranga agomba kuba munsi y'inyuguti 200.").optional(),
-  profileImageUrl: z.string().url({message: "URL y'ishusho yanditse nabi."}).optional().or(z.literal("")), 
+  bio: z.string().max(200, lang === 'kn' ? "Amagambo akuranga agomba kuba munsi y'inyuguti 200." : "Bio must be under 200 characters.").optional(),
+  profileImageUrl: z.string().url({message: lang === 'kn' ? "URL y'ishusho yanditse nabi." : "Invalid image URL."}).optional().or(z.literal("")), 
   
   preferredLanguage: z.string().optional(),
   enableMarketingEmails: z.boolean().optional(),
@@ -43,10 +43,10 @@ const profileSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).optional(),
 
   emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: "Nimero ya telefone y'u Rwanda y'uwo guhamagara byihutirwa yanditse nabi." }),
+  emergencyContactPhone: z.string().optional().refine(val => !val || /^(\+?250)?(07[2389])\d{7}$/.test(val), { message: lang === 'kn' ? "Nimero ya telefone y'u Rwanda y'uwo guhamagara byihutirwa yanditse nabi." : "Invalid Rwandan emergency contact phone number." }),
 
-  currentPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: "Ijambobanga rigomba kuba nibura inyuguti 6."}),
-  newPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: "Ijambobanga rishya rigomba kuba nibura inyuguti 6."}),
+  currentPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: lang === 'kn' ? "Ijambobanga rigomba kuba nibura inyuguti 6." : "Password must be at least 6 characters."}),
+  newPassword: z.string().optional().refine(val => !val || val.length >= 6, { message: lang === 'kn' ? "Ijambobanga rishya rigomba kuba nibura inyuguti 6." : "New password must be at least 6 characters."}),
   confirmNewPassword: z.string().optional(),
   enableTwoFactor: z.boolean().optional(),
 }).refine(data => {
@@ -61,12 +61,12 @@ const profileSchema = z.object({
     }
     return true;
 }, {
-    message: "Ijambobanga rishya ntirihura, ijambobanga rya none rirakenewe ngo uhindure, cyangwa kwemeza kurabuze.",
+    message: lang === 'kn' ? "Ijambobanga rishya ntirihura, ijambobanga rya none rirakenewe ngo uhindure, cyangwa kwemeza kurabuze." : "New passwords do not match, current password is required to change, or confirmation is missing.",
     path: ["confirmNewPassword"], 
 });
 
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = z.infer<ReturnType<typeof profileSchema>>;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -75,9 +75,9 @@ export default function ProfilePage() {
   const [initials, setInitials] = useState("U");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
   
-  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+  const t = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
 
   const [currentUser, setCurrentUser] = useState<ProfileFormValues>({
     fullName: "User Name",
@@ -89,7 +89,7 @@ export default function ProfilePage() {
     country: "Rwanda",
     bio: "",
     profileImageUrl: "",
-    preferredLanguage: "kn", // Default to Kinyarwanda
+    preferredLanguage: "kn",
     enableMarketingEmails: false,
     enableAppNotifications: true,
     theme: "system",
@@ -99,7 +99,7 @@ export default function ProfilePage() {
   });
 
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(profileSchema(currentLanguage)),
     defaultValues: currentUser,
   });
 
@@ -115,8 +115,11 @@ export default function ProfilePage() {
       const storedProfileImage = localStorage.getItem('mockUserProfileImage');
       const storedLang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
 
-      if(storedLang) setPreferredLanguage(storedLang);
-      else setPreferredLanguage('kn'); // Fallback if not set
+      if(storedLang) setCurrentLanguage(storedLang);
+      else {
+        setCurrentLanguage('kn'); 
+        localStorage.setItem('mockUserLang', 'kn');
+      }
 
       if (!authStatus) {
         toast({
@@ -127,14 +130,14 @@ export default function ProfilePage() {
         router.replace('/welcome'); 
       } else {
         const userData: ProfileFormValues = {
-          fullName: authStatus === 'admin' ? "Admin User" : storedUserName,
+          fullName: authStatus === 'admin' ? t("Admin User", "Umunyamabanga Mukuru") : storedUserName,
           email: authStatus === 'admin' ? "admin@mediservehub.com" : storedUserEmail,
           phone: localStorage.getItem('mockUserPhone') || "0788123456",
           dob: localStorage.getItem('mockUserDOB') || "1990-01-01",
           address: localStorage.getItem('mockUserAddress') || "KG 123 St",
           city: localStorage.getItem('mockUserCity') || "Kigali",
           country: localStorage.getItem('mockUserCountry') || "Rwanda",
-          bio: localStorage.getItem('mockUserBio') || "Passionate about health and wellness. Exploring new ways to stay fit and informed.",
+          bio: localStorage.getItem('mockUserBio') || t("Passionate about health and wellness. Exploring new ways to stay fit and informed.", "Nkunda cyane ubuzima bwiza n'imibereho myiza. Nshakisha uburyo bushya bwo kuguma mfite ubuzima bwiza kandi nzi amakuru."),
           profileImageUrl: storedProfileImage || "",
           preferredLanguage: storedLang || "kn",
           enableMarketingEmails: localStorage.getItem('mockUserMarketing') === 'true',
@@ -155,7 +158,13 @@ export default function ProfilePage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast]); 
+  }, [isClient, router, toast, currentLanguage]); 
+
+  useEffect(() => {
+    form.reset({}, { keepValues: true, keepDirtyValues: true, keepErrors: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLanguage]); // Re-validate form on language change
+
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -191,7 +200,7 @@ export default function ProfilePage() {
     localStorage.setItem('mockUserProfileImage', updatedProfileImageUrl); 
     if (updatedData.preferredLanguage) {
         localStorage.setItem('mockUserLang', updatedData.preferredLanguage);
-        setPreferredLanguage(updatedData.preferredLanguage as 'en' | 'kn');
+        setCurrentLanguage(updatedData.preferredLanguage as 'en' | 'kn');
     }
 
     localStorage.setItem('mockUserMarketing', String(updatedData.enableMarketingEmails || false));
@@ -227,6 +236,14 @@ export default function ProfilePage() {
     form.setValue('newPassword','');
     form.setValue('confirmNewPassword','');
   };
+
+  const handleMockAction = (actionName: string, actionNameKn: string) => {
+    toast({
+      title: t(`${actionName} (Mock)`, `${actionNameKn} (Agateganyo)`),
+      description: t(`This feature (${actionName}) is not fully implemented yet.`, `Iki gice (${actionNameKn}) ntikirakora neza.`),
+    });
+  };
+
 
   if (!isClient || !localStorage.getItem('mockAuth')) {
     return (
@@ -408,10 +425,10 @@ export default function ProfilePage() {
               <CardTitle className="font-headline text-lg">{t("Account Actions", "Ibikorwa bya Konti")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift"> <FileText className="mr-2 h-4 w-4" /> {t("My Medical Records (Mock)", "Amadosiye Yanjye y'Ubuvuzi (Agateganyo)")} </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift"> <FileClock className="mr-2 h-4 w-4" /> {t("My Order History (Mock)", "Amateka y'Ibyo Natumije (Agateganyo)")} </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift"> <History className="mr-2 h-4 w-4" /> {t("Login History (Mock)", "Amateka y'Uko Ninjiye (Agateganyo)")} </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift"> <MessageCircle className="mr-2 h-4 w-4" /> {t("Communication History", "Amateka y'Itumanaho")} </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("My Medical Records", "Amadosiye Yanjye y'Ubuvuzi")}> <FileText className="mr-2 h-4 w-4" /> {t("My Medical Records (Mock)", "Amadosiye Yanjye y'Ubuvuzi (Agateganyo)")} </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("My Order History", "Amateka y'Ibyo Natumije")}> <FileClock className="mr-2 h-4 w-4" /> {t("My Order History (Mock)", "Amateka y'Ibyo Natumije (Agateganyo)")} </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("Login History", "Amateka y'Uko Ninjiye")}> <History className="mr-2 h-4 w-4" /> {t("Login History (Mock)", "Amateka y'Uko Ninjiye (Agateganyo)")} </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("Communication History", "Amateka y'Itumanaho")}> <MessageCircle className="mr-2 h-4 w-4" /> {t("Communication History", "Amateka y'Itumanaho")} </Button>
             </CardContent>
           </Card>
            <Card className="shadow-xl hover-lift border-destructive/30 dark:border-destructive/50 dark:shadow-destructive/10">
@@ -419,8 +436,8 @@ export default function ProfilePage() {
               <CardTitle className="font-headline text-lg text-destructive">{t("Data & Privacy", "Amakuru & Ubuzima Bwite")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-destructive hover:text-destructive/80 hover:bg-destructive/5 hover-lift"><Database className="mr-2 h-4 w-4"/> {t("Export My Data (Mock)", "Ohereza Amakuru Yanjye (Agateganyo)")}</Button>
-              <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-90 hover-lift">
+               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-destructive hover:text-destructive/80 hover:bg-destructive/5 hover-lift" onClick={() => handleMockAction("Export My Data", "Ohereza Amakuru Yanjye")}><Database className="mr-2 h-4 w-4"/> {t("Export My Data (Mock)", "Ohereza Amakuru Yanjye (Agateganyo)")}</Button>
+              <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-90 hover-lift" onClick={() => handleMockAction("Deactivate Account", "Hagarika Konti")}>
                 <PowerOff className="mr-2 h-4 w-4" /> {t("Deactivate Account (Mock)", "Hagarika Konti (Agateganyo)")}
               </Button>
                <p className="text-xs text-muted-foreground mt-2">{t("Deactivating your account is irreversible. Please be certain.", "Guhagarika konti yawe ntibisubirwaho. Nyamuneka wizere.")}</p>

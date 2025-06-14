@@ -16,15 +16,22 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Translation helper
+const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+
 interface SupportGroup {
   id: string;
   name: string;
+  nameKn: string;
   description: string;
+  descriptionKn: string;
   longDescription?: string;
+  longDescriptionKn?: string;
   imageUrl: string;
   aiHint: string;
   memberCount: number;
   category: string;
+  categoryKn: string;
   isPrivate: boolean;
   adminName: string;
   adminAvatar: string;
@@ -44,9 +51,9 @@ interface GroupPost {
 }
 
 const defaultSupportGroupsData: SupportGroup[] = [
-  { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes.', longDescription: "This group provides a safe and supportive environment for individuals living with diabetes. We share tips on diet, exercise, medication management, and emotional well-being. Regular virtual meetups are organized.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'community health meeting', memberCount: 125, category: 'Chronic Illness', isPrivate: false, adminName: "Sarah M.", adminAvatar: "https://placehold.co/40x40.png?text=SM", adminInitials: "SM"},
-  { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', longDescription: "Welcome new parents! This circle is for sharing experiences, asking questions, and finding support during the incredible journey of early parenthood. From sleep tips to feeding advice, we're here for each other.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'parents children group', memberCount: 88, category: 'Parenthood', isPrivate: true, adminName: "David K.", adminAvatar: "https://placehold.co/40x40.png?text=DK", adminInitials: "DK" },
-  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', longDescription: "Our mission is to advocate for mental wellness and provide a judgment-free zone for discussion. Share your story, learn coping mechanisms, and connect with others who understand.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'mental wellness discussion', memberCount: 210, category: 'Mental Health', isPrivate: false, adminName: "Laura P.", adminAvatar: "https://placehold.co/40x40.png?text=LP", adminInitials: "LP" },
+  { id: 'sg1', name: 'Diabetes Management Group', nameKn: 'Itsinda ryo Gucunga Diyabete', description: 'A supportive community for individuals managing diabetes.', descriptionKn: 'Umuryango w\'ubufasha ku bantu bacunga diyabete.', longDescription: "This group provides a safe and supportive environment for individuals living with diabetes. We share tips on diet, exercise, medication management, and emotional well-being. Regular virtual meetups are organized.", longDescriptionKn: "Iri tsinda ritanga umwanya wizewe kandi w'ubufasha ku bantu babana na diyabete. Dusangira inama ku mirire, imyitozo ngororamubiri, gucunga imiti, n'imibereho myiza yo mu mutwe. Hategurwa guhura kuri interineti buri gihe.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'community health meeting', memberCount: 125, category: 'Chronic Illness', categoryKn: 'Indwara Idakira', isPrivate: false, adminName: "Sarah M.", adminAvatar: "https://placehold.co/40x40.png?text=SM", adminInitials: "SM"},
+  { id: 'sg2', name: 'New Parents Support Circle', nameKn: 'Itsinda ry\'Ubufasha ku Babyeyi Bashya', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', descriptionKn: 'Hura n\'abandi babyeyi bashya kugirango muganire ku byishimo n\'imbogamizi z\'ububyeyi.', longDescription: "Welcome new parents! This circle is for sharing experiences, asking questions, and finding support during the incredible journey of early parenthood. From sleep tips to feeding advice, we're here for each other.", longDescriptionKn: "Murakaza neza babyeyi bashya! Iri tsinda ni iryo gusangira uburambe, kubaza ibibazo, no gushaka ubufasha mu rugendo rutangaje rw'ububyeyi bwa mbere. Kuva ku nama z'ibitotsi kugeza ku nama z'imirire, turi hano kubwanyu.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'parents children group', memberCount: 88, category: 'Parenthood', categoryKn: 'Ububyeyi', isPrivate: true, adminName: "David K.", adminAvatar: "https://placehold.co/40x40.png?text=DK", adminInitials: "DK" },
+  { id: 'sg3', name: 'Mental Wellness Advocates', nameKn: 'Abaharanira Ubuzima Bwiza bwo mu Mutwe', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', descriptionKn: 'Ahantu hizewe ho kuganirira ku buzima bwo mu mutwe, gusangira uburyo bwo kwihangana, no gufashanya.', longDescription: "Our mission is to advocate for mental wellness and provide a judgment-free zone for discussion. Share your story, learn coping mechanisms, and connect with others who understand.", longDescriptionKn: "Intego yacu ni uguharanira ubuzima bwiza bwo mu mutwe no gutanga ahantu ho kuganirira hatabamo urubanza. Sangiza inkuru yawe, iga uburyo bwo kwihangana, kandi uhure n'abandi babyumva.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'mental wellness discussion', memberCount: 210, category: 'Mental Health', categoryKn: 'Ubuzima bwo mu Mutwe', isPrivate: false, adminName: "Laura P.", adminAvatar: "https://placehold.co/40x40.png?text=LP", adminInitials: "LP" },
 ];
 
 const defaultGroupPosts: { [groupId: string]: GroupPost[] } = {
@@ -60,8 +67,6 @@ const defaultGroupPosts: { [groupId: string]: GroupPost[] } = {
     sg2: [],
 };
 
-// Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 const GroupPostSkeleton = () => (
     <Card className="shadow-lg">
@@ -86,7 +91,7 @@ const GroupPostSkeleton = () => (
     </Card>
 );
 
-const GroupDetailSkeleton = () => (
+const GroupDetailSkeleton = ({ t }: { t: (en: string, kn: string) => string }) => (
     <>
     <div className="relative mb-8">
         <Skeleton className="w-full h-56 md:h-72 rounded-lg" />
@@ -99,10 +104,10 @@ const GroupDetailSkeleton = () => (
      <PageHeader 
         title="" 
         breadcrumbs={[
-          {label: "...", href: "/"}, 
-          {label: "...", href: "/community-support/forums"}, 
-          {label: "...", href: "/community-support/support-groups"},
-          {label: "..."}
+          {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
+          {label: t("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/support-groups"}, 
+          {label: t("Support Groups", "Amatsinda y'Ubufasha"), href: "/community-support/support-groups"},
+          {label: t("Loading...", "Gutegura...")}
         ]}
       />
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-[-2rem]">
@@ -239,11 +244,23 @@ export default function SupportGroupDetailPage() {
     toast({ title: t("Post Liked", "Ubutumwa Bwakunzwe") });
   }
 
+  const handleCommentMock = () => {
+    toast({description: t("Commenting feature coming soon!", "Igice cyo gutanga ibitecyerezo kizaza vuba!")})
+  };
+
+  const handleInviteMock = () => {
+    toast({description: t("Feature to invite members coming soon!", "Igice cyo gutumira abanyamuryango kizaza vuba!")})
+  };
+
+  const handleAddImageMock = () => {
+    toast({description: t("Image upload for posts coming soon!", "Gushyiraho amafoto ku butumwa bizaza vuba!")})
+  };
+
 
   if (!isClient || isLoadingData || !group) {
     return (
       <AppLayout>
-        <GroupDetailSkeleton/>
+        <GroupDetailSkeleton t={t}/>
       </AppLayout>
     );
   }
@@ -253,7 +270,7 @@ export default function SupportGroupDetailPage() {
       <div className="relative mb-8">
         <Image 
             src={group.imageUrl} 
-            alt={`${group.name} banner`} 
+            alt={t(group.name, group.nameKn) + " " + t("banner", "ikirango")} 
             width={1200} 
             height={300} 
             className="w-full h-56 md:h-72 object-cover rounded-lg shadow-lg"
@@ -261,9 +278,9 @@ export default function SupportGroupDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-lg"></div>
         <div className="absolute bottom-0 left-0 p-6 text-white">
-            <Badge variant="secondary" className="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/30">{group.category}</Badge>
-            <h1 className="text-3xl md:text-4xl font-bold font-headline drop-shadow-md">{group.name}</h1>
-            <p className="text-sm md:text-md mt-1 drop-shadow-sm">{group.description}</p>
+            <Badge variant="secondary" className="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/30">{t(group.category, group.categoryKn)}</Badge>
+            <h1 className="text-3xl md:text-4xl font-bold font-headline drop-shadow-md">{t(group.name, group.nameKn)}</h1>
+            <p className="text-sm md:text-md mt-1 drop-shadow-sm">{t(group.description, group.descriptionKn)}</p>
         </div>
       </div>
       
@@ -273,7 +290,7 @@ export default function SupportGroupDetailPage() {
           {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
           {label: t("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/support-groups"}, 
           {label: t("Support Groups", "Amatsinda y'Ubufasha"), href: "/community-support/support-groups"},
-          {label: group.name.substring(0,30) + "..."}
+          {label: t(group.name, group.nameKn).substring(0,30) + "..."}
         ]}
       />
 
@@ -293,7 +310,7 @@ export default function SupportGroupDetailPage() {
                             className="resize-none"
                         />
                         <div className="flex justify-between items-center">
-                            <Button type="button" variant="outline" size="sm" onClick={() => toast({description: t("Image upload for posts coming soon!", "Gushyiraho amafoto ku butumwa bizaza vuba!")})}>
+                            <Button type="button" variant="outline" size="sm" onClick={handleAddImageMock}>
                                 <ImageIcon className="mr-2 h-4 w-4"/> {t("Add Image", "Ongeraho Ifoto")}
                             </Button>
                             <Button type="submit" className="transition-transform hover:scale-105 active:scale-95" disabled={isSubmittingPost}>
@@ -325,7 +342,7 @@ export default function SupportGroupDetailPage() {
                         <p className="text-sm text-foreground/90 whitespace-pre-wrap">{post.text}</p>
                         {post.imageUrl && (
                             <div className="mt-3 rounded-lg overflow-hidden border">
-                                <Image src={post.imageUrl} alt="Post image" width={500} height={300} className="w-full object-cover" data-ai-hint={post.imageAiHint || "group post image"}/>
+                                <Image src={post.imageUrl} alt={t("Post image", "Ifoto y'ubutumwa")} width={500} height={300} className="w-full object-cover" data-ai-hint={post.imageAiHint || "group post image"}/>
                             </div>
                         )}
                     </CardContent>
@@ -333,7 +350,7 @@ export default function SupportGroupDetailPage() {
                         <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={() => handleLikeGroupPost(post.id)}>
                             <ThumbsUp className="mr-1.5 h-4 w-4"/> {post.likes || 0} {t("Like", "Kunda")}
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={() => toast({description: t("Commenting coming soon!", "Gutanga ibitecyerezo bizaza vuba!")})}>
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={handleCommentMock}>
                             <MessageCircle className="mr-1.5 h-4 w-4"/> {t("Comment", "Igitecyerezo")}
                         </Button>
                     </CardFooter>
@@ -355,7 +372,7 @@ export default function SupportGroupDetailPage() {
                     <CardTitle className="font-headline flex items-center text-primary"><Info className="mr-2 h-5 w-5"/>{t("About This Group", "Ibyerekeye Iri Tsinda")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{group.longDescription || group.description}</p>
+                    <p className="text-sm text-muted-foreground">{currentLanguage === 'kn' ? (group.longDescriptionKn || group.descriptionKn) : (group.longDescription || group.description)}</p>
                     <Separator/>
                     <div className="text-sm">
                         <span className="font-medium text-foreground">{t("Administered by:", "Riyobowe na:")}</span>
@@ -371,7 +388,7 @@ export default function SupportGroupDetailPage() {
                         <span className="font-medium text-foreground">{t("Members:", "Abanyamuryango:")}</span> <span className="text-muted-foreground">{group.memberCount}</span>
                     </div>
                     {group.isPrivate && <Badge variant="secondary" className="w-fit"><Shield className="mr-1.5 h-3 w-3"/> {t("Private Group", "Itsinda Rwihishwa")}</Badge>}
-                    <Button className="w-full transition-transform hover:scale-105 active:scale-95" onClick={() => toast({description: t("Feature to invite members coming soon!", "Uburyo bwo gutumira abanyamuryango buzaza vuba!")})}>
+                    <Button className="w-full transition-transform hover:scale-105 active:scale-95" onClick={handleInviteMock}>
                         <UserPlus className="mr-2 h-4 w-4"/> {t("Invite Members", "Tumira Abanyamuryango")}
                     </Button>
                 </CardContent>
