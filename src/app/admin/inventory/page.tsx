@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,16 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Edit3, Trash2, Search, Pill, Save } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { PlusCircle, Edit3, Trash2, Search, Pill, Save, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
-// Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 interface MedicineStock {
   id: string;
@@ -30,42 +30,49 @@ interface MedicineStock {
   supplier: string;
 }
 
+// Mock initial data - in a real app, this would be fetched from the backend
 const initialMockInventory: MedicineStock[] = [
   { id: 'inv1', name: 'Paracetamol 500mg', category: 'Pain Relief', stockLevel: 150, unitPrice: 40, expiryDate: '2025-12-31', supplier: 'PharmaSupply Co.' },
   { id: 'inv2', name: 'Amoxicillin 250mg', category: 'Antibiotics', stockLevel: 80, unitPrice: 150, expiryDate: '2024-10-30', supplier: 'MediGoods Inc.' },
   { id: 'inv3', name: 'Loratadine 10mg', category: 'Allergy Relief', stockLevel: 120, unitPrice: 80, expiryDate: '2026-06-15', supplier: 'HealthFirst Ltd.' },
-  { id: 'inv4', name: 'Ibuprofen 200mg', category: 'Pain Relief', stockLevel: 20, unitPrice: 50, expiryDate: '2024-08-20', supplier: 'PharmaSupply Co.' },
-  { id: 'inv5', name: 'Vitamin C 1000mg', category: 'Vitamins', stockLevel: 300, unitPrice: 30, expiryDate: '2025-09-01', supplier: 'VitaWell Corp.' },
 ];
 
-const medicineFormSchema = (lang: 'en' | 'kn') => z.object({
-  name: z.string().min(3, { message: translate("Name must be at least 3 characters.", "Izina rigomba kuba nibura inyuguti 3.", lang) }),
-  category: z.string().min(3, { message: translate("Category is required.", "Icyiciro kirakenewe.", lang) }),
-  stockLevel: z.coerce.number().min(0, { message: translate("Stock level must be 0 or more.", "Umubare w'ububiko ugomba kuba 0 cyangwa urenze.", lang) }),
-  unitPrice: z.coerce.number().min(1, { message: translate("Unit price must be at least 1.", "Igiciro cy'igice kigomba kuba nibura 1.", lang) }),
-  expiryDate: z.string().refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: translate("Invalid date format (YYYY-MM-DD).", "Uburyo bw'itariki ntabwo ari bwo (UMWAKA-UKWEZI-UMUNSI).", lang) }),
-  supplier: z.string().min(2, { message: translate("Supplier name is required.", "Izina ry'uwagitanze rirakenewe.", lang) }),
+const medicineFormSchema = z.object({
+  name: z.string().min(3, { message: t("Izina rigomba kuba nibura inyuguti 3.", "Izina rigomba kuba nibura inyuguti 3.") }),
+  category: z.string().min(3, { message: t("Icyiciro kirakenewe.", "Icyiciro kirakenewe.") }),
+  stockLevel: z.coerce.number().min(0, { message: t("Umubare w'ububiko ugomba kuba 0 cyangwa urenze.", "Umubare w'ububiko ugomba kuba 0 cyangwa urenze.") }),
+  unitPrice: z.coerce.number().min(1, { message: t("Igiciro cy'igice kigomba kuba nibura 1.", "Igiciro cy'igice kigomba kuba nibura 1.") }),
+  expiryDate: z.string().refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: t("Invalid date format (YYYY-MM-DD).", "Uburyo bw'itariki ntabwo ari bwo (UMWAKA-UKWEZI-UMUNSI).") }),
+  supplier: z.string().min(2, { message: t("Izina ry'uwagitanze rirakenewe.", "Izina ry'uwagitanze rirakenewe.") }),
 });
 
 type MedicineFormValues = z.infer<ReturnType<typeof medicineFormSchema>>;
 
 export default function AdminInventoryPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
-  const [inventoryList, setInventoryList] = useState<MedicineStock[]>(initialMockInventory);
+  const [inventoryList, setInventoryList] = useState<MedicineStock[]>([]); // Start empty
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<MedicineStock | null>(null);
   
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
   useEffect(() => {
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    // Simulate checking admin authentication and fetching initial data
+    const simulateLoad = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // For prototype, assume authenticated if reaching here
+      setIsAuthenticatedAdmin(true);
+      setInventoryList(initialMockInventory); // Load mock data after "auth"
+      setIsLoadingPage(false);
+    };
+    simulateLoad();
   }, []);
   
   const form = useForm<MedicineFormValues>({
-    resolver: zodResolver(medicineFormSchema(currentLanguage)),
+    resolver: zodResolver(medicineFormSchema),
     defaultValues: { name: '', category: '', stockLevel: 0, unitPrice: 0, expiryDate: '', supplier: '' },
   });
 
@@ -75,7 +82,7 @@ export default function AdminInventoryPage() {
     } else {
       form.reset({ name: '', category: '', stockLevel: 0, unitPrice: 0, expiryDate: '', supplier: '' });
     }
-  }, [editingMedicine, form, isFormDialogOpen]);
+  }, [editingMedicine, form]); // Removed isFormDialogOpen dependency as it was causing reset on every open
 
   const filteredInventory = inventoryList.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,35 +90,53 @@ export default function AdminInventoryPage() {
   );
 
   const handleFormSubmit = (data: MedicineFormValues) => {
+    // UI update is now ephemeral, backend would handle persistence
     if (editingMedicine) {
       setInventoryList(prev => prev.map(med => med.id === editingMedicine.id ? { ...editingMedicine, ...data } : med));
-      toast({ title: t("Medicine Updated", "Umuti Wahinduwe"), description: t(`${data.name} has been updated. (Mock)`, `${data.name} wahinduwe. (Agateganyo)`)});
+      toast({ title: t("Umuti Wahinduwe (Igerageza)", "Umuti Wahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`)});
     } else {
-      const newMedicine: MedicineStock = { ...data, id: `inv${Date.now()}` };
+      const newMedicine: MedicineStock = { ...data, id: `inv${Date.now()}` }; // Still need client-side ID for list key
       setInventoryList(prev => [newMedicine, ...prev]);
-      toast({ title: t("Medicine Added", "Umuti Wongeweho"), description: t(`${data.name} has been added to the list. (Mock)`, `${data.name} wongeweho ku rutonde. (Agateganyo)`)});
+      toast({ title: t("Umuti Wongeweho (Igerageza)", "Umuti Wongeweho (Igerageza)"), description: t(`${data.name} wongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} wongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`)});
     }
     setIsFormDialogOpen(false);
     setEditingMedicine(null);
+    form.reset(); // Reset form after submission
   };
 
   const handleOpenDialog = (medicine: MedicineStock | null = null) => {
     setEditingMedicine(medicine);
+    // form.reset will be called by useEffect based on editingMedicine
     setIsFormDialogOpen(true);
   };
 
   const handleDeleteItem = (itemId: string, itemName: string) => {
-    // In a real app, this would make an API call. Here, we just show a toast.
-    // Optionally, filter the list client-side:
-    // setInventoryList(prev => prev.filter(item => item.id !== itemId));
-    toast({ variant: "destructive", title: t("Item Deletion (Mock)", "Gusiba Ikintu (Agateganyo)"), description: t(`${itemName} would be deleted from the inventory.`, `${itemName} yaba yakuwe mu bubiko.`)});
+    // UI update is now ephemeral
+    setInventoryList(prev => prev.filter(item => item.id !== itemId));
+    toast({ variant: "destructive", title: t("Gusiba Ikintu (Igerageza)", "Gusiba Ikintu (Igerageza)"), description: t(`${itemName} yakuwe mu bubiko ku buryo bw'agateganyo. Gusiba nyako bisaba seriveri.`, `${itemName} yakuwe mu bubiko ku buryo bw'agateganyo. Gusiba nyako bisaba seriveri.`)});
   };
   
   const handleEditItem = (item: MedicineStock) => {
-    setEditingMedicine(item);
-    setIsFormDialogOpen(true);
+    handleOpenDialog(item);
   };
 
+  if (isLoadingPage) {
+    return (
+      <AppLayout>
+        <PageHeader title={t("Manage Medicine Inventory", "Gucunga Ububiko bw'Imiti")} />
+        <div className="flex justify-center items-center py-10">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">{t("Loading inventory...", "Gutegura ububiko...")}</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!isAuthenticatedAdmin) {
+    toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
+    router.replace('/admin/login');
+    return null;
+  }
 
   return (
     <AppLayout>
@@ -141,7 +166,7 @@ export default function AdminInventoryPage() {
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><Pill className="mr-2 h-5 w-5 text-primary" />{t("Current Stock", "Ububiko Burimo")}</CardTitle>
-          <CardDescription>{t("View, update, or remove items from the medicine inventory. Changes are mock and client-side only.", "Reba, hindura, cyangwa ukure ibintu mu bubiko bw'imiti. Impinduka ni iz'ikitegererezo kandi zibera ku ruhande rw'umukoresha gusa.")}</CardDescription>
+          <CardDescription>{t("View, update, or remove items. Changes are illustrative and require backend integration for persistence.", "Reba, hindura, cyangwa ukure ibintu. Impinduka ni iz'ikitegererezo kandi zisaba guhuzwa na seriveri kugirango zibike.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -190,7 +215,7 @@ export default function AdminInventoryPage() {
           <DialogHeader>
             <DialogTitle>{editingMedicine ? t('Edit Medicine', 'Hindura Umuti') : t('Add New Medicine', 'Ongeraho Umuti Mushya')}</DialogTitle>
             <DialogDescription>
-              {editingMedicine ? t("Update the medicine details.", "Hindura amakuru y'umuti.") : t("Fill in the details to add a new medicine to the inventory. (Mock)", "Uzuza amakuru kugirango wongere umuti mushya mu bubiko. (Agateganyo)")}
+              {editingMedicine ? t("Update the medicine details. (Mock)", "Hindura amakuru y'umuti. (Igerageza)") : t("Fill in the details to add a new medicine. (Mock)", "Uzuza amakuru kugirango wongere umuti mushya. (Igerageza)")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
@@ -201,7 +226,7 @@ export default function AdminInventoryPage() {
             <div><Label htmlFor="expiryDate">{t("Expiry Date", "Itariki yo Kurangira")}</Label><Input id="expiryDate" type="date" {...form.register("expiryDate")} className="mt-1" /><p className="text-sm text-destructive mt-1">{form.formState.errors.expiryDate?.message}</p></div>
             <div><Label htmlFor="supplier">{t("Supplier", "Uwagitanze")}</Label><Input id="supplier" {...form.register("supplier")} className="mt-1" /><p className="text-sm text-destructive mt-1">{form.formState.errors.supplier?.message}</p></div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormDialogOpen(false)}>{t("Cancel", "Hagarika")}</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsFormDialogOpen(false); setEditingMedicine(null); form.reset(); }}>{t("Cancel", "Hagarika")}</Button>
               <Button type="submit" className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" /> {editingMedicine ? t('Save Changes', 'Bika Impinduka') : t('Add Medicine', 'Ongeraho Umuti')}</Button>
             </DialogFooter>
           </form>

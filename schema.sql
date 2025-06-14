@@ -1,274 +1,344 @@
+-- Database schema for MediServe Hub
 
--- Users Table
-CREATE TABLE Users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
+-- Users Table: Stores information about all users (patients, doctors, admins, seekers)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK (role IN ('patient', 'doctor', 'admin', 'seeker')), -- e.g., patient, doctor, admin, seeker
-    profile_image_url TEXT,
-    phone VARCHAR(20),
-    dob DATE,
+    password_hash VARCHAR(255) NOT NULL, -- Store hashed passwords, never plain text
+    role VARCHAR(50) NOT NULL DEFAULT 'patient' CHECK (role IN ('patient', 'doctor', 'admin', 'seeker')), -- User role
+    phone_number VARCHAR(20) UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User Profiles Table: Stores additional profile information for users
+CREATE TABLE user_profiles (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    date_of_birth DATE,
     address TEXT,
     city VARCHAR(100),
-    country VARCHAR(100),
+    country VARCHAR(100) DEFAULT 'Rwanda',
     bio TEXT,
+    profile_image_url VARCHAR(2048),
     preferred_language VARCHAR(5) DEFAULT 'kn', -- 'en', 'kn', 'fr'
-    marketing_emails_enabled BOOLEAN DEFAULT FALSE,
-    app_notifications_enabled BOOLEAN DEFAULT TRUE,
-    theme_preference VARCHAR(10) DEFAULT 'system', -- 'light', 'dark', 'system'
-    two_factor_enabled BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    theme VARCHAR(10) DEFAULT 'system' CHECK (theme IN ('light', 'dark', 'system')),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Emergency Contacts (linked to Users)
-CREATE TABLE EmergencyContacts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    relationship VARCHAR(100), -- Optional: e.g., Spouse, Parent, Friend
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+-- User Settings Table: Stores user-specific settings like notification preferences
+CREATE TABLE user_settings (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    enable_marketing_emails BOOLEAN DEFAULT FALSE,
+    enable_app_notifications BOOLEAN DEFAULT TRUE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Medicines Table (for inventory and catalog)
-CREATE TABLE Medicines (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- Emergency Contacts Table: Stores emergency contact information for users
+CREATE TABLE emergency_contacts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    contact_name VARCHAR(255),
+    relationship VARCHAR(100), -- e.g., Spouse, Parent, Sibling
+    phone_number VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, phone_number) -- A user might have multiple emergency contacts, but not with the same phone
+);
+
+-- Doctor Specific Information Table
+CREATE TABLE doctor_details (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    specialty VARCHAR(255),
+    license_number VARCHAR(100) UNIQUE,
+    years_of_experience INTEGER,
+    consultation_fee_rwf DECIMAL(10, 2),
+    availability_schedule JSONB, -- To store complex availability like { "monday": ["09:00-12:00", "14:00-17:00"], ... }
+    is_available_for_consultation BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Medicines Table: Catalog of all medicines
+CREATE TABLE medicines (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    category VARCHAR(100),
     description TEXT,
-    stock_level INTEGER DEFAULT 0,
-    unit_price DECIMAL(10, 2) NOT NULL, -- Assuming RWF, adjust precision as needed
-    expiry_date DATE,
+    category VARCHAR(100),
+    unit_price_rwf DECIMAL(10, 2) NOT NULL,
+    stock_level INTEGER NOT NULL DEFAULT 0,
     supplier VARCHAR(255),
-    image_url TEXT,
+    expiry_date DATE,
+    image_url VARCHAR(2048),
+    ai_hint VARCHAR(255), -- For placeholder image generation
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Services Table (Medical Tests, Consultations, etc.)
-CREATE TABLE Services (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name_en VARCHAR(255) NOT NULL,
-    name_kn VARCHAR(255),
-    type VARCHAR(100) NOT NULL, -- e.g., 'Medical Test', 'Consultation', 'Procedure'
-    price DECIMAL(10, 2) NOT NULL,
-    duration_en VARCHAR(100), -- e.g., 'Results in 24h', '30 minutes'
-    duration_kn VARCHAR(100),
+-- Services Table: Medical tests, consultation types, procedures offered
+CREATE TABLE services (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    name_kn VARCHAR(255), -- Kinyarwanda name
+    type VARCHAR(100) NOT NULL CHECK (type IN ('Medical Test', 'Consultation', 'Procedure')),
+    description TEXT,
+    price_rwf DECIMAL(10, 2) NOT NULL,
+    duration_estimate VARCHAR(100), -- e.g., '30 minutes', 'Results in 24h'
+    preparation_instructions TEXT,
     is_active BOOLEAN DEFAULT TRUE,
-    description_en TEXT,
-    description_kn TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Appointments Table
-CREATE TABLE Appointments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE, -- Patient User ID
-    doctor_id UUID REFERENCES Users(id) ON DELETE SET NULL, -- Doctor User ID (can be null if system assigned)
-    doctor_name VARCHAR(255), -- Denormalized for easier display
-    specialty VARCHAR(100), -- Denormalized doctor specialty
-    appointment_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    appointment_time VARCHAR(20) NOT NULL, -- Consider storing as TIME or part of appointment_date
-    reason TEXT,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('Pending', 'Confirmed', 'Cancelled', 'Completed')),
-    type VARCHAR(50) NOT NULL CHECK (type IN ('Online', 'In-Person')),
-    notes_patient TEXT, -- Notes from patient during booking
-    notes_doctor TEXT, -- Notes from doctor after consultation
+CREATE TABLE appointments (
+    id SERIAL PRIMARY KEY,
+    patient_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    doctor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, -- Can be null if general booking
+    service_id INTEGER REFERENCES services(id) ON DELETE SET NULL, -- If appointment is for a specific service like 'General Consultation'
+    appointment_date DATE NOT NULL,
+    appointment_time TIME NOT NULL,
+    reason_for_visit TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Confirmed', 'Cancelled', 'Completed')),
+    consultation_type VARCHAR(50) DEFAULT 'Online' CHECK (consultation_type IN ('Online', 'In-Person')),
+    notes_for_doctor TEXT, -- Patient's notes
+    doctor_notes TEXT, -- Doctor's notes post-consultation
+    video_call_link VARCHAR(2048),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(doctor_user_id, appointment_date, appointment_time) -- A doctor cannot have two appointments at the exact same time
 );
 
 -- Prescriptions Table
-CREATE TABLE Prescriptions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    doctor_id UUID REFERENCES Users(id) ON DELETE SET NULL, -- Issuing doctor
-    doctor_name VARCHAR(255), -- Denormalized for display
-    date_prescribed DATE NOT NULL,
-    notes TEXT, -- General notes for the whole prescription
-    status VARCHAR(50) NOT NULL CHECK (status IN ('Active', 'Completed', 'Expired', 'Cancelled')),
+CREATE TABLE prescriptions (
+    id SERIAL PRIMARY KEY,
+    patient_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    doctor_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT, -- A prescription must have a doctor
+    appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL, -- Link to appointment if applicable
+    date_prescribed DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes_for_patient TEXT,
+    status VARCHAR(50) DEFAULT 'Active' CHECK (status IN ('Active', 'Completed', 'Expired', 'Cancelled')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Prescription Items Table (Many-to-Many between Prescriptions and Medicines, with details)
-CREATE TABLE PrescriptionItems (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    prescription_id UUID NOT NULL REFERENCES Prescriptions(id) ON DELETE CASCADE,
-    -- Instead of medicine_id referencing Medicines directly, store medicine name for historical accuracy
-    -- as medicine details in Medicines table might change.
-    medicine_name VARCHAR(255) NOT NULL, 
-    dosage VARCHAR(255) NOT NULL, -- e.g., '1 tablet', '10mg'
+-- Prescription Items Table: Links medicines to a prescription
+CREATE TABLE prescription_items (
+    id SERIAL PRIMARY KEY,
+    prescription_id INTEGER NOT NULL REFERENCES prescriptions(id) ON DELETE CASCADE,
+    medicine_id INTEGER NOT NULL REFERENCES medicines(id) ON DELETE RESTRICT,
+    dosage VARCHAR(255) NOT NULL, -- e.g., '1 tablet', '10ml'
     frequency VARCHAR(255) NOT NULL, -- e.g., 'Twice a day', 'Every 6 hours'
     duration VARCHAR(255) NOT NULL, -- e.g., '7 days', 'Until finished'
-    instructions TEXT, -- Specific instructions for this medicine item
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    instructions TEXT, -- Additional instructions for this specific medicine
+    UNIQUE(prescription_id, medicine_id) -- Avoid duplicate medicine entries in the same prescription
 );
 
 -- Forum Posts Table
-CREATE TABLE ForumPosts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+CREATE TABLE forum_posts (
+    id SERIAL PRIMARY KEY,
+    author_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    category VARCHAR(100),
     content TEXT NOT NULL,
+    category VARCHAR(100),
     tags TEXT[], -- Array of tags
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Forum Post Likes Table
-CREATE TABLE ForumPostLikes (
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    post_id UUID NOT NULL REFERENCES ForumPosts(id) ON DELETE CASCADE,
+CREATE TABLE forum_post_likes (
+    post_id INTEGER NOT NULL REFERENCES forum_posts(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, post_id)
+    PRIMARY KEY (post_id, user_id)
 );
 
 -- Forum Comments Table
-CREATE TABLE ForumComments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    post_id UUID NOT NULL REFERENCES ForumPosts(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    parent_comment_id UUID REFERENCES ForumComments(id) ON DELETE CASCADE, -- For threaded comments
-    content TEXT NOT NULL,
+CREATE TABLE forum_comments (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES forum_posts(id) ON DELETE CASCADE,
+    author_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_comment_id INTEGER REFERENCES forum_comments(id) ON DELETE CASCADE, -- For threaded comments
+    text_content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Support Groups Table
-CREATE TABLE SupportGroups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name_en VARCHAR(255) NOT NULL,
-    name_kn VARCHAR(255),
-    description_en TEXT,
+CREATE TABLE support_groups (
+    id SERIAL PRIMARY KEY,
+    admin_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT, -- Group must have an admin
+    name VARCHAR(255) NOT NULL UNIQUE,
+    name_kn VARCHAR(255) UNIQUE,
+    description TEXT,
     description_kn TEXT,
-    long_description_en TEXT,
+    long_description TEXT,
     long_description_kn TEXT,
-    image_url TEXT,
-    category_en VARCHAR(100),
+    image_url VARCHAR(2048),
+    ai_hint VARCHAR(255),
+    category VARCHAR(100),
     category_kn VARCHAR(100),
     is_private BOOLEAN DEFAULT FALSE,
-    admin_user_id UUID NOT NULL REFERENCES Users(id) ON DELETE RESTRICT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Support Group Members Table (Many-to-Many)
-CREATE TABLE SupportGroupMembers (
-    group_id UUID NOT NULL REFERENCES SupportGroups(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+-- Support Group Members Table: Junction table for users and support groups
+CREATE TABLE support_group_members (
+    group_id INTEGER NOT NULL REFERENCES support_groups(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'admin', 'moderator')),
+    join_status VARCHAR(50) DEFAULT 'approved' CHECK (join_status IN ('pending_approval', 'approved', 'rejected', 'banned')), -- For private groups
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'moderator', 'admin')), -- Group-specific role
-    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'pending_approval', 'banned')),
     PRIMARY KEY (group_id, user_id)
 );
 
 -- Support Group Posts Table
-CREATE TABLE SupportGroupPosts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    group_id UUID NOT NULL REFERENCES SupportGroups(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    content TEXT NOT NULL,
-    image_url TEXT,
+CREATE TABLE support_group_posts (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES support_groups(id) ON DELETE CASCADE,
+    author_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text_content TEXT NOT NULL,
+    image_url VARCHAR(2048),
+    image_ai_hint VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Support Group Post Likes Table
-CREATE TABLE SupportGroupPostLikes (
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    post_id UUID NOT NULL REFERENCES SupportGroupPosts(id) ON DELETE CASCADE,
+CREATE TABLE support_group_post_likes (
+    post_id INTEGER NOT NULL REFERENCES support_group_posts(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, post_id)
+    PRIMARY KEY (post_id, user_id)
 );
 
--- Orders Table (for medicine purchases)
-CREATE TABLE Orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+-- User Cart Items Table: For storing items in a user's shopping cart
+CREATE TABLE user_cart_items (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    medicine_id INTEGER NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, medicine_id)
+);
+
+-- Orders Table
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     total_amount_rwf DECIMAL(12, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('Pending Payment', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded')),
-    shipping_address TEXT,
-    billing_address TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Processing', 'Awaiting Payment', 'Shipped', 'Delivered', 'Cancelled', 'Refunded')),
+    shipping_address_line1 TEXT,
+    shipping_address_line2 TEXT,
+    shipping_city VARCHAR(100),
+    shipping_postal_code VARCHAR(20),
+    shipping_country VARCHAR(100),
+    payment_method VARCHAR(100),
+    payment_transaction_id VARCHAR(255) UNIQUE,
+    payment_status VARCHAR(50) DEFAULT 'Pending' CHECK (payment_status IN ('Pending', 'Paid', 'Failed', 'Refunded')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Order Items Table
-CREATE TABLE OrderItems (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL REFERENCES Orders(id) ON DELETE CASCADE,
-    medicine_id UUID NOT NULL, -- Could reference Medicines(id) if stock is managed elsewhere or keep denormalized
-    medicine_name VARCHAR(255) NOT NULL, -- Denormalized for historical accuracy
-    quantity INTEGER NOT NULL,
-    unit_price_at_purchase DECIMAL(10, 2) NOT NULL,
-    sub_total_amount_rwf DECIMAL(12, 2) NOT NULL,
+-- Order Items Table: Links medicines to an order
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    medicine_id INTEGER NOT NULL REFERENCES medicines(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_at_order_rwf DECIMAL(10, 2) NOT NULL, -- Price of the medicine at the time of order
+    subtotal_rwf DECIMAL(12, 2) NOT NULL -- quantity * price_at_order_rwf
+);
+
+-- Admin Notifications or System Logs (Example)
+CREATE TABLE system_logs (
+    id SERIAL PRIMARY KEY,
+    log_level VARCHAR(20) DEFAULT 'INFO' CHECK (log_level IN ('INFO', 'WARNING', 'ERROR', 'CRITICAL')),
+    message TEXT NOT NULL,
+    context JSONB, -- Additional context for the log
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Payments Table
-CREATE TABLE Payments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID REFERENCES Orders(id) ON DELETE SET NULL, -- Can be null if payment is for other services
-    user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
-    amount_rwf DECIMAL(12, 2) NOT NULL,
-    payment_method VARCHAR(50) NOT NULL, -- e.g., 'Credit Card', 'Mobile Money', 'Bank Transfer'
-    transaction_id VARCHAR(255) UNIQUE, -- From payment gateway
-    payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('Pending', 'Successful', 'Failed', 'Refunded')),
-    reason TEXT, -- General reason if not linked to an order
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- AI Interaction Logs (Optional, for Genkit flows)
-CREATE TABLE AiInteractions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES Users(id) ON DELETE SET NULL,
-    flow_name VARCHAR(255) NOT NULL, -- e.g., 'symptomAnalyzerFlow', 'answerMedicalQuestionFlow'
-    input_data JSONB,
-    output_data JSONB,
-    error_message TEXT,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('Success', 'Error', 'Pending')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- Indexes for performance
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_appointments_patient_id ON appointments(patient_user_id);
+CREATE INDEX idx_appointments_doctor_id ON appointments(doctor_user_id);
+CREATE INDEX idx_appointments_date ON appointments(appointment_date);
+CREATE INDEX idx_prescriptions_patient_id ON prescriptions(patient_user_id);
+CREATE INDEX idx_forum_posts_author_id ON forum_posts(author_user_id);
+CREATE INDEX idx_support_groups_name ON support_groups(name);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
 
--- Audit Logs (Optional, for tracking important actions)
-CREATE TABLE AuditLogs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES Users(id) ON DELETE SET NULL, -- User performing the action
-    action VARCHAR(255) NOT NULL, -- e.g., 'USER_LOGIN', 'MEDICINE_STOCK_UPDATE', 'ADMIN_SETTINGS_CHANGE'
-    target_type VARCHAR(100), -- e.g., 'User', 'Medicine', 'SystemSetting'
-    target_id TEXT, -- ID of the entity affected
-    details JSONB, -- Additional details about the action
-    ip_address VARCHAR(45),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- Trigger function to update 'updated_at' columns
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Add indexes for frequently queried columns for performance
-CREATE INDEX idx_users_email ON Users(email);
-CREATE INDEX idx_appointments_user_id ON Appointments(user_id);
-CREATE INDEX idx_appointments_doctor_id ON Appointments(doctor_id);
-CREATE INDEX idx_appointments_date ON Appointments(appointment_date);
-CREATE INDEX idx_prescriptions_patient_id ON Prescriptions(patient_id);
-CREATE INDEX idx_prescriptions_doctor_id ON Prescriptions(doctor_id);
-CREATE INDEX idx_forumposts_user_id ON ForumPosts(user_id);
-CREATE INDEX idx_forumcomments_post_id ON ForumComments(post_id);
-CREATE INDEX idx_supportgroups_admin_user_id ON SupportGroups(admin_user_id);
-CREATE INDEX idx_supportgroupmembers_group_id ON SupportGroupMembers(group_id);
-CREATE INDEX idx_supportgroupmembers_user_id ON SupportGroupMembers(user_id);
-CREATE INDEX idx_supportgroupposts_group_id ON SupportGroupPosts(group_id);
-CREATE INDEX idx_orders_user_id ON Orders(user_id);
-CREATE INDEX idx_payments_user_id ON Payments(user_id);
-CREATE INDEX idx_payments_order_id ON Payments(order_id);
+-- Apply the trigger to tables with 'updated_at'
+CREATE TRIGGER set_timestamp_users
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
 
--- You might want to add more specific indexes based on your query patterns.
--- Consider Full-Text Search capabilities for fields like descriptions, content, etc.
--- For Kinyarwanda names/text, ensure your database collation supports it correctly.
-    
+CREATE TRIGGER set_timestamp_user_profiles
+BEFORE UPDATE ON user_profiles
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+-- (Apply similar triggers for all other tables with an updated_at column)
+-- e.g., medicines, services, appointments, prescriptions, forum_posts, support_groups, orders etc.
+-- Example for medicines:
+CREATE TRIGGER set_timestamp_medicines
+BEFORE UPDATE ON medicines
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_services
+BEFORE UPDATE ON services
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_appointments
+BEFORE UPDATE ON appointments
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_prescriptions
+BEFORE UPDATE ON prescriptions
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_forum_posts
+BEFORE UPDATE ON forum_posts
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_forum_comments
+BEFORE UPDATE ON forum_comments
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_support_groups
+BEFORE UPDATE ON support_groups
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_support_group_posts
+BEFORE UPDATE ON support_group_posts
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp_orders
+BEFORE UPDATE ON orders
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+-- You might want to add more specific triggers, e.g., to update medicine stock after an order is placed,
+-- or to manage group member counts automatically. These are more advanced and depend on specific business logic.

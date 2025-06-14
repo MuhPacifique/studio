@@ -19,17 +19,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { Phone } from 'lucide-react';
 
-// Assuming Kinyarwanda is the default language.
-const preferredLanguage = typeof window !== 'undefined' ? (localStorage.getItem('mockUserLang') as 'en' | 'kn' || 'kn') : 'kn';
-const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 const loginSchema = z.object({
-  email: z.string().email({ message: t("Invalid email address.", "Aderesi email yanditse nabi.") }),
-  phone: z.string().optional().refine(val => !val || val.length >= 10, { message: t("Phone number must be at least 10 digits if provided.", "Nimero ya telefone igomba kuba nibura imibare 10 niba yatanzwe.")}),
-  password: z.string().min(6, { message: t("Password must be at least 6 characters.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
+  email: z.string().email({ message: t("Aderesi email yanditse nabi.", "Aderesi email yanditse nabi.") }),
+  phone: z.string().optional().refine(val => !val || val.length >= 10, { message: t("Nimero ya telefone igomba kuba nibura imibare 10 niba yatanzwe.", "Nimero ya telefone igomba kuba nibura imibare 10 niba yatanzwe.")}),
+  password: z.string().min(6, { message: t("Ijambobanga rigomba kuba nibura inyuguti 6.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -37,20 +35,19 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const searchParams = useSearchParams(); // Get query parameters
+  const [roleFromQuery, setRoleFromQuery] = useState<string | null>(null);
 
   useEffect(() => {
-    const role = localStorage.getItem('selectedRole');
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
-
-    if (!role) {
-      router.replace('/welcome'); 
+    const role = searchParams.get('role');
+    if (role) {
+      setRoleFromQuery(role);
     } else {
-      setSelectedRole(role);
+      // If no role in query, redirect to welcome, as role selection is now transient
+      router.replace('/welcome');
     }
-  }, [router]);
+  }, [searchParams, router]);
+
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -61,54 +58,49 @@ export default function LoginPage() {
     },
   });
 
-  const currentT = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
-
   const onSubmit = async (data: LoginFormValues) => {
+    // This is a mock login. In a real app, this would call a backend API.
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const role = localStorage.getItem('selectedRole') || 'patient'; 
-
+    // Since localStorage for auth is removed, this login doesn't "persist" a session.
+    // It just simulates a successful login attempt for UI flow.
+    
     let loginSuccess = false;
-    let userName = "User";
-    let patientId: string | null = null;
+    let userName = "Umukoresha"; // Default Kinyarwanda "User"
+    let redirectPath = '/';
 
-    if (role === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
+    // Mock credentials check based on roleFromQuery
+    if (roleFromQuery === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
         loginSuccess = true;
-        userName = "Dr. Alex Smith";
-    } else if ((role === 'patient' || role === 'seeker') && data.email === "patient@example.com" && data.password === "password") {
+        userName = "Dr. Alex Smith"; // Keep some distinct names for demo
+        redirectPath = '/doctor/dashboard';
+    } else if (roleFromQuery === 'patient' && data.email === "patient@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Patty Patient";
-        patientId = "patient123"; 
-    } else if (role === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
+        redirectPath = '/';
+    } else if (roleFromQuery === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Sam Seeker";
-        patientId = "seeker123"; 
+        redirectPath = '/';
     }
-
+    // Admin login is handled separately
 
     if (loginSuccess) {
       toast({
-        title: currentT("Login Successful", "Kwinjira Byagenze Neza"),
-        description: `${currentT("Welcome back", "Murakaza neza")}, ${userName}!`,
+        title: t("Kwinjira Byagenze Neza", "Kwinjira Byagenze Neza"),
+        description: `${t("Murakaza neza", "Murakaza neza")}, ${userName}! (Igerageza)`,
       });
-      localStorage.setItem('mockAuth', role); 
-      localStorage.setItem('mockUserName', userName); 
-      localStorage.setItem('mockUserEmail', data.email);
-      localStorage.setItem('mockUserPhone', data.phone || "");
-      if (patientId) {
-        localStorage.setItem('mockPatientId', patientId);
-      } else {
-        localStorage.removeItem('mockPatientId'); 
-      }
-      router.push('/');
+      // In a real app, backend would set a session cookie/token.
+      // For prototype, redirect. UserNav won't show logged-in state without further changes.
+      router.push(redirectPath); 
     } else {
       toast({
         variant: "destructive",
-        title: currentT("Login Failed", "Kwinjira Byanze"),
-        description: currentT("Invalid credentials for the selected role.", "Amakuru watanze ntabwo ariyo kuri uru ruhare."),
+        title: t("Kwinjira Byanze", "Kwinjira Byanze"),
+        description: t("Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa.", "Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa."),
       });
-      form.setError("email", { type: "manual", message: " " });
-      form.setError("password", { type: "manual", message: currentT("Invalid credentials.", "Amakuru watanze ntabwo ariyo.") });
+      form.setError("email", { type: "manual", message: " " }); // Clear specific error message as it's generic
+      form.setError("password", { type: "manual", message: t("Amakuru watanze ntabwo ariyo.", "Amakuru watanze ntabwo ariyo.") });
     }
   };
   
@@ -116,12 +108,21 @@ export default function LoginPage() {
     patient: { en: "Patient Login", kn: "Kwinjira kw'Umurwayi" },
     doctor: { en: "Doctor Login", kn: "Kwinjira kwa Muganga" },
     seeker: { en: "Health Seeker Login", kn: "Kwinjira k'Ushaka Ubujyanama" },
-    admin: { en: "Administrator Login", kn: "Kwinjira k'Umunyamabanga"}
+    // Admin login is a separate page
   };
 
-  const pageTitle = selectedRole && roleTitles[selectedRole] 
-    ? currentT(roleTitles[selectedRole].en, roleTitles[selectedRole].kn) 
-    : currentT("Login", "Injira");
+  const pageTitle = roleFromQuery && roleTitles[roleFromQuery] 
+    ? t(roleTitles[roleFromQuery].en, roleTitles[roleFromQuery].kn) 
+    : t("Injira", "Injira");
+
+  if (!roleFromQuery) {
+    // Still waiting for role from query params or redirecting
+    return (
+         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
+            <p>{t("Guta...", "Gutegura...")}</p> {/* Loading... */}
+         </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
@@ -132,7 +133,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
-          <CardDescription>{currentT("Access your MediServe Hub account. You may receive a (mock) verification code.", "Injira muri konti yawe ya MediServe Hub. Ushobora kwakira kode y'igenzura (y'agateganyo).")}</CardDescription>
+          <CardDescription>{t("Injira muri konti yawe ya MediServe Hub. Igenzura ni iry'ikitegererezo gusa.", "Injira muri konti yawe ya MediServe Hub. Igenzura ni iry'ikitegererezo gusa.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -142,7 +143,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Email Address", "Aderesi Email")}</FormLabel>
+                    <FormLabel>{t("Aderesi Email", "Aderesi Email")}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
@@ -157,7 +158,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {currentT("Phone Number (Optional for login, for verification)", "Nimero ya Telefone (Si ngombwa kwinjira, ni iy'igenzura)")}
+                      {t("Nimero ya Telefone (Si ngombwa kwinjira)", "Nimero ya Telefone (Si ngombwa kwinjira)")}
                     </FormLabel>
                     <FormControl>
                       <Input type="tel" placeholder="+250 7XX XXX XXX" {...field} />
@@ -171,7 +172,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Password", "Ijambobanga")}</FormLabel>
+                    <FormLabel>{t("Ijambobanga", "Ijambobanga")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -180,21 +181,21 @@ export default function LoginPage() {
                 )}
               />
               <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? currentT("Logging in...", "Kwinjira...") : currentT("Log In", "Injira")}
+                {form.formState.isSubmitting ? t("Kwinjira...", "Kwinjira...") : t("Injira", "Injira")}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm">
           <p>
-            {currentT("Need an account?", "Ukeneye konti?")}{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
-              {currentT("Register here", "Iyandikishe hano")}
+            {t("Ukeneye konti?", "Ukeneye konti?")}{' '}
+            <Link href={`/register?role=${roleFromQuery}`} className="font-medium text-primary hover:underline">
+              {t("Iyandikishe hano", "Iyandikishe hano")}
             </Link>
           </p>
            <p>
             <Link href="/welcome" className="font-medium text-primary hover:underline">
-              {currentT("Back to Role Selection", "Subira ku Ihitamo ry'Uruhare")}
+              {t("Subira ku Ihitamo ry'Uruhare", "Subira ku Ihitamo ry'Uruhare")}
             </Link>
           </p>
         </CardFooter>
@@ -202,4 +203,3 @@ export default function LoginPage() {
     </div>
   );
 }
-    

@@ -14,132 +14,73 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase, Moon, Sun } from 'lucide-react';
+import { LogIn, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase, Moon, Sun, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
+// With localStorage removed, auth state is no longer persisted client-side.
+// This component will now mostly reflect a "logged out" state or a very basic
+// visual representation if it were to get user data from a (future) context/backend.
 
-const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [userType, setUserType] = React.useState<Role | null>(null);
-  const [userName, setUserName] = React.useState<string | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
-  const [isClient, setIsClient] = React.useState(false);
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
-  const router = useRouter(); 
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  React.useEffect(() => {
-    if (isClient) {
-      const updateAuthState = () => {
-        const mockAuth = localStorage.getItem('mockAuth');
-        const storedUserName = localStorage.getItem('mockUserName');
-        const storedRole = localStorage.getItem('selectedRole') as Role | null;
-        const storedProfileImage = localStorage.getItem('mockUserProfileImage');
-        const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-        if(lang) setPreferredLanguage(lang);
-
-        if (mockAuth) {
-          setIsAuthenticated(true);
-          setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
-          setProfileImageUrl(storedProfileImage); 
-          if (mockAuth === 'admin') {
-            setUserType('admin');
-          } else if (mockAuth === 'doctor') {
-            setUserType('doctor');
-          } else if (storedRole) {
-            setUserType(storedRole);
-          } else {
-            setUserType('patient'); 
-          }
-        } else {
-          setIsAuthenticated(false);
-          setUserType(null);
-          setUserName(null);
-          setProfileImageUrl(null);
-        }
-      };
-
-      updateAuthState(); 
-
-      const handleStorageChange = (event: StorageEvent) => {
-        if (
-          event.key === 'mockAuth' ||
-          event.key === 'mockUserName' ||
-          event.key === 'selectedRole' ||
-          event.key === 'mockUserProfileImage' ||
-          event.key === 'mockUserLang' 
-        ) {
-          updateAuthState();
-        }
-      };
-
-      window.addEventListener('storage', handleStorageChange);
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
-    }
-  }, [isClient]); 
-
-  const logout = () => {
-    if (isClient) {
-      const keysToRemove = [
-        'mockAuth', 'mockUserName', 'selectedRole', 'mockUserEmail', 
-        'mockUserPhone', 'mockUserProfileImage', 'mockUserDOB', 
-        'mockUserAddress', 'mockUserCity', 'mockUserCountry', 'mockUserBio',
-        'mockUserLang', 'mockUserMarketing', 'mockUserAppNotifs', 'mockUserTheme',
-        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA', 'theme'
-      ];
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      document.documentElement.classList.remove('dark'); 
-      document.documentElement.lang = 'kn'; // Reset lang to Kinyarwanda on logout
-
-      setIsAuthenticated(false);
-      setUserType(null);
-      setUserName(null);
-      setProfileImageUrl(null);
-      setPreferredLanguage('kn');
-      
-      router.push('/welcome'); 
-    }
-  };
-
-  return { isAuthenticated, userType, userName, profileImageUrl, logout, isClient, preferredLanguage };
-};
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 export function UserNav() {
-  const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient, preferredLanguage } = useAuth();
-  const [initials, setInitials] = React.useState("U");
-  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
-  
-  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+  const router = useRouter();
+  // Mocked state, assuming user is not authenticated by default as localStorage is gone.
+  // In a real app, this would come from a global state/context updated after API calls.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [initials, setInitials] = useState("U");
 
-  useEffect(() => {
-    if (isClient) {
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme) {
-        setCurrentTheme(storedTheme);
-        document.documentElement.classList.toggle('dark', storedTheme === 'dark');
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setCurrentTheme('dark');
-        document.documentElement.classList.add('dark');
-      } else {
-        setCurrentTheme('light');
-      }
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+
+   useEffect(() => {
+    // Set initial theme based on OS preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setCurrentTheme('dark');
+      document.documentElement.classList.add('dark');
+    } else {
+      setCurrentTheme('light');
+      document.documentElement.classList.remove('dark');
     }
-  }, [isClient]);
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setCurrentTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    // Note: Theme persistence via localStorage was removed.
   };
 
-  React.useEffect(() => {
+  // Simulate fetching user data or checking session on mount (conceptual)
+  useEffect(() => {
+    // In a real app, you'd check a token or make an API call here.
+    // For this prototype, we'll assume logged out state.
+    setIsAuthenticated(false); 
+    setUserName(null);
+    setUserType(null);
+    setProfileImageUrl(null);
+    setInitials("U");
+
+    // If you wanted to test the logged-in UI without localStorage:
+    // setIsAuthenticated(true);
+    // setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); // "Prototype User"
+    // setUserType("patient");
+    // setProfileImageUrl(""); // Or a placeholder
+    // setInitials("UP");
+  }, []);
+
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserName(null);
+    setUserType(null);
+    // In a real app, this would also call a backend logout endpoint.
+    router.push('/welcome');
+  };
+  
+  useEffect(() => {
     if (userName) {
       const nameParts = userName.split(' ');
       const firstInitial = nameParts[0]?.[0] || '';
@@ -150,13 +91,6 @@ export function UserNav() {
     }
   }, [userName]);
 
-  if (!isClient) {
-    return (
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" className="h-10 w-10 rounded-full animate-pulse bg-muted"></Button>
-      </div>
-    );
-  }
 
   return (
     <div className="flex items-center space-x-2">
@@ -164,7 +98,7 @@ export function UserNav() {
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        aria-label={currentTheme === 'dark' ? t("Switch to light mode", "Hindura Uburyo bw'Urumuri") : t("Switch to dark mode", "Hindura Uburyo bw'Umwijima")}
+        aria-label={currentTheme === 'dark' ? t("Hindura Uburyo bw'Urumuri", "Hindura Uburyo bw'Urumuri") : t("Hindura Uburyo bw'Umwijima", "Hindura Uburyo bw'Umwijima")}
         className="text-foreground hover:bg-accent hover:text-accent-foreground"
       >
         {currentTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -173,12 +107,12 @@ export function UserNav() {
         <>
           <Button variant="outline" asChild className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
             <Link href="/welcome">
-              <LogIn className="mr-2 h-4 w-4" /> {t('Login', 'Injira')}
+              <LogIn className="mr-2 h-4 w-4" /> {t('Injira', 'Injira')}
             </Link>
           </Button>
           <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/welcome">
-              <UserPlus className="mr-2 h-4 w-4" /> {t('Register', 'Iyandikishe')}
+              <UserPlus className="mr-2 h-4 w-4" /> {t('Iyandikishe', 'Iyandikishe')}
             </Link>
           </Button>
         </>
@@ -195,13 +129,13 @@ export function UserNav() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{userName}</p>
+                <p className="text-sm font-medium leading-none">{userName || t("Ukoresha", "Ukoresha")}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {userType === 'patient' ? t('Patient', 'Umurwayi') :
-                   userType === 'doctor' ? t('Doctor', 'Muganga') :
-                   userType === 'admin' ? t('Administrator', 'Umunyamabanga') :
-                   userType === 'seeker' ? t('Health Seeker', 'Ushaka Ubujyanama') :
-                   t('User', 'Ukoresha')}
+                  {userType === 'patient' ? t('Umurwayi', 'Umurwayi') :
+                   userType === 'doctor' ? t('Muganga', 'Muganga') :
+                   userType === 'admin' ? t('Umunyamabanga', 'Umunyamabanga') :
+                   userType === 'seeker' ? t('Ushaka Ubujyanama', 'Ushaka Ubujyanama') :
+                   t('Ukoresha', 'Ukoresha')}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -210,14 +144,14 @@ export function UserNav() {
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <UserCircle className="mr-2 h-4 w-4" />
-                  <span>{t('My Profile', 'Umwirondoro Wanjye')}</span>
+                  <span>{t('Umwirondoro Wanjye', 'Umwirondoro Wanjye')}</span>
                 </Link>
               </DropdownMenuItem>
               {userType === 'admin' && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>{t('Admin Dashboard', 'Imbonerahamwe y\'Ubuyobozi')}</span>
+                    <span>{t('Imbonerahamwe y\'Ubuyobozi', 'Imbonerahamwe y\'Ubuyobozi')}</span>
                   </Link>
                 </DropdownMenuItem>
               )}
@@ -225,15 +159,15 @@ export function UserNav() {
                 <DropdownMenuItem asChild>
                   <Link href="/doctor/dashboard">
                     <Briefcase className="mr-2 h-4 w-4" />
-                    <span>{t('Doctor Dashboard', 'Imbonerahamwe ya Muganga')}</span>
+                    <span>{t('Imbonerahamwe ya Muganga', 'Imbonerahamwe ya Muganga')}</span>
                   </Link>
                 </DropdownMenuItem>
               )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive group">
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive group">
               <LogOut className="mr-2 h-4 w-4 group-hover:text-destructive" />
-              <span>{t('Log out', 'Sohoka')}</span>
+              <span>{t('Sohoka', 'Sohoka')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

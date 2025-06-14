@@ -19,19 +19,16 @@ import { MainNav } from '@/components/shared/main-nav';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck } from 'lucide-react';
 
+// AppLayout is now language-agnostic for its own text, text comes from children or sub-components
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) {
-      setPreferredLanguage(lang);
-    }
   }, []);
   
-  const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+  // Defaulting to Kinyarwanda as per general direction
+  const t = (enText: string, knText: string) => knText;
 
 
   return (
@@ -47,9 +44,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <MainNav />
         </SidebarContent>
         <SidebarFooter className="p-4 border-t border-sidebar-border">
-           <Button variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+           <Button variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+            onClick={() => alert(t('Privacy & Security policy would be displayed here.', 'Amabwiriza y\'Ubuzima Bwite n\'Umutekano yagaragara hano.'))}>
             <ShieldCheck className="mr-2 h-5 w-5" />
-            <span>{isClient ? t('Privacy & Security', 'Ubuzima Bwite & Umutekano') : 'Privacy & Security'}</span>
+            <span>{isClient ? t('Privacy & Security', 'Ubuzima Bwite & Umutekano') : 'Ubuzima Bwite & Umutekano'}</span>
           </Button>
         </SidebarFooter>
         <SidebarRail />

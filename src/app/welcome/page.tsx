@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { LogoIcon } from '@/components/icons/logo';
 import { User, UserCog, Briefcase, Shield, LogIn, UserPlus, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
 
 type Role = "patient" | "doctor" | "seeker" | "admin";
 
@@ -21,26 +23,41 @@ const roles: { name: Role; title: string; titleKn: string; description: string; 
 
 export default function WelcomePage() {
   const router = useRouter();
+  const { toast } = useToast(); // Keep toast for general messages
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  // Assuming Kinyarwanda is the default for now
-  const [language, setLanguage] = useState<'en' | 'kn'>('kn'); 
+  
+  // Defaulting to Kinyarwanda as per app direction
+  const language = 'kn';
+  const t = (enText: string, knText: string) => language === 'kn' ? knText : enText;
+
+  useEffect(() => {
+    // Clear any simulated auth state on welcome page load as localStorage is removed.
+    // This is conceptual; real auth state would be managed via context/backend.
+  }, []);
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    localStorage.setItem('selectedRole', role); 
+    // No longer saving selectedRole to localStorage
+    // The selection is now transient for this page only to guide next step.
   };
 
   const getLoginPath = () => {
-    if (selectedRole === "admin") return "/admin/login";
-    return "/login";
+    // Navigate to login, passing role as query param conceptually
+    // Real app would handle role context server-side or via state management after login
+    if (selectedRole === "admin") return `/admin/login?role=${selectedRole}`;
+    return `/login?role=${selectedRole}`;
   };
   
   const getRegisterPath = () => {
-    if (selectedRole === "admin") return "#"; 
-    return "/register";
+    if (selectedRole === "admin") {
+      toast({
+          title: t('Admin Registration', 'Kwiyandikisha kw\'Umunyamabanga'),
+          description: t('Administrator accounts are created internally.', 'Konti z\'abanyamabanga zikorerwa imbere.'),
+      });
+      return "#"; // Prevent navigation for admin registration
+    }
+    return `/register?role=${selectedRole}`;
   };
-
-  const t = (enText: string, knText: string) => language === 'kn' ? knText : enText;
 
 
   return (
@@ -55,7 +72,7 @@ export default function WelcomePage() {
           <CardTitle className="text-2xl sm:text-3xl font-headline gradient-text">{t('Welcome to MediServe Hub!', 'Murakaza neza kuri MediServe Hub!')}</CardTitle>
           <CardDescription className="text-md sm:text-lg text-muted-foreground">
             {selectedRole ? 
-              t(`You've selected: ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}. Now, please login or register.`, `Wahisemo: ${roles.find(r=>r.name === selectedRole)?.titleKn}. Noneho, injira cyangwa wiyandikishe.`) 
+              t(`You've selected: ${roles.find(r => r.name === selectedRole)?.title || selectedRole}. Now, please login or register.`, `Wahisemo: ${roles.find(r => r.name === selectedRole)?.titleKn || selectedRole}. Noneho, injira cyangwa wiyandikishe.`) 
               : t("Please select your role to continue.", "Nyamuneka hitamo uruhare rwawe kugirango ukomeze.")
             }
           </CardDescription>
@@ -101,36 +118,28 @@ export default function WelcomePage() {
                   </CardContent>
                 </Card>
                 
-                {selectedRole !== 'admin' && (
-                    <Card 
-                        className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20 border-2 border-accent/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-accent/30"
-                        onClick={() => router.push(getRegisterPath())}
-                    >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl font-medium font-headline text-accent">{t('Register', 'Iyandikishe')}</CardTitle>
-                        <UserPlus className="h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">{t('Create a new account.', 'Fungura konti nshya.')}</p>
+                <Card 
+                    className={cn(
+                        "hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20 border-2 border-accent/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-accent/30",
+                        selectedRole === 'admin' && "opacity-60 cursor-not-allowed bg-muted/10 border-muted/30 hover:bg-muted/10"
+                    )}
+                    onClick={() => selectedRole !== 'admin' && router.push(getRegisterPath())}
+                >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className={cn("text-xl font-medium font-headline text-accent", selectedRole === 'admin' && "text-muted-foreground")}>{t('Register', 'Iyandikishe')}</CardTitle>
+                    <UserPlus className={cn("h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110", selectedRole === 'admin' && "text-muted-foreground")} />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        {selectedRole === 'admin' ? t('Admin registration is managed internally.', 'Kwiyandikisha kw\'abanyamabanga bikorerwa imbere.') : t('Create a new account.', 'Fungura konti nshya.')}
+                    </p>
+                    {selectedRole !== 'admin' && (
                         <div className="flex items-center pt-3 text-sm font-medium text-accent group-hover:underline">
                             {t('Create Account', 'Fungura Konti')} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                         </div>
-                    </CardContent>
-                    </Card>
-                )}
-                 {selectedRole === 'admin' && (
-                    <Card 
-                        className="opacity-60 cursor-not-allowed bg-muted/10 border-2 border-muted/30"
-                    >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl font-medium font-headline text-muted-foreground">{t('Register', 'Iyandikishe')}</CardTitle>
-                        <UserPlus className="h-8 w-8 text-muted-foreground opacity-80 transition-opacity" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">{t('Admin registration is managed internally.', 'Kwiyandikisha kw\'abanyamabanga bikorerwa imbere.')}</p>
-                    </CardContent>
-                    </Card>
-                )}
+                    )}
+                </CardContent>
+                </Card>
               </div>
               <Button variant="outline" onClick={() => setSelectedRole(null)} className="w-full sm:w-auto hover:bg-muted/80 transition-colors">
                 {t('Back to Role Selection', 'Subira ku Ihitamo ry\'Uruhare')}

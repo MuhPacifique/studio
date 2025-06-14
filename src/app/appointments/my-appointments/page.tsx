@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { format, isPast } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface Appointment {
+interface AppointmentClient { // Renamed to avoid conflict
   id: string;
-  userId: string;
+  userId: string; // This would be used by a backend to filter
   doctorId: string;
   doctorName: string;
   specialty?: string; 
@@ -26,8 +26,7 @@ interface Appointment {
   reason?: string;
 }
 
-// Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 const AppointmentSkeleton = () => (
   <Card className="shadow-lg">
@@ -55,64 +54,30 @@ export default function MyAppointmentsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  // Assume not authenticated until backend confirms
+  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  const [appointments, setAppointments] = useState<AppointmentClient[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true); 
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    // Simulate auth check and data fetching
+    const loadData = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsAuthenticated(true); // Assume authenticated for prototype
+        // Data would be fetched from backend here, not localStorage
+        // For now, show empty or very minimal mock data
+        setAppointments([ /*
+          { id: 'appt1', userId: 'user123', doctorId: 'doc1', doctorName: 'Dr. Emily Carter', specialty: 'General Physician', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), time: '10:00 AM', status: 'Confirmed', type: 'Online', reason: 'Checkup'},
+          { id: 'appt2', userId: 'user123', doctorId: 'doc2', doctorName: 'Dr. Ben Adams', specialty: 'Pediatrician', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), time: '02:30 PM', status: 'Completed', type: 'In-Person', reason: 'Vaccination'}
+        */ ]); 
+        setIsLoadingData(false);
+    };
+    loadData();
   }, []);
 
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      const userId = localStorage.getItem('mockPatientId') || localStorage.getItem('mockUserEmail');
-
-      setCurrentUserId(userId);
-
-      if (!authStatus || !userId) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe"),
-          description: t("Please log in to view your appointments.", "Nyamuneka injira kugirango urebe amateraniro yawe."),
-        });
-        router.replace('/welcome');
-      } else {
-        setIsAuthenticated(true);
-        loadAppointments(userId);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast, currentLanguage]);
-
-  const loadAppointments = (userId: string) => {
-    setIsLoadingData(true);
-    try {
-      const storedAppointmentsString = localStorage.getItem('userAppointments');
-      if (storedAppointmentsString) {
-        const allAppointments: Appointment[] = JSON.parse(storedAppointmentsString);
-        const userAppointments = allAppointments
-            .filter(appt => appt.userId === userId)
-            .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()); 
-        setAppointments(userAppointments);
-      } else {
-        setAppointments([]);
-      }
-    } catch (error) {
-        console.error("Failed to load appointments:", error);
-        toast({variant: "destructive", title: t("Error", "Ikosa"), description: t("Could not load your appointments.", "Ntibishoboye gutegura amateraniro yawe.")})
-    } finally {
-        setIsLoadingData(false);
-    }
-  };
   
-  const getStatusBadgeVariant = (status: Appointment['status']): "default" | "secondary" | "destructive" | "outline" => {
+  const getStatusBadgeVariant = (status: AppointmentClient['status']): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Confirmed': return 'default'; 
       case 'Pending': return 'secondary'; 
@@ -122,48 +87,39 @@ export default function MyAppointmentsPage() {
     }
   };
 
-  const getStatusText = (status: Appointment['status']): string => {
-    if (currentLanguage === 'kn') {
-      if (status === 'Confirmed') return 'Byemejwe';
-      if (status === 'Pending') return 'Bigitegerejwe';
-      if (status === 'Completed') return 'Byarangiye';
-      if (status === 'Cancelled') return 'Byahagaritswe';
-    }
+  const getStatusText = (status: AppointmentClient['status']): string => {
+    if (status === 'Confirmed') return t('Byemejwe', 'Byemejwe');
+    if (status === 'Pending') return t('Bigitegerejwe', 'Bigitegerejwe');
+    if (status === 'Completed') return t('Byarangiye', 'Byarangiye');
+    if (status === 'Cancelled') return t('Byahagaritswe', 'Byahagaritswe');
     return status;
   }
 
-  const getTypeText = (type: Appointment['type']): string => {
-    if (currentLanguage === 'kn') {
-        if (type === 'Online') return 'Kuri Interineti';
-        if (type === 'In-Person') return 'Aho Bahurira';
-    }
+  const getTypeText = (type: AppointmentClient['type']): string => {
+    if (type === 'Online') return t('Kuri Interineti', 'Kuri Interineti');
+    if (type === 'In-Person') return t('Aho Bahurira', 'Aho Bahurira');
     return type;
   }
 
 
   const handleCancelAppointment = (apptId: string) => {
-     if (!currentUserId) return;
-    setAppointments(prev => 
-        prev.map(appt => appt.id === apptId ? {...appt, status: 'Cancelled'} : appt)
-    );
-    
-    const allAppointmentsString = localStorage.getItem('userAppointments');
-    let allAppointments: Appointment[] = allAppointmentsString ? JSON.parse(allAppointmentsString) : [];
-    const updatedAllAppointments = allAppointments.map(appt => appt.id === apptId && appt.userId === currentUserId ? {...appt, status: 'Cancelled'} : appt);
-    localStorage.setItem('userAppointments', JSON.stringify(updatedAllAppointments));
-    
+    // This would be an API call to the backend
+    // For UI, we can optimistically update or show a toast.
+    // setAppointments(prev => 
+    //     prev.map(appt => appt.id === apptId ? {...appt, status: 'Cancelled'} : appt)
+    // );
     toast({
-        title: t("Cancellation Requested", "Guhagarika Byasabwe"),
-        description: t(`Request to cancel appointment ${apptId} has been submitted.`, `Gusaba guhagarika iteraniro ${apptId} byoherejwe.`),
+        title: t("Gusaba Guhagarika (Igerageza)", "Gusaba Guhagarika (Igerageza)"),
+        description: t(`Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri.`, `Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri.`),
     });
   };
 
-  const handleJoinCall = (appointment: Appointment) => {
+  const handleJoinCall = (appointment: AppointmentClient) => {
     if (appointment.type === 'Online' && (appointment.status === 'Confirmed' || appointment.status === 'Pending')) { 
-        toast({ title: t("Joining Online Consultation", "Kwinjira mu Bujyanama kuri Interineti"), description: t(`Connecting to your call with ${appointment.doctorName}...`, `Guhuza n'ikiganiro cyawe na ${appointment.doctorName}...`)});
-        router.push('/online-consultation'); 
+        toast({ title: t("Kwinjira mu Bujyanama kuri Interineti (Igerageza)", "Kwinjira mu Bujyanama kuri Interineti (Igerageza)"), description: t(`Guhuza n'ikiganiro cyawe na ${appointment.doctorName}... Ibi byasaba seriveri ya videwo.`, `Guhuza n'ikiganiro cyawe na ${appointment.doctorName}... Ibi byasaba seriveri ya videwo.`)});
+        // router.push('/online-consultation'); // Navigation can still happen
     } else {
-        toast({ variant:"destructive", title: t("Cannot Join Call", "Ntushobora Kwinjira mu Kiganiro"), description: t("This appointment is not an active online consultation.", "Iri teraniro ntabwo ari ikiganiro cyo kuri interineti kiri gukora.")});
+        toast({ variant:"destructive", title: t("Ntushobora Kwinjira mu Kiganiro", "Ntushobora Kwinjira mu Kiganiro"), description: t("Iri teraniro ntabwo ari ikiganiro cyo kuri interineti kiri gukora.", "Iri teraniro ntabwo ari ikiganiro cyo kuri interineti kiri gukora.")});
     }
   };
 
@@ -172,27 +128,27 @@ export default function MyAppointmentsPage() {
     return (
       <AppLayout>
          <PageHeader 
-            title={t("My Appointments", "Amateraniro Yanjye")} 
+            title={t("Amateraniro Yanjye", "Amateraniro Yanjye")} 
             breadcrumbs={[
-            {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
-            {label: t("Appointments", "Amateraniro"), href: "/appointments/my-appointments"}, 
-            {label: t("My Appointments", "Amateraniro Yanjye")}
+            {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+            {label: t("Amateraniro", "Amateraniro"), href: "/appointments/my-appointments"}, 
+            {label: t("Amateraniro Yanjye", "Amateraniro Yanjye")}
             ]}
         >
             <Button onClick={() => router.push('/appointments/book')} className="transition-transform hover:scale-105 active:scale-95">
-                <CalendarCheck2 className="mr-2 h-4 w-4" /> {t("Book New Appointment", "Fata Igihe Gishya")}
+                <CalendarCheck2 className="mr-2 h-4 w-4" /> {t("Fata Igihe Gishya", "Fata Igihe Gishya")}
             </Button>
         </PageHeader>
         <div className="space-y-8">
             <section>
-                <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Upcoming Appointments", "Amateraniro Ateganijwe")}</h2>
+                <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Amateraniro Ateganijwe", "Amateraniro Ateganijwe")}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <AppointmentSkeleton />
                     <AppointmentSkeleton />
                 </div>
             </section>
             <section>
-                <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Past Appointments", "Amateraniro Yashize")}</h2>
+                <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Amateraniro Yashize", "Amateraniro Yashize")}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <AppointmentSkeleton />
                 </div>
@@ -201,6 +157,20 @@ export default function MyAppointmentsPage() {
       </AppLayout>
     );
   }
+  
+  if (!isAuthenticated) {
+     return (
+         <AppLayout>
+            <PageHeader title={t("Amateraniro Yanjye", "Amateraniro Yanjye")} />
+            <Card className="mt-10 text-center p-10">
+                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
+                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango urebe amateraniro yawe.", "Nyamuneka injira kugirango urebe amateraniro yawe.")}</CardDescription>
+                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+            </Card>
+         </AppLayout>
+     )
+  }
+
 
   const upcomingAppointments = appointments
     .filter(appt => (appt.status === 'Confirmed' || appt.status === 'Pending') && !isPast(new Date(appt.date)))
@@ -214,95 +184,99 @@ export default function MyAppointmentsPage() {
   return (
     <AppLayout>
       <PageHeader 
-        title={t("My Appointments", "Amateraniro Yanjye")} 
+        title={t("Amateraniro Yanjye", "Amateraniro Yanjye")} 
         breadcrumbs={[
-          {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
-          {label: t("Appointments", "Amateraniro"), href: "/appointments/my-appointments"}, 
-          {label: t("My Appointments", "Amateraniro Yanjye")}
+          {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+          {label: t("Amateraniro", "Amateraniro"), href: "/appointments/my-appointments"}, 
+          {label: t("Amateraniro Yanjye", "Amateraniro Yanjye")}
         ]}
       >
         <Button onClick={() => router.push('/appointments/book')} className="transition-transform hover:scale-105 active:scale-95">
-            <CalendarCheck2 className="mr-2 h-4 w-4" /> {t("Book New Appointment", "Fata Igihe Gishya")}
+            <CalendarCheck2 className="mr-2 h-4 w-4" /> {t("Fata Igihe Gishya", "Fata Igihe Gishya")}
         </Button>
       </PageHeader>
       
-      <div className="space-y-8">
-        <section>
-            <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Upcoming Appointments", "Amateraniro Ateganijwe")}</h2>
-            {upcomingAppointments.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {upcomingAppointments.map(appt => (
-                        <Card key={appt.id} className="shadow-lg hover-lift">
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <CardTitle className="font-headline text-xl">{appt.doctorName}</CardTitle>
-                                    <Badge variant={getStatusBadgeVariant(appt.status)}>{getStatusText(appt.status)}</Badge>
-                                </div>
-                                <CardDescription>{appt.specialty || t('General Consultation', 'Ubujyanama Rusange')}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                                <p className="flex items-center"><CalendarCheck2 className="mr-2 h-4 w-4 text-muted-foreground" /> {format(new Date(appt.date), "PPP")} {t('at', 'saa')} {appt.time}</p>
-                                <p className="flex items-center"><UserCheck className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Type', 'Ubwoko')}: {getTypeText(appt.type)}</p>
-                                {appt.reason && <p className="flex items-center"><Info className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Reason', 'Impamvu')}: {appt.reason}</p>}
-                            </CardContent>
-                            <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
-                               {appt.type === 'Online' && (appt.status === 'Confirmed' || appt.status === 'Pending') && (
-                                    <Button variant="default" size="sm" onClick={() => handleJoinCall(appt)} className="w-full sm:w-auto">
-                                        <Video className="mr-2 h-4 w-4" /> {t("Join Call", "Injira mu Kiganiro")}
-                                    </Button>
-                                )}
-                                {appt.status !== 'Cancelled' && appt.status !== 'Completed' && (
-                                     <Button variant="outline" size="sm" onClick={() => toast({title: t("Reschedule (Mock)", "Hindura Igihe (By'agateganyo)"), description: t("Contact support to reschedule.", "Vugana n'ubufasha kugirango uhindure igihe.")})}  className="w-full sm:w-auto">
-                                        <RefreshCw className="mr-2 h-4 w-4" /> {t("Reschedule", "Hindura Igihe")}
-                                    </Button>
-                                )}
-                                {appt.status !== 'Cancelled' && appt.status !== 'Completed' && (
-                                    <Button variant="destructive" size="sm" onClick={() => handleCancelAppointment(appt.id)} className="w-full sm:w-auto">
-                                        <PhoneOff className="mr-2 h-4 w-4" /> {t("Cancel", "Hagarika")}
-                                    </Button>
-                                )}
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-muted-foreground">{t("You have no upcoming appointments.", "Nta materaniro ateganijwe ufite.")}</p>
-            )}
-        </section>
+      {appointments.length === 0 && (
+        <Card className="text-center p-10 shadow-lg">
+            <CalendarCheck2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <CardTitle>{t("Nta Materaniro Ufite", "Nta Materaniro Ufite")}</CardTitle>
+            <CardDescription className="mt-2">
+                {t("Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu!", "Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu!")}
+            </CardDescription>
+        </Card>
+      )}
 
-        <section>
-            <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Past Appointments", "Amateraniro Yashize")}</h2>
-            {pastAppointments.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {pastAppointments.map(appt => (
-                        <Card key={appt.id} className="shadow-md opacity-80">
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <CardTitle className="font-headline text-lg">{appt.doctorName}</CardTitle>
-                                     <Badge variant={getStatusBadgeVariant(appt.status)}>{getStatusText(appt.status)}</Badge>
-                                </div>
-                                <CardDescription>{appt.specialty || t('General Consultation', 'Ubujyanama Rusange')}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-1">
-                                <p className="flex items-center text-sm"><CalendarCheck2 className="mr-2 h-4 w-4 text-muted-foreground" /> {format(new Date(appt.date), "PPP")} {t('at', 'saa')} {appt.time}</p>
-                                <p className="flex items-center text-sm"><UserCheck className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Type', 'Ubwoko')}: {getTypeText(appt.type)}</p>
-                                {appt.reason && <p className="text-sm flex items-start"><Info className="mr-2 h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" /> {t('Reason', 'Impamvu')}: {appt.reason}</p>}
-                            </CardContent>
-                             {appt.status === 'Completed' && (
-                                <CardFooter>
-                                    <Button variant="ghost" size="sm" onClick={() => toast({title: t("View Summary (Mock)", "Reba Incamake (By'agateganyo)"), description:t("Displaying appointment summary...", "Kwerekana incamake y'iteraniro...")})}>
-                                        <MessageSquare className="mr-2 h-4 w-4" /> {t("View Summary / Notes", "Reba Incamake / Inyandiko")}
-                                    </Button>
-                                </CardFooter>
-                             )}
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                 <p className="text-muted-foreground">{t("You have no past appointments.", "Nta materaniro yashize ufite.")}</p>
-            )}
+      {upcomingAppointments.length > 0 && (
+        <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Amateraniro Ateganijwe", "Amateraniro Ateganijwe")}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {upcomingAppointments.map(appt => (
+                    <Card key={appt.id} className="shadow-lg hover-lift">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="font-headline text-xl">{appt.doctorName}</CardTitle>
+                                <Badge variant={getStatusBadgeVariant(appt.status)}>{getStatusText(appt.status)}</Badge>
+                            </div>
+                            <CardDescription>{appt.specialty || t('Ubujyanama Rusange', 'Ubujyanama Rusange')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <p className="flex items-center"><CalendarCheck2 className="mr-2 h-4 w-4 text-muted-foreground" /> {format(new Date(appt.date), "PPP")} {t('saa', 'saa')} {appt.time}</p>
+                            <p className="flex items-center"><UserCheck className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Ubwoko', 'Ubwoko')}: {getTypeText(appt.type)}</p>
+                            {appt.reason && <p className="flex items-center"><Info className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Impamvu', 'Impamvu')}: {appt.reason}</p>}
+                        </CardContent>
+                        <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                           {appt.type === 'Online' && (appt.status === 'Confirmed' || appt.status === 'Pending') && (
+                                <Button variant="default" size="sm" onClick={() => handleJoinCall(appt)} className="w-full sm:w-auto">
+                                    <Video className="mr-2 h-4 w-4" /> {t("Injira mu Kiganiro", "Injira mu Kiganiro")}
+                                </Button>
+                            )}
+                            {appt.status !== 'Cancelled' && appt.status !== 'Completed' && (
+                                 <Button variant="outline" size="sm" onClick={() => toast({title: t("Hindura Igihe (Igerageza)", "Hindura Igihe (Igerageza)"), description: t("Vugana n'ubufasha kugirango uhindure igihe.", "Vugana n'ubufasha kugirango uhindure igihe.")})}  className="w-full sm:w-auto">
+                                    <RefreshCw className="mr-2 h-4 w-4" /> {t("Hindura Igihe", "Hindura Igihe")}
+                                </Button>
+                            )}
+                            {appt.status !== 'Cancelled' && appt.status !== 'Completed' && (
+                                <Button variant="destructive" size="sm" onClick={() => handleCancelAppointment(appt.id)} className="w-full sm:w-auto">
+                                    <PhoneOff className="mr-2 h-4 w-4" /> {t("Hagarika", "Hagarika")}
+                                </Button>
+                            )}
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
         </section>
-      </div>
+      )}
+
+      {pastAppointments.length > 0 && (
+        <section>
+            <h2 className="text-2xl font-semibold mb-4 font-headline text-primary">{t("Amateraniro Yashize", "Amateraniro Yashize")}</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {pastAppointments.map(appt => (
+                    <Card key={appt.id} className="shadow-md opacity-80">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="font-headline text-lg">{appt.doctorName}</CardTitle>
+                                 <Badge variant={getStatusBadgeVariant(appt.status)}>{getStatusText(appt.status)}</Badge>
+                            </div>
+                            <CardDescription>{appt.specialty || t('Ubujyanama Rusange', 'Ubujyanama Rusange')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-1">
+                            <p className="flex items-center text-sm"><CalendarCheck2 className="mr-2 h-4 w-4 text-muted-foreground" /> {format(new Date(appt.date), "PPP")} {t('saa', 'saa')} {appt.time}</p>
+                            <p className="flex items-center text-sm"><UserCheck className="mr-2 h-4 w-4 text-muted-foreground" /> {t('Ubwoko', 'Ubwoko')}: {getTypeText(appt.type)}</p>
+                            {appt.reason && <p className="text-sm flex items-start"><Info className="mr-2 h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" /> {t('Impamvu', 'Impamvu')}: {appt.reason}</p>}
+                        </CardContent>
+                         {appt.status === 'Completed' && (
+                            <CardFooter>
+                                <Button variant="ghost" size="sm" onClick={() => toast({title: t("Reba Incamake (Igerageza)", "Reba Incamake (Igerageza)"), description:t("Kwerekana incamake y'iteraniro...", "Kwerekana incamake y'iteraniro...")})}>
+                                    <MessageSquare className="mr-2 h-4 w-4" /> {t("Reba Incamake / Inyandiko", "Reba Incamake / Inyandiko")}
+                                </Button>
+                            </CardFooter>
+                         )}
+                    </Card>
+                ))}
+            </div>
+        </section>
+      )}
     </AppLayout>
   );
 }

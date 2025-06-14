@@ -13,25 +13,24 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface PrescribedMedicineItem {
+interface PrescribedMedicineItemClient { // Renamed
   id: string;
   name: string;
   dosage: string;
   frequency: string;
   duration: string;
 }
-interface Prescription {
+interface PrescriptionClient { // Renamed
   id: string;
   patientId: string; 
   doctorName: string;
   datePrescribed: string; 
-  medicines: PrescribedMedicineItem[];
+  medicines: PrescribedMedicineItemClient[];
   notes?: string;
   status: 'Active' | 'Completed' | 'Expired';
 }
 
-// Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 const PrescriptionSkeleton = () => (
   <Card className="shadow-lg">
@@ -68,49 +67,28 @@ export default function MyPrescriptionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); 
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Assume false initially
+  const [prescriptions, setPrescriptions] = useState<PrescriptionClient[]>([]); 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    // Simulate auth check and data fetching
+    const loadData = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        setIsAuthenticated(true); // Assume authenticated for prototype
+        
+        // Data would be fetched from backend, not localStorage
+        // For now, show empty or minimal mock data if localStorage is gone
+        setPrescriptions([ /*
+            { id: 'rx1', patientId: 'user123', doctorName: 'Dr. Alex Smith', datePrescribed: new Date().toISOString(), medicines: [{id: 'med1', name: 'Paracetamol 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'}], notes: 'Take after meals.', status: 'Active' }
+        */ ]);
+        setIsLoadingData(false);
+    };
+    loadData();
   }, []);
   
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe"),
-          description: t("Please log in to view your prescriptions.", "Nyamuneka injira kugirango ubashe kureba imiti wandikiwe."),
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-        const currentPatientId = localStorage.getItem('mockPatientId');
-        const allPrescriptionsString = localStorage.getItem('allPrescriptions');
-        if (allPrescriptionsString && currentPatientId) {
-          try {
-            const allPrescriptions: Prescription[] = JSON.parse(allPrescriptionsString);
-            const userPrescriptions = allPrescriptions.filter(rx => rx.patientId === currentPatientId);
-            setPrescriptions(userPrescriptions.sort((a, b) => new Date(b.datePrescribed).getTime() - new Date(a.datePrescribed).getTime()));
-          } catch (error) {
-            console.error("Error parsing prescriptions from localStorage:", error);
-            toast({variant: "destructive", title: t("Error", "Ikosa"), description: t("Could not load your prescriptions.", "Ntibishoboye gutegura imiti wandikiwe.")})
-          }
-        }
-        setIsLoadingData(false);
-      }
-    }
-  }, [isClient, router, toast, currentLanguage]);
-  
-  const getStatusBadgeVariant = (status: Prescription['status']): "default" | "secondary" | "outline" | "destructive" => {
+  const getStatusBadgeVariant = (status: PrescriptionClient['status']): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
       case 'Active': return 'default'; 
       case 'Completed': return 'secondary';
@@ -119,12 +97,10 @@ export default function MyPrescriptionsPage() {
     }
   };
   
-  const getStatusText = (status: Prescription['status']): string => {
-    if (currentLanguage === 'kn') {
-      if (status === 'Active') return 'Ikirimo Gukoreshwa';
-      if (status === 'Completed') return 'Byarangiye';
-      if (status === 'Expired') return 'Byarangiye Igihe';
-    }
+  const getStatusText = (status: PrescriptionClient['status']): string => {
+    if (status === 'Active') return t('Ikirimo Gukoreshwa', 'Ikirimo Gukoreshwa');
+    if (status === 'Completed') return t('Byarangiye', 'Byarangiye');
+    if (status === 'Expired') return t('Byarangiye Igihe', 'Byarangiye Igihe');
     return status;
   };
 
@@ -132,11 +108,11 @@ export default function MyPrescriptionsPage() {
     return (
       <AppLayout>
          <PageHeader 
-            title={t("My Prescriptions", "Imiti Nandikiwe")} 
+            title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} 
             breadcrumbs={[
-            {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
-            {label: t("My Health", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"}, // Assuming #my-health resolves to this or similar parent
-            {label: t("My Prescriptions", "Imiti Nandikiwe")}
+            {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+            {label: t("Ubuzima Bwanjye", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
+            {label: t("Imiti Nandikiwe", "Imiti Nandikiwe")}
             ]}
         />
         <div className="space-y-6">
@@ -146,16 +122,29 @@ export default function MyPrescriptionsPage() {
       </AppLayout>
     );
   }
+
+  if (!isAuthenticated) {
+     return (
+         <AppLayout>
+            <PageHeader title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} />
+            <Card className="mt-10 text-center p-10">
+                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
+                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango urebe imiti wandikiwe.", "Nyamuneka injira kugirango urebe imiti wandikiwe.")}</CardDescription>
+                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+            </Card>
+         </AppLayout>
+     )
+  }
   
 
   return (
     <AppLayout>
       <PageHeader 
-        title={t("My Prescriptions", "Imiti Nandikiwe")} 
+        title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} 
         breadcrumbs={[
-          {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
-          {label: t("My Health", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
-          {label: t("My Prescriptions", "Imiti Nandikiwe")}
+          {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+          {label: t("Ubuzima Bwanjye", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
+          {label: t("Imiti Nandikiwe", "Imiti Nandikiwe")}
         ]}
       />
       
@@ -165,23 +154,23 @@ export default function MyPrescriptionsPage() {
             <Card key={rx.id} className="shadow-lg hover-lift">
               <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
-                  <CardTitle className="font-headline text-xl mb-1 sm:mb-0">{t("Prescription from", "Urupapuro rw'imiti rwa")} {rx.doctorName}</CardTitle>
+                  <CardTitle className="font-headline text-xl mb-1 sm:mb-0">{t("Urupapuro rw'imiti rwa", "Urupapuro rw'imiti rwa")} {rx.doctorName}</CardTitle>
                   <Badge variant={getStatusBadgeVariant(rx.status)} className="w-fit">{getStatusText(rx.status)}</Badge>
                 </div>
                 <CardDescription className="flex items-center text-sm">
                   <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                  {t("Prescribed on:", "Rwanditswe ku itariki:")} {format(new Date(rx.datePrescribed), "PPP")}
+                  {t("Rwanditswe ku itariki:", "Rwanditswe ku itariki:")} {format(new Date(rx.datePrescribed), "PPP")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center"><Pill className="mr-2 h-5 w-5 text-primary"/>{t("Medicines:", "Imiti:")}</h4>
+                  <h4 className="font-semibold mb-2 flex items-center"><Pill className="mr-2 h-5 w-5 text-primary"/>{t("Imiti:", "Imiti:")}</h4>
                   <ul className="space-y-2 pl-2">
                     {rx.medicines.map(med => (
                       <li key={med.id} className="text-sm p-2 border-l-2 border-primary/30 bg-muted/30 dark:bg-muted/10 rounded-r-md">
                         <p><span className="font-medium">{med.name}</span></p>
                         <p className="text-xs text-muted-foreground">
-                          {t("Dosage:", "Ingano:")} {med.dosage} | {t("Frequency:", "Inshuro:")} {med.frequency} | {t("Duration:", "Igihe:")} {med.duration}
+                          {t("Ingano:", "Ingano:")} {med.dosage} | {t("Inshuro:", "Inshuro:")} {med.frequency} | {t("Igihe:", "Igihe:")} {med.duration}
                         </p>
                       </li>
                     ))}
@@ -189,31 +178,30 @@ export default function MyPrescriptionsPage() {
                 </div>
                 {rx.notes && (
                   <div>
-                    <h4 className="font-semibold mb-1 flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>{t("Doctor's Notes:", "Inyandiko za Muganga:")}</h4>
+                    <h4 className="font-semibold mb-1 flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>{t("Inyandiko za Muganga:", "Inyandiko za Muganga:")}</h4>
                     <p className="text-sm text-muted-foreground bg-primary/5 dark:bg-primary/10 p-3 rounded-md border border-primary/20">{rx.notes}</p>
                   </div>
                 )}
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 border-t pt-4">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors">
-                  <Download className="mr-2 h-4 w-4"/> {t("Download PDF (Mock)", "Kurura PDF (By'agateganyo)")}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Mock)", "Kurura PDF (By'agateganyo)")})}>
+                  <Download className="mr-2 h-4 w-4"/> {t("Kurura PDF (Igerageza)", "Kurura PDF (Igerageza)")}
                 </Button>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors">
-                  <Printer className="mr-2 h-4 w-4"/> {t("Print Prescription (Mock)", "Chapisha Urupapuro (By'agateganyo)")}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Mock)", "Chapisha Urupapuro (By'agateganyo)")})}>
+                  <Printer className="mr-2 h-4 w-4"/> {t("Chapisha Urupapuro (Igerageza)", "Chapisha Urupapuro (Igerageza)")}
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="shadow-lg hover-lift">
-            <CardHeader>
-                <CardTitle className="font-headline">{t("No Prescriptions Found", "Nta Rupapuro rw'Imiti Rubonetse")}</CardTitle>
-            </CardHeader>
+        <Card className="shadow-lg hover-lift text-center p-10">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4"/>
+            <CardTitle className="font-headline">{t("Nta Rupapuro rw'Imiti Rubonetse", "Nta Rupapuro rw'Imiti Rubonetse")}</CardTitle>
             <CardContent>
-                <p className="text-muted-foreground">{t("You currently do not have any prescriptions on record.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko.")}</p>
-                <Button onClick={() => router.push('/appointments/book')} className="mt-4 transition-transform hover:scale-105 active:scale-95">
-                    {t("Book an Appointment", "Fata Igihe kwa Muganga")}
+                <p className="text-muted-foreground mt-2">{t("Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Niba witeze kubona rumwe, vugana na muganga wawe cyangwa usure ishami ry'amateraniro.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Niba witeze kubona rumwe, vugana na muganga wawe cyangwa usure ishami ry'amateraniro.")}</p>
+                <Button onClick={() => router.push('/appointments/book')} className="mt-6 transition-transform hover:scale-105 active:scale-95">
+                    {t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")}
                 </Button>
             </CardContent>
         </Card>

@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Not directly used, FormLabel is preferred
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,12 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Smartphone, DollarSign, Loader2, Building, Landmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+
 const paymentSchema = z.object({
-  amount: z.coerce.number().min(100, { message: "Amount must be at least 100 RWF." }),
+  amount: z.coerce.number().min(100, { message: t("Amafaranga agomba kuba nibura 100 RWF.", "Amafaranga agomba kuba nibura 100 RWF.") }),
   paymentMethod: z.enum(["creditCard", "mobileMoney", "bankTransfer"], {
-    required_error: "You need to select a payment method.",
+    required_error: t("Ugomba guhitamo uburyo bwo kwishyura.", "Ugomba guhitamo uburyo bwo kwishyura."),
   }),
-  reason: z.string().min(5, {message: "Please provide a reason for payment (e.g., Order #123, Consultation Fee)."}),
+  reason: z.string().min(5, {message: t("Nyamuneka tanga impamvu yo kwishyura (urugero: Itumiza #123, Amafaranga yo kubonana na muganga).", "Nyamuneka tanga impamvu yo kwishyura (urugero: Itumiza #123, Amafaranga yo kubonana na muganga).")}),
   cardNumber: z.string().optional(),
   expiryDate: z.string().optional(),
   cvv: z.string().optional(),
@@ -31,37 +33,37 @@ const paymentSchema = z.object({
   mobileNumber: z.string().optional(),
   mobileProvider: z.string().optional(),
   bankName: z.string().optional(),
-  accountNumber: z.string().optional(),
-  userReference: z.string().optional(), // For bank transfer
+  accountNumber: z.string().optional(), // Not explicitly used in UI, but good for schema
+  userReference: z.string().optional(), 
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === "creditCard") {
     if (!data.cardHolderName || data.cardHolderName.trim().length < 2) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Card holder name is required.", path: ["cardHolderName"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Izina riri ku ikarita rirakenewe.", "Izina riri ku ikarita rirakenewe."), path: ["cardHolderName"] });
     }
     if (!data.cardNumber || !/^\d{16}$/.test(data.cardNumber.replace(/\s/g, '')) ) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid card number (must be 16 digits).", path: ["cardNumber"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Nimero y'ikarita yanditse nabi (igomba kuba imibare 16).", "Nimero y'ikarita yanditse nabi (igomba kuba imibare 16)."), path: ["cardNumber"] });
     }
     if (!data.expiryDate || !/^(0[1-9]|1[0-2])\s*\/\s*\d{2}$/.test(data.expiryDate)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid expiry date (MM/YY).", path: ["expiryDate"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Itariki yo kurangira yanditse nabi (UKWEZI/UMWAKA).", "Itariki yo kurangira yanditse nabi (UKWEZI/UMWAKA)."), path: ["expiryDate"] });
     }
     if (!data.cvv || !/^\d{3,4}$/.test(data.cvv)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid CVV (3 or 4 digits).", path: ["cvv"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("CVV yanditse nabi (imibare 3 cyangwa 4).", "CVV yanditse nabi (imibare 3 cyangwa 4)."), path: ["cvv"] });
     }
   }
   if (data.paymentMethod === "mobileMoney") {
     if (!data.mobileNumber || !/^07[2389]\d{7}$/.test(data.mobileNumber)) { 
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid Rwandan mobile number (e.g., 07XXXXXXXX).", path: ["mobileNumber"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Nimero ya telefone y'u Rwanda yanditse nabi (urugero: 07XXXXXXXX).", "Nimero ya telefone y'u Rwanda yanditse nabi (urugero: 07XXXXXXXX)."), path: ["mobileNumber"] });
     }
     if (!data.mobileProvider) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select a mobile money provider.", path: ["mobileProvider"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Nyamuneka hitamo umunyamitwe wa mobile money.", "Nyamuneka hitamo umunyamitwe wa mobile money."), path: ["mobileProvider"] });
     }
   }
   if (data.paymentMethod === "bankTransfer") {
     if (!data.bankName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select your bank.", path: ["bankName"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Nyamuneka hitamo banki yawe.", "Nyamuneka hitamo banki yawe."), path: ["bankName"] });
     }
      if (!data.userReference || data.userReference.trim().length < 3) { 
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Valid payment reference is required.", path: ["userReference"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("Referanse y'ubwishyu yemewe irakenewe.", "Referanse y'ubwishyu yemewe irakenewe."), path: ["userReference"] });
     }
   }
 });
@@ -72,7 +74,8 @@ export default function PaymentPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Assume false initially
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
   
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
@@ -95,64 +98,73 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "Please log in to make a payment.",
-        });
-        router.replace('/welcome'); 
-      } else {
+    // Simulate auth check
+    const checkAuth = async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // This is a placeholder. Real auth would check a session/token.
+        // For now, we'll assume if they get here, they are "authenticated" for prototype purposes.
         setIsAuthenticated(true);
-      }
-    }
-  }, [isClient, router, toast]);
+        setIsLoadingPage(false);
+    };
+    checkAuth();
+  }, []);
 
 
   const onSubmit = async (data: PaymentFormValues) => {
+    // Simulate backend payment processing
+    form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1500));
+    form.formState.isSubmitting = false;
+    
     toast({
-      title: "Payment Processed (Mock)",
-      description: `Successfully processed ${data.amount.toLocaleString()} RWF via ${data.paymentMethod} for: ${data.reason}. This is a demo, no actual payment was made.`,
+      title: t("Ubwishyu Bwakozwe (Igerageza)", "Ubwishyu Bwakozwe (Igerageza)"),
+      description: t(`Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe.`, `Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe.`),
     });
     form.reset({
         amount: 5000, 
-        paymentMethod: data.paymentMethod, 
-        reason: "",
-        cardHolderName: "",
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        mobileNumber: "",
-        mobileProvider: undefined,
-        bankName: undefined,
-        userReference: "",
+        paymentMethod: data.paymentMethod, // Keep selected method for convenience
+        reason: "", // Clear reason
+        // Clear other fields
+        cardHolderName: "", cardNumber: "", expiryDate: "", cvv: "",
+        mobileNumber: "", mobileProvider: undefined,
+        bankName: undefined, userReference: "",
     });
   };
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+        <PageHeader title={t("Kwishyura Kuri Interineti", "Kwishyura Kuri Interineti")} />
+        <div className="flex flex-col justify-center items-center h-auto py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading Payment Gateway...</p>
+          <p className="text-muted-foreground">{t("Gutegura Uburyo bwo Kwishyura...", "Gutegura Uburyo bwo Kwishyura...")}</p>
         </div>
       </AppLayout>
     );
   }
 
+  if (!isAuthenticated) {
+    // This should ideally be caught by a global auth guard or redirect from previous page
+    return (
+      <AppLayout>
+        <PageHeader title={t("Kwishyura Kuri Interineti", "Kwishyura Kuri Interineti")} />
+        <Card className="mt-10 text-center p-10">
+            <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
+            <CardDescription className="mt-2">{t("Nyamuneka injira kugirango ukore ubwishyu.", "Nyamuneka injira kugirango ukore ubwishyu.")}</CardDescription>
+            <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+        </Card>
+      </AppLayout>
+    );
+  }
+
+
   return (
     <AppLayout>
-      <PageHeader title="Online Payment" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Payment"}]} />
+      <PageHeader title={t("Kwishyura Kuri Interineti", "Kwishyura Kuri Interineti")} breadcrumbs={[{label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, {label: t("Ubwishyu", "Ubwishyu")}]} />
       <Card className="w-full max-w-2xl mx-auto shadow-xl hover-lift">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />Secure Payment Gateway</CardTitle>
-          <CardDescription>Complete your payment for services or orders in RWF. This is a demonstration and no real transaction will occur.</CardDescription>
+          <CardTitle className="font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />{t("Uburyo bwo Kwishyura bwizewe", "Uburyo bwo Kwishyura bwizewe")}</CardTitle>
+          <CardDescription>{t("Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba.", "Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -163,9 +175,9 @@ export default function PaymentPage() {
                     name="amount"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Amount (RWF)</FormLabel>
+                        <FormLabel>{t("Amafaranga (RWF)", "Amafaranga (RWF)")}</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="Enter amount in RWF" {...field} />
+                        <Input type="number" placeholder={t("Andika amafaranga mu RWF", "Andika amafaranga mu RWF")} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -176,9 +188,9 @@ export default function PaymentPage() {
                     name="reason"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Reason for Payment</FormLabel>
+                        <FormLabel>{t("Impamvu yo Kwishyura", "Impamvu yo Kwishyura")}</FormLabel>
                         <FormControl>
-                        <Input placeholder="e.g. Order #123, Consultation" {...field} />
+                        <Input placeholder={t("urugero: Itumiza #123, Kubonana na muganga", "urugero: Itumiza #123, Kubonana na muganga")} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -191,44 +203,40 @@ export default function PaymentPage() {
                 name="paymentMethod"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Payment Method</FormLabel>
+                    <FormLabel>{t("Uburyo bwo Kwishyura", "Uburyo bwo Kwishyura")}</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
+                            // Reset specific fields when payment method changes
                             form.reset({
-                                ...form.getValues(), // keep existing values like amount and reason
+                                ...form.getValues(), 
                                 paymentMethod: value as PaymentFormValues["paymentMethod"],
-                                cardNumber: "",
-                                expiryDate: "",
-                                cvv: "",
-                                cardHolderName: "",
-                                mobileNumber: "",
-                                mobileProvider: undefined,
-                                bankName: undefined,
-                                userReference: "",
+                                cardNumber: "", expiryDate: "", cvv: "", cardHolderName: "",
+                                mobileNumber: "", mobileProvider: undefined,
+                                bankName: undefined, userReference: "",
                             });
                         }}
-                        defaultValue={field.value}
+                        value={field.value} // Ensure value is controlled
                         className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
                             <RadioGroupItem value="creditCard" />
                           </FormControl>
-                          <FormLabel className="font-normal flex items-center cursor-pointer"><CreditCard className="mr-2 h-5 w-5 text-blue-500" /> Credit/Debit Card</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><CreditCard className="mr-2 h-5 w-5 text-blue-500" /> {t("Ikarita ya Banki", "Ikarita ya Banki")}</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
                             <RadioGroupItem value="mobileMoney" />
                           </FormControl>
-                          <FormLabel className="font-normal flex items-center cursor-pointer"><Smartphone className="mr-2 h-5 w-5 text-green-500" /> Mobile Money</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><Smartphone className="mr-2 h-5 w-5 text-green-500" /> {t("Mobile Money", "Mobile Money")}</FormLabel>
                         </FormItem>
                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                           <FormControl>
                             <RadioGroupItem value="bankTransfer" />
                           </FormControl>
-                          <FormLabel className="font-normal flex items-center cursor-pointer"><Landmark className="mr-2 h-5 w-5 text-purple-500" /> Bank Transfer</FormLabel>
+                          <FormLabel className="font-normal flex items-center cursor-pointer"><Landmark className="mr-2 h-5 w-5 text-purple-500" /> {t("Kohereza kuri Banki", "Kohereza kuri Banki")}</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -239,17 +247,17 @@ export default function PaymentPage() {
 
               {paymentMethod === 'creditCard' && (
                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
-                  <h3 className="text-lg font-medium flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary" />Card Details</h3>
+                  <h3 className="text-lg font-medium flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary" />{t("Amakuru y'Ikarita", "Amakuru y'Ikarita")}</h3>
                   <FormField control={form.control} name="cardHolderName" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Card Holder Name</FormLabel>
-                      <FormControl><Input placeholder="Name as it appears on card" {...field} /></FormControl>
+                      <FormLabel>{t("Izina riri ku Ikarita", "Izina riri ku Ikarita")}</FormLabel>
+                      <FormControl><Input placeholder={t("Izina nk'uko rigaragara ku ikarita", "Izina nk'uko rigaragara ku ikarita")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}/>
                   <FormField control={form.control} name="cardNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Card Number</FormLabel>
+                      <FormLabel>{t("Nimero y'Ikarita", "Nimero y'Ikarita")}</FormLabel>
                       <FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,8 +265,8 @@ export default function PaymentPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="expiryDate" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Expiry Date (MM/YY)</FormLabel>
-                        <FormControl><Input placeholder="MM/YY" {...field} /></FormControl>
+                        <FormLabel>{t("Itariki yo Kurangira (UKWEZI/UMWAKA)", "Itariki yo Kurangira (UKWEZI/UMWAKA)")}</FormLabel>
+                        <FormControl><Input placeholder="UKWEZI/UMWAKA" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}/>
@@ -275,24 +283,24 @@ export default function PaymentPage() {
 
               {paymentMethod === 'mobileMoney' && (
                 <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
-                   <h3 className="text-lg font-medium flex items-center"><Smartphone className="mr-2 h-5 w-5 text-primary" />Mobile Money Details</h3>
+                   <h3 className="text-lg font-medium flex items-center"><Smartphone className="mr-2 h-5 w-5 text-primary" />{t("Amakuru ya Mobile Money", "Amakuru ya Mobile Money")}</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mobile Number (e.g. 078xxxxxxx)</FormLabel>
-                      <FormControl><Input type="tel" placeholder="Enter mobile number" {...field} /></FormControl>
+                      <FormLabel>{t("Nimero ya Telefone (urugero: 078xxxxxxx)", "Nimero ya Telefone (urugero: 078xxxxxxx)")}</FormLabel>
+                      <FormControl><Input type="tel" placeholder={t("Andika nimero ya telefone", "Andika nimero ya telefone")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}/>
                    <FormField control={form.control} name="mobileProvider" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Provider</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>{t("Umunyamitwe", "Umunyamitwe")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select mobile money provider" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder={t("Hitamo umunyamitwe wa mobile money", "Hitamo umunyamitwe wa mobile money")} /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="MTN">MTN Mobile Money</SelectItem>
-                            <SelectItem value="Airtel">Airtel Money</SelectItem>
+                            <SelectItem value="MTN">{t("MTN Mobile Money", "MTN Mobile Money")}</SelectItem>
+                            <SelectItem value="Airtel">{t("Airtel Money", "Airtel Money")}</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -303,37 +311,37 @@ export default function PaymentPage() {
               
               {paymentMethod === 'bankTransfer' && (
                  <div className="space-y-6 p-4 border rounded-md bg-muted/20 dark:bg-muted/10 shadow-inner">
-                    <h3 className="text-lg font-medium flex items-center"><Landmark className="mr-2 h-5 w-5 text-primary"/>Bank Transfer Details</h3>
+                    <h3 className="text-lg font-medium flex items-center"><Landmark className="mr-2 h-5 w-5 text-primary"/>{t("Amakuru yo Kohereza kuri Banki", "Amakuru yo Kohereza kuri Banki")}</h3>
                     <Alert>
-                        <AlertTitle className="font-semibold">Bank Transfer Instructions</AlertTitle>
+                        <AlertTitle className="font-semibold">{t("Amabwiriza yo Kohereza kuri Banki", "Amabwiriza yo Kohereza kuri Banki")}</AlertTitle>
                         <AlertDescription className="text-sm">
-                            <p>Please transfer the amount to:</p>
+                            <p>{t("Nyamuneka ohereza amafaranga kuri:", "Nyamuneka ohereza amafaranga kuri:")}</p>
                             <ul className="list-disc list-inside mt-1">
-                                <li>Bank: MediServe Trust Bank</li>
-                                <li>Account Name: MediServe Hub Rwanda Ltd</li>
-                                <li>Account Number: <span className="font-mono">1000123456789 RWF</span></li>
-                                <li>Swift/BIC: <span className="font-mono">MTRWRW</span></li>
+                                <li>{t("Banki: Banki y'Ikizere ya MediServe", "Banki: Banki y'Ikizere ya MediServe")}</li>
+                                <li>{t("Izina rya Konti: MediServe Hub Rwanda Ltd", "Izina rya Konti: MediServe Hub Rwanda Ltd")}</li>
+                                <li>{t("Nimero ya Konti:", "Nimero ya Konti:")} <span className="font-mono">1000123456789 RWF</span></li>
+                                <li>{t("Swift/BIC:", "Swift/BIC:")} <span className="font-mono">MTRWRW</span></li>
                             </ul>
-                            <p className="mt-2">Use the payment reason you entered above as the transaction reference.</p>
+                            <p className="mt-2">{t("Koresha impamvu y'ubwishyu wanditse haruguru nka referanse y'igikorwa.", "Koresha impamvu y'ubwishyu wanditse haruguru nka referanse y'igikorwa.")}</p>
                         </AlertDescription>
                     </Alert>
                      <FormField control={form.control} name="bankName" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Bank</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>{t("Banki Yawe", "Banki Yawe")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select your bank" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder={t("Hitamo banki yawe", "Hitamo banki yawe")} /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="BK">Bank of Kigali</SelectItem>
-                                <SelectItem value="Equity">Equity Bank</SelectItem>
-                                <SelectItem value="I&M">I&M Bank</SelectItem>
-                                <SelectItem value="Cogebanque">Cogebanque</SelectItem>
-                                <SelectItem value="GTBank">GTBank</SelectItem>
-                                <SelectItem value="Access">Access Bank</SelectItem>
-                                <SelectItem value="Ecobank">Ecobank</SelectItem>
-                                <SelectItem value="Urwego">Urwego Bank</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
+                                <SelectItem value="BK">{t("Banki ya Kigali", "Banki ya Kigali")}</SelectItem>
+                                <SelectItem value="Equity">{t("Equity Bank", "Equity Bank")}</SelectItem>
+                                <SelectItem value="I&M">{t("I&M Bank", "I&M Bank")}</SelectItem>
+                                <SelectItem value="Cogebanque">{t("Cogebanque", "Cogebanque")}</SelectItem>
+                                <SelectItem value="GTBank">{t("GTBank", "GTBank")}</SelectItem>
+                                <SelectItem value="Access">{t("Access Bank", "Access Bank")}</SelectItem>
+                                <SelectItem value="Ecobank">{t("Ecobank", "Ecobank")}</SelectItem>
+                                <SelectItem value="Urwego">{t("Urwego Bank", "Urwego Bank")}</SelectItem>
+                                <SelectItem value="Other">{t("Indi", "Indi")}</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -341,9 +349,9 @@ export default function PaymentPage() {
                     )}/>
                     <FormField control={form.control} name="userReference" render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Your Transaction Reference</FormLabel>
-                        <FormControl><Input placeholder="Enter reference used for your transfer" {...field} /></FormControl>
-                        <FormDescription>Enter the reference you used when making the bank transfer.</FormDescription>
+                        <FormLabel>{t("Referanse y'Igikorwa Cyawe", "Referanse y'Igikorwa Cyawe")}</FormLabel>
+                        <FormControl><Input placeholder={t("Andika referanse wakoresheje wohereza", "Andika referanse wakoresheje wohereza")} {...field} /></FormControl>
+                        <FormDescription>{t("Andika referanse wakoresheje igihe woherezaga amafaranga kuri banki.", "Andika referanse wakoresheje igihe woherezaga amafaranga kuri banki.")}</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}/>
@@ -352,7 +360,7 @@ export default function PaymentPage() {
 
 
               <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95 text-lg py-6" disabled={form.formState.isSubmitting || !paymentMethod}>
-                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Processing...</> : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
+                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> {t("Gutunganya...", "Gutunganya...")}</> : `${t("Ishyura", "Ishyura")} ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
               </Button>
             </form>
           </Form>

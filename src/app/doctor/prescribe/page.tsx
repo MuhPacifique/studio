@@ -14,102 +14,87 @@ import { Loader2, User, Pill, PlusCircle, Trash2, Send, Search } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-interface MockPatient {
+const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+
+interface MockPatientClient { // Renamed
   id: string;
-  name: string;
+  name: string; // Should be Kinyarwanda if that's the display language
 }
 
-interface MockMedicine {
+interface MockMedicineClient { // Renamed
   id: string;
-  name: string;
+  name: string; // Should be Kinyarwanda
 }
 
-interface PrescribedMedicineItem extends MockMedicine {
+interface PrescribedMedicineItemClient extends MockMedicineClient { // Renamed
   dosage: string;
   frequency: string;
   duration: string;
 }
 
-interface Prescription {
-  id: string;
-  patientId: string; // Added to link to patient
-  doctorName: string;
-  datePrescribed: string;
-  medicines: PrescribedMedicineItem[];
-  notes?: string;
-  status: 'Active' | 'Completed' | 'Expired';
-}
-
-
-const mockPatients: MockPatient[] = [
-  { id: 'patient123', name: 'Patty Patient (patient@example.com)' }, // Matches login mock
-  { id: 'aliceW', name: 'Alice Wonderland' },
-  { id: 'bobB', name: 'Bob The Builder' },
-  { id: 'charlieB', name: 'Charlie Brown' },
+// Mock data - in a real app, this would be fetched from the backend
+const mockPatientsClient: MockPatientClient[] = [
+  { id: 'patient123', name: t('Patty Patient (patient@example.com)', 'Patty Umurwayi (patient@example.com)') },
+  { id: 'aliceW', name: t('Alice Wonderland', 'Alice Wonderland') },
+  { id: 'bobB', name: t('Bob The Builder', 'Bob Umwubatsi') },
 ];
 
-const allMockMedicines: MockMedicine[] = [
-  { id: 'med1', name: 'Paracetamol 500mg' },
-  { id: 'med2', name: 'Amoxicillin 250mg' },
-  { id: 'med3', name: 'Loratadine 10mg' },
-  { id: 'med4', name: 'Ibuprofen 200mg' },
-  { id: 'med5', name: 'Vitamin C 1000mg' },
-  { id: 'med6', name: 'Omeprazole 20mg' },
+const allMockMedicinesClient: MockMedicineClient[] = [
+  { id: 'med1', name: t('Paracetamol 500mg', 'Parasetamoli 500mg') },
+  { id: 'med2', name: t('Amoxicillin 250mg', 'Amogisiline 250mg') },
+  { id: 'med3', name: t('Loratadine 10mg', 'Loratadine 10mg') },
 ];
 
 export default function PrescribeMedicinePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticatedDoctor, setIsAuthenticatedDoctor] = useState(false);
+  const [isAuthenticatedDoctor, setIsAuthenticatedDoctor] = useState(false); // Assume false
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
   
   const [selectedPatient, setSelectedPatient] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<MockMedicine[]>([]);
-  const [prescriptionItems, setPrescriptionItems] = useState<PrescribedMedicineItem[]>([]); // Renamed from 'prescription' to avoid conflict
+  const [searchResults, setSearchResults] = useState<MockMedicineClient[]>([]);
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescribedMedicineItemClient[]>([]);
   const [currentDosage, setCurrentDosage] = useState('');
   const [currentFrequency, setCurrentFrequency] = useState('');
   const [currentDuration, setCurrentDuration] = useState('');
   const [patientNotes, setPatientNotes] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      const storedRole = localStorage.getItem('selectedRole');
-      if (authStatus && (storedRole === 'doctor' || authStatus === 'doctor')) {
+    // Simulate auth check
+    const checkAuth = async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // This is a placeholder. Real auth would check a session/token.
+        // For prototype, assuming doctor is "authenticated" to access this page.
         setIsAuthenticatedDoctor(true);
-      } else {
-        toast({ variant: "destructive", title: "Access Denied", description: "Only doctors can access this page." });
-        router.replace('/welcome');
-      }
-    }
-  }, [isClient, router, toast]);
+        setIsLoadingPage(false);
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setSearchResults([]);
       return;
     }
-    const filtered = allMockMedicines.filter(med =>
+    const filtered = allMockMedicinesClient.filter(med =>
       med.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setSearchResults(filtered);
   }, [searchTerm]);
 
-  const handleAddMedicineToPrescription = () => { // Changed to take no arguments
+  const handleAddMedicineToPrescription = () => {
     const selectedMedicine = searchResults.find(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (!selectedMedicine) {
-        toast({ variant: "destructive", title: "No Medicine Selected", description: "Please select a medicine from the search results or ensure your search term matches an available medicine." });
+        toast({ variant: "destructive", title: t("Nta Muti Wahiswemo", "Nta Muti Wahiswemo"), description: t("Nyamuneka hitamo umuti mu bisubizo by'ubushakashatsi cyangwa urebe ko ijambo washakishije rihura n'umuti uboneka.", "Nyamuneka hitamo umuti mu bisubizo by'ubushakashatsi cyangwa urebe ko ijambo washakishije rihura n'umuti uboneka.") });
         return;
     }
     if (!currentDosage || !currentFrequency || !currentDuration) {
-        toast({ variant: "destructive", title: "Missing Details", description: "Please provide dosage, frequency, and duration for the medicine." });
+        toast({ variant: "destructive", title: t("Amakuru Arabura", "Amakuru Arabura"), description: t("Nyamuneka tanga ingano, inshuro, n'igihe cyo gufata umuti.", "Nyamuneka tanga ingano, inshuro, n'igihe cyo gufata umuti.") });
         return;
     }
     setPrescriptionItems(prev => [...prev, { ...selectedMedicine, dosage: currentDosage, frequency: currentFrequency, duration: currentDuration }]);
@@ -117,12 +102,12 @@ export default function PrescribeMedicinePage() {
     setCurrentDosage('');
     setCurrentFrequency('');
     setCurrentDuration('');
-    toast({ title: `${selectedMedicine.name} added to prescription.` });
+    toast({ title: t(`${selectedMedicine.name} wongewe ku rupapuro.`, `${selectedMedicine.name} wongewe ku rupapuro.`) });
   };
   
-  const handleSelectMedicineFromSearch = (medicine: MockMedicine) => {
-    setSearchTerm(medicine.name); // Fill search bar with selected medicine
-    setSearchResults([]); // Clear search results after selection
+  const handleSelectMedicineFromSearch = (medicine: MockMedicineClient) => {
+    setSearchTerm(medicine.name);
+    setSearchResults([]); 
   };
 
 
@@ -132,83 +117,80 @@ export default function PrescribeMedicinePage() {
 
   const handleSubmitPrescription = async () => {
     if (!selectedPatient || prescriptionItems.length === 0) {
-      toast({ variant: "destructive", title: "Incomplete Prescription", description: "Please select a patient and add at least one medicine." });
+      toast({ variant: "destructive", title: t("Urupapuro Rutuzuye", "Urupapuro Rutuzuye"), description: t("Nyamuneka hitamo umurwayi kandi wongereho nibura umuti umwe.", "Nyamuneka hitamo umurwayi kandi wongereho nibura umuti umwe.") });
       return;
     }
-    setIsLoading(true);
+    setIsSubmitting(true);
 
-    const doctorName = localStorage.getItem('mockUserName') || "Dr. Default";
-    const newPrescription: Prescription = {
-      id: `rx${Date.now()}`,
-      patientId: selectedPatient,
-      doctorName,
-      datePrescribed: new Date().toISOString(),
-      medicines: prescriptionItems,
-      notes: patientNotes,
-      status: 'Active',
-    };
+    // Simulate API call to save prescription
+    // const newPrescription = { /* ... */ };
+    // Backend would handle saving to database based on schema.sql.
 
-    try {
-      const existingPrescriptionsString = localStorage.getItem('allPrescriptions');
-      const existingPrescriptions: Prescription[] = existingPrescriptionsString ? JSON.parse(existingPrescriptionsString) : [];
-      existingPrescriptions.push(newPrescription);
-      localStorage.setItem('allPrescriptions', JSON.stringify(existingPrescriptions));
-      
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
-      setIsLoading(false);
-      toast({ title: "Prescription Saved", description: `Prescription for ${mockPatients.find(p=>p.id === selectedPatient)?.name} has been saved.` });
-      
-      setSelectedPatient(undefined);
-      setPrescriptionItems([]);
-      setPatientNotes('');
-      setSearchTerm('');
-      setCurrentDosage('');
-      setCurrentFrequency('');
-      setCurrentDuration('');
-      router.push('/doctor/dashboard');
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    setIsSubmitting(false);
+    toast({ title: t("Urupapuro rw'Imiti Rwabitswe (Igerageza)", "Urupapuro rw'Imiti Rwabitswe (Igerageza)"), description: t(`Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
+    
+    setSelectedPatient(undefined);
+    setPrescriptionItems([]);
+    setPatientNotes('');
+    setSearchTerm('');
+    setCurrentDosage('');
+    setCurrentFrequency('');
+    setCurrentDuration('');
+    router.push('/doctor/dashboard');
 
-    } catch (error) {
-        setIsLoading(false);
-        console.error("Failed to save prescription:", error);
-        toast({ variant: "destructive", title: "Save Failed", description: "Could not save the prescription." });
-    }
   };
 
-  if (!isClient || !isAuthenticatedDoctor) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+        <PageHeader title={t("Andika Imiti / Inama ku Murwayi", "Andika Imiti / Inama ku Murwayi")} />
+        <div className="flex flex-col justify-center items-center h-auto py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading Prescription Page...</p>
+          <p className="text-muted-foreground">{t("Gutegura Urupapuro rw'Imiti...", "Gutegura Urupapuro rw'Imiti...")}</p>
         </div>
       </AppLayout>
     );
   }
 
+  if (!isAuthenticatedDoctor) {
+     return (
+         <AppLayout>
+            <PageHeader title={t("Andika Imiti / Inama ku Murwayi", "Andika Imiti / Inama ku Murwayi")} />
+            <Card className="mt-10 text-center p-10">
+                <CardTitle>{t("Ugomba Kwinjira nka Muganga", "Ugomba Kwinjira nka Muganga")}</CardTitle>
+                <CardDescription className="mt-2">{t("Muganga wenyine ni we ushobora kugera kuri iyi paji.", "Muganga wenyine ni we ushobora kugera kuri iyi paji.")}</CardDescription>
+                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+            </Card>
+         </AppLayout>
+     )
+  }
+
+
   return (
     <AppLayout>
       <PageHeader 
-        title="Create Patient Prescription / Advice"
+        title={t("Andika Imiti / Inama ku Murwayi", "Andika Imiti / Inama ku Murwayi")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/"}, 
-          { label: "Doctor Portal", href: "/doctor/dashboard"},
-          { label: "Prescribe" }
+          { label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+          { label: t("Irembo rya Muganga", "Irembo rya Muganga"), href: "/doctor/dashboard"},
+          { label: t("Kwandika Imiti", "Kwandika Imiti") }
         ]}
       />
       <Card className="w-full max-w-4xl mx-auto shadow-xl hover-lift">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><Pill className="mr-2 h-6 w-6 text-primary"/>New Prescription</CardTitle>
-          <CardDescription>Select patient, add medicines, and provide instructions.</CardDescription>
+          <CardTitle className="font-headline flex items-center"><Pill className="mr-2 h-6 w-6 text-primary"/>{t("Urupapuro Rushya rw'Imiti", "Urupapuro Rushya rw'Imiti")}</CardTitle>
+          <CardDescription>{t("Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza.", "Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="patientSelect" className="mb-1 block">Select Patient</Label>
+            <Label htmlFor="patientSelect" className="mb-1 block">{t("Hitamo Umurwayi", "Hitamo Umurwayi")}</Label>
             <Select value={selectedPatient} onValueChange={setSelectedPatient}>
               <SelectTrigger id="patientSelect">
-                <SelectValue placeholder="Choose a patient..." />
+                <SelectValue placeholder={t("Hitamo umurwayi...", "Hitamo umurwayi...")} />
               </SelectTrigger>
               <SelectContent>
-                {mockPatients.map(patient => (
+                {mockPatientsClient.map(patient => (
                   <SelectItem key={patient.id} value={patient.id}>
                     <div className="flex items-center">
                       <User className="mr-2 h-4 w-4 text-muted-foreground"/> {patient.name}
@@ -220,12 +202,12 @@ export default function PrescribeMedicinePage() {
           </div>
 
           <div className="space-y-4 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
-            <h3 className="font-semibold text-lg mb-2 text-primary">Add Medicine</h3>
+            <h3 className="font-semibold text-lg mb-2 text-primary">{t("Ongeraho Umuti", "Ongeraho Umuti")}</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
                 id="medicineSearch"
-                placeholder="Search for medicine..." 
+                placeholder={t("Shakisha umuti...", "Shakisha umuti...")} 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -241,36 +223,36 @@ export default function PrescribeMedicinePage() {
               </div>
             )}
              {searchTerm && searchResults.length === 0 && (
-                <p className="text-sm text-muted-foreground">No medicines found matching "{searchTerm}".</p>
+                <p className="text-sm text-muted-foreground">{t("Nta miti ibonetse ihuye na", "Nta miti ibonetse ihuye na")} "{searchTerm}".</p>
              )}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                 <div>
-                    <Label htmlFor="dosage">Dosage (e.g., 1 tablet, 10ml)</Label>
-                    <Input id="dosage" placeholder="e.g., 1 tablet" value={currentDosage} onChange={(e) => setCurrentDosage(e.target.value)} />
+                    <Label htmlFor="dosage">{t("Ingano (urugero: ikinini 1, 10ml)", "Ingano (urugero: ikinini 1, 10ml)")}</Label>
+                    <Input id="dosage" placeholder={t("urugero: ikinini 1", "urugero: ikinini 1")} value={currentDosage} onChange={(e) => setCurrentDosage(e.target.value)} />
                 </div>
                 <div>
-                    <Label htmlFor="frequency">Frequency (e.g., Twice a day)</Label>
-                    <Input id="frequency" placeholder="e.g., Twice a day" value={currentFrequency} onChange={(e) => setCurrentFrequency(e.target.value)} />
+                    <Label htmlFor="frequency">{t("Inshuro (urugero: Kabiri ku munsi)", "Inshuro (urugero: Kabiri ku munsi)")}</Label>
+                    <Input id="frequency" placeholder={t("urugero: Kabiri ku munsi", "urugero: Kabiri ku munsi")} value={currentFrequency} onChange={(e) => setCurrentFrequency(e.target.value)} />
                 </div>
                 <div>
-                    <Label htmlFor="duration">Duration (e.g., 7 days)</Label>
-                    <Input id="duration" placeholder="e.g., 7 days" value={currentDuration} onChange={(e) => setCurrentDuration(e.target.value)} />
+                    <Label htmlFor="duration">{t("Igihe (urugero: Iminsi 7)", "Igihe (urugero: Iminsi 7)")}</Label>
+                    <Input id="duration" placeholder={t("urugero: Iminsi 7", "urugero: Iminsi 7")} value={currentDuration} onChange={(e) => setCurrentDuration(e.target.value)} />
                 </div>
              </div>
              <Button type="button" onClick={handleAddMedicineToPrescription} className="mt-2" disabled={!searchTerm || !currentDosage || !currentFrequency || !currentDuration}>
-                <PlusCircle className="mr-2 h-4 w-4"/> Add to Prescription
+                <PlusCircle className="mr-2 h-4 w-4"/> {t("Ongeraho ku Rupapuro", "Ongeraho ku Rupapuro")}
              </Button>
           </div>
           
           {prescriptionItems.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-semibold text-lg text-primary">Current Prescription Items:</h3>
+              <h3 className="font-semibold text-lg text-primary">{t("Imiti Iri ku Rupapuro Ubu:", "Imiti Iri ku Rupapuro Ubu:")}</h3>
               {prescriptionItems.map(med => (
                 <Card key={med.id} className="p-4 flex justify-between items-start bg-background shadow-sm">
                   <div>
                     <p className="font-medium">{med.name}</p>
                     <p className="text-xs text-muted-foreground">
-                        Dosage: {med.dosage} | Frequency: {med.frequency} | Duration: {med.duration}
+                        {t("Ingano:", "Ingano:")} {med.dosage} | {t("Inshuro:", "Inshuro:")} {med.frequency} | {t("Igihe:", "Igihe:")} {med.duration}
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => handleRemoveMedicine(med.id)} className="text-destructive hover:bg-destructive/10">
@@ -282,10 +264,10 @@ export default function PrescribeMedicinePage() {
           )}
 
           <div>
-            <Label htmlFor="patientNotes">Additional Notes/Advice for Patient</Label>
+            <Label htmlFor="patientNotes">{t("Inyandiko / Inama Zinyongera ku Murwayi", "Inyandiko / Inama Zinyongera ku Murwayi")}</Label>
             <Textarea 
               id="patientNotes"
-              placeholder="e.g., Take with food, complete the full course, report any side effects..."
+              placeholder={t("urugero: Fata nyuma yo kurya, rangiza imiti yose, tanga raporo ku ngaruka mbi zose...", "urugero: Fata nyuma yo kurya, rangiza imiti yose, tanga raporo ku ngaruka mbi zose...")}
               value={patientNotes}
               onChange={(e) => setPatientNotes(e.target.value)}
               rows={4}
@@ -296,15 +278,13 @@ export default function PrescribeMedicinePage() {
           <Button 
             className="w-full sm:w-auto ml-auto transition-transform hover:scale-105 active:scale-95" 
             onClick={handleSubmitPrescription}
-            disabled={isLoading || !selectedPatient || prescriptionItems.length === 0}
+            disabled={isSubmitting || !selectedPatient || prescriptionItems.length === 0}
           >
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
-            {isLoading ? 'Sending...' : 'Save & Send Prescription'}
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
+            {isSubmitting ? t('Kohereza...', 'Kohereza...') : t('Bika & Ohereza Urupapuro', 'Bika & Ohereza Urupapuro')}
           </Button>
         </CardFooter>
       </Card>
     </AppLayout>
   );
 }
-
-    

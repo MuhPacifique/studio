@@ -10,24 +10,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
-    const storedLang = localStorage.getItem('mockUserLang') || 'kn'; // Default to Kinyarwanda
-    
-    document.documentElement.lang = storedLang;
+  // localStorage for theme and language preference is removed.
+  // The app will default to Kinyarwanda ('kn') as set on the <html> tag.
+  // Theme will default to OS/browser preference (light or dark).
 
-    if (storedTheme) {
-      document.documentElement.classList.toggle('dark', storedTheme === 'dark');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark'); 
-    } else {
-      localStorage.setItem('theme', 'light'); 
+  useEffect(() => {
+    // Set lang attribute for accessibility, default to 'kn'
+    document.documentElement.lang = 'kn';
+
+    // Apply dark mode based on OS preference if no class is set
+    if (!document.documentElement.classList.contains('light') && !document.documentElement.classList.contains('dark')) {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.add('light'); // Default to light if no OS preference or OS prefers light
+      }
     }
   }, []);
 
   return (
-    <html lang="kn" suppressHydrationWarning>{/* Default to Kinyarwanda, will be updated by useEffect */}
+    <html lang="kn" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

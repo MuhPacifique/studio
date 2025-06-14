@@ -45,25 +45,23 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   doctorOnly?: boolean;
-  patientOnly?: boolean; 
+  patientOrSeekerOnly?: boolean; // Changed from patientOnly to be more inclusive
   subItems?: NavItem[];
-  requiresAuth?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', labelKn: 'Imbonerahamwe', icon: Home, requiresAuth: true },
-  { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imiti', icon: Pill, requiresAuth: true, patientOnly: true },
-  { href: '/medical-tests', label: 'Medical Tests', labelKn: 'Ibipimo bya Muganga', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
+  { href: '/', label: 'Dashboard', labelKn: 'Imbonerahamwe', icon: Home },
+  { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imiti', icon: Pill, patientOrSeekerOnly: true },
+  { href: '/medical-tests', label: 'Medical Tests', labelKn: 'Ibipimo bya Muganga', icon: ClipboardListIcon, patientOrSeekerOnly: true },
   { 
     href: '#appointments', 
     label: 'Appointments', 
     labelKn: 'Amateraniro',
     icon: CalendarCheck2, 
-    requiresAuth: true,
-    patientOnly: true,
+    patientOrSeekerOnly: true,
     subItems: [
-      { href: '/appointments/book', label: 'Book Appointment', labelKn: 'Fata Igihe', icon: CalendarPlus, requiresAuth: true, patientOnly: true },
-      { href: '/appointments/my-appointments', label: 'My Appointments', labelKn: 'Amateraniro Yanjye', icon: CalendarCheck2, requiresAuth: true, patientOnly: true },
+      { href: '/appointments/book', label: 'Book Appointment', labelKn: 'Fata Igihe', icon: CalendarPlus, patientOrSeekerOnly: true },
+      { href: '/appointments/my-appointments', label: 'My Appointments', labelKn: 'Amateraniro Yanjye', icon: CalendarCheck2, patientOrSeekerOnly: true },
     ]
   },
   { 
@@ -71,10 +69,9 @@ const navItems: NavItem[] = [
     label: 'My Health', 
     labelKn: 'Ubuzima Bwanjye',
     icon: FileHeart, 
-    requiresAuth: true,
-    patientOnly: true, 
+    patientOrSeekerOnly: true, 
     subItems: [
-      { href: '/my-health/prescriptions', label: 'My Prescriptions', labelKn: 'Imiti Nandikiwe', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
+      { href: '/my-health/prescriptions', label: 'My Prescriptions', labelKn: 'Imiti Nandikiwe', icon: ClipboardListIcon, patientOrSeekerOnly: true },
     ]
   },
   { 
@@ -82,10 +79,9 @@ const navItems: NavItem[] = [
     label: 'Health Resources', 
     labelKn: 'Amakuru y\'Ubuzima',
     icon: LifeBuoy, 
-    requiresAuth: true,
     subItems: [
-      { href: '/health-resources/articles', label: 'Educational Articles', labelKn: 'Inyandiko Zigisha', icon: BookOpen, requiresAuth: true },
-      { href: '/health-resources/wellness-tips', label: 'Wellness Tips', labelKn: 'Inama z\'Ubuzima', icon: HeartPulse, requiresAuth: true },
+      { href: '/health-resources/articles', label: 'Educational Articles', labelKn: 'Inyandiko Zigisha', icon: BookOpen },
+      { href: '/health-resources/wellness-tips', label: 'Wellness Tips', labelKn: 'Inama z\'Ubuzima', icon: HeartPulse },
     ]
   },
   { 
@@ -93,27 +89,25 @@ const navItems: NavItem[] = [
     label: 'Community & Support', 
     labelKn: 'Ubufatanye & Ubufasha',
     icon: Users2, 
-    requiresAuth: true,
     subItems: [
-      { href: '/community-support/forums', label: 'Patient Forums', labelKn: 'Ibiganiro by\'Abarwayi', icon: MessageCircleQuestion, requiresAuth: true },
-      { href: '/community-support/support-groups', label: 'Support Groups', labelKn: 'Amatsinda y\'Ubufasha', icon: Users2, requiresAuth: true },
+      { href: '/community-support/forums', label: 'Patient Forums', labelKn: 'Ibiganiro by\'Abarwayi', icon: MessageCircleQuestion },
+      { href: '/community-support/support-groups', label: 'Support Groups', labelKn: 'Amatsinda y\'Ubufasha', icon: Users2 },
     ]
   },
-  { href: '/symptom-analyzer', label: 'Symptom Analyzer', labelKn: 'Isesengura ry\'Ibimenyetso', icon: ActivitySquare, requiresAuth: true },
-  { href: '/faq', label: 'Medical FAQ', labelKn: 'Ibibazo Bikunze Kubazwa', icon: MessageSquareQuote, requiresAuth: true },
-  { href: '/test-yourself', label: 'Test Yourself', labelKn: 'Isúzumé Ubwawe', icon: FlaskConical, requiresAuth: true },
-  { href: '/online-consultation', label: 'Online Consultation', labelKn: 'Ubujyanama kuri Interineti', icon: Video, requiresAuth: true },
-  { href: '/payment', label: 'Make Payment', labelKn: 'Kwishyura', icon: CreditCard, requiresAuth: true, patientOnly: true },
+  { href: '/symptom-analyzer', label: 'Symptom Analyzer', labelKn: 'Isesengura ry\'Ibimenyetso', icon: ActivitySquare },
+  { href: '/faq', label: 'Medical FAQ', labelKn: 'Ibibazo Bikunze Kubazwa', icon: MessageSquareQuote },
+  { href: '/test-yourself', label: 'Test Yourself', labelKn: 'Isúzumé Ubwawe', icon: FlaskConical },
+  { href: '/online-consultation', label: 'Online Consultation', labelKn: 'Ubujyanama kuri Interineti', icon: Video },
+  { href: '/payment', label: 'Make Payment', labelKn: 'Kwishyura', icon: CreditCard, patientOrSeekerOnly: true },
   { 
     href: '/doctor/dashboard', 
     label: 'Doctor Portal', 
     labelKn: 'Irembo rya Muganga',
     icon: Stethoscope, 
     doctorOnly: true, 
-    requiresAuth: true, 
     subItems: [
-        { href: '/doctor/dashboard', label: 'Doctor Overview', labelKn: 'Incámáke ya Muganga', icon: LayoutDashboard, doctorOnly: true, requiresAuth: true },
-        { href: '/doctor/prescribe', label: 'Prescribe / Advise', labelKn: 'Kwandika Imiti / Inama', icon: ClipboardListIcon, doctorOnly: true, requiresAuth: true },
+        { href: '/doctor/dashboard', label: 'Doctor Overview', labelKn: 'Incámáke ya Muganga', icon: LayoutDashboard, doctorOnly: true },
+        { href: '/doctor/prescribe', label: 'Prescribe / Advise', labelKn: 'Kwandika Imiti / Inama', icon: ClipboardListIcon, doctorOnly: true },
     ]
   },
   { 
@@ -122,69 +116,46 @@ const navItems: NavItem[] = [
     labelKn: 'Igice cy\'Ubuyobozi',
     icon: LayoutDashboard, 
     adminOnly: true,
-    requiresAuth: true,
     subItems: [
-      { href: '/admin/dashboard', label: 'Overview', labelKn: 'Incámáke', icon: LayoutDashboard, adminOnly: true, requiresAuth: true },
-      { href: '/admin/users', label: 'Manage Users', labelKn: 'Gucunga Abakoresha', icon: Users, adminOnly: true, requiresAuth: true },
-      { href: '/admin/inventory', label: 'Manage Inventory', labelKn: 'Gucunga Ububiko', icon: Pill, adminOnly: true, requiresAuth: true },
-      { href: '/admin/services', label: 'Manage Services', labelKn: 'Gucunga Serivisi', icon: Settings, adminOnly: true, requiresAuth: true },
-      { href: '/admin/analytics', label: 'Analytics', labelKn: 'Isesengura', icon: Stethoscope, adminOnly: true, requiresAuth: true },
-      { href: '/admin/settings', label: 'System Settings', labelKn: 'Igenamiterere rya Sisitemu', icon: Settings, adminOnly: true, requiresAuth: true },
+      { href: '/admin/dashboard', label: 'Overview', labelKn: 'Incámáke', icon: LayoutDashboard, adminOnly: true },
+      { href: '/admin/users', label: 'Manage Users', labelKn: 'Gucunga Abakoresha', icon: Users, adminOnly: true },
+      { href: '/admin/inventory', label: 'Manage Inventory', labelKn: 'Gucunga Ububiko', icon: Pill, adminOnly: true },
+      { href: '/admin/services', label: 'Manage Services', labelKn: 'Gucunga Serivisi', icon: Settings, adminOnly: true },
+      { href: '/admin/analytics', label: 'Analytics', labelKn: 'Isesengura', icon: Stethoscope, adminOnly: true },
+      { href: '/admin/settings', label: 'System Settings', labelKn: 'Igenamiterere rya Sisitemu', icon: Settings, adminOnly: true },
     ]
   },
 ];
 
-type UserRole = 'patient' | 'admin' | 'doctor' | 'seeker' | null;
+// Since localStorage is removed, userType and isAuthenticated will be hardcoded or managed by a (future) global state.
+// For this prototype, we'll assume a default state or allow manual toggling for testing.
+const useAuthSimulator = () => {
+  // To test different roles, you can change this value:
+  // const simulatedUserType: 'patient' | 'admin' | 'doctor' | 'seeker' | null = 'patient';
+  // const simulatedIsAuthenticated = true;
 
-const useAuth = () => {
-  const [userType, setUserType] = useState<UserRole>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Default to a logged-out state for the purpose of this refactor
+  const simulatedUserType: 'patient' | 'admin' | 'doctor' | 'seeker' | null = null;
+  const simulatedIsAuthenticated = false;
+  
   const [isClient, setIsClient] = useState(false);
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn');
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (isClient) {
-      const mockAuth = localStorage.getItem('mockAuth');
-      const storedRole = localStorage.getItem('selectedRole') as UserRole;
-      const storedLang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-      
-      if (mockAuth) {
-        setIsAuthenticated(true);
-        if (mockAuth === 'admin') setUserType('admin');
-        else if (mockAuth === 'doctor') setUserType('doctor');
-        else if (storedRole) setUserType(storedRole);
-        else setUserType('patient'); 
-      } else {
-        setUserType(null);
-        setIsAuthenticated(false);
-      }
-      if (storedLang) {
-        setPreferredLanguage(storedLang);
-      } else {
-        localStorage.setItem('mockUserLang', 'kn'); 
-      }
-
-      const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'mockUserLang') {
-          setPreferredLanguage((event.newValue as 'en' | 'kn') || 'kn');
-        }
-      };
-      window.addEventListener('storage', handleStorageChange);
-      return () => window.removeEventListener('storage', handleStorageChange);
-
-    }
-  }, [isClient]);
-  return { userType, isAuthenticated, isClient, preferredLanguage };
+  return { 
+    userType: simulatedIsAuthenticated ? simulatedUserType : null, 
+    isAuthenticated: simulatedIsAuthenticated, 
+    isClient,
+    preferredLanguage: 'kn' as 'en' | 'kn' // Default to Kinyarwanda
+  };
 };
 
 
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
-  const { userType, isAuthenticated, isClient, preferredLanguage } = useAuth();
+  const { userType, isAuthenticated, isClient, preferredLanguage } = useAuthSimulator();
   const [openSubMenus, setOpenSubMenus] = React.useState<Record<string, boolean>>({});
 
   const t = (label: string, labelKn: string) => preferredLanguage === 'kn' ? labelKn : label;
@@ -213,22 +184,21 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
     );
   }
   
-  const isPatientOrSeeker = userType === 'patient' || userType === 'seeker';
-
   const filteredNavItems = navItems.filter(item => {
-    if (!item.requiresAuth && !isAuthenticated) return true; 
-    if (!isAuthenticated) return false; 
+    if (!isAuthenticated) { // If not authenticated, show only items that don't require auth (none in current list)
+        // If we had public items, they would be returned here.
+        // For now, all items imply some level of auth or role.
+        // To make the sidebar useful in a "logged out" state, we might show a few public links or all links disabled.
+        // For this iteration, if not authenticated, the sidebar will be empty as per current navItems structure.
+        // Or, we can show all and let page-level guards handle redirection.
+        // Let's show all for layout purposes, page guards would handle access.
+        return true; // This will show all items, page guards will handle access.
+    }
     if (item.adminOnly && userType !== 'admin') return false;
     if (item.doctorOnly && userType !== 'doctor') return false;
-    if (item.patientOnly && (!isPatientOrSeeker || userType === 'admin' || userType === 'doctor')) return false;
+    if (item.patientOrSeekerOnly && !(userType === 'patient' || userType === 'seeker')) return false;
     
-    if (!item.adminOnly && !item.doctorOnly && !item.patientOnly) return true;
-
-    if (item.adminOnly && userType === 'admin') return true;
-    if (item.doctorOnly && userType === 'doctor') return true;
-    if (item.patientOnly && isPatientOrSeeker) return true;
-
-    return false; 
+    return true; 
   });
 
   return (
@@ -240,7 +210,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href}>
+              <Link href={item.href} passHref>
                 <SidebarMenuButton
                   asChild
                   variant="default"
@@ -249,8 +219,11 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   tooltip={t(item.label, item.labelKn)}
                   className={cn(
                     "justify-start w-full transition-all duration-200 ease-in-out hover:pl-3",
-                    pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    !isAuthenticated ? "opacity-50 cursor-not-allowed" : "",
+                    pathname === item.href && isAuthenticated ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
+                  disabled={!isAuthenticated && item.href !== '/'} // Disable if not auth, except dashboard for demo
+                  onClick={(e) => { if (!isAuthenticated && item.href !== '/') e.preventDefault(); }}
                 >
                   <span>
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -263,32 +236,32 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 <SidebarMenuButton
                   variant="default"
                   size="default"
-                  isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
+                  isActive={item.subItems.some(sub => pathname.startsWith(sub.href)) && isAuthenticated}
                   tooltip={t(item.label, item.labelKn)}
-                  onClick={() => toggleSubMenu(item.label)}
+                  onClick={() => { if (isAuthenticated) toggleSubMenu(item.label); }}
                   className={cn(
                     "justify-between w-full transition-all duration-200 ease-in-out", 
-                     item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    !isAuthenticated ? "opacity-50 cursor-not-allowed" : "",
+                    item.subItems.some(sub => pathname.startsWith(sub.href)) && isAuthenticated ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
+                  disabled={!isAuthenticated}
                 >
                   <span className="flex items-center truncate">
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     <span className="truncate">{t(item.label, item.labelKn)}</span>
                   </span>
-                  {openSubMenus[item.label] ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />}
+                  {isAuthenticated && (openSubMenus[item.label] ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />)}
                 </SidebarMenuButton>
-                {openSubMenus[item.label] && (
+                {isAuthenticated && openSubMenus[item.label] && (
                   <SidebarMenuSub className="mt-1">
                     {item.subItems.filter(subItem => {
-                        if (!subItem.requiresAuth && !isAuthenticated) return true;
-                        if (!isAuthenticated) return false;
                         if (subItem.adminOnly && userType !== 'admin') return false;
                         if (subItem.doctorOnly && userType !== 'doctor') return false;
-                         if (subItem.patientOnly && (!isPatientOrSeeker || userType === 'admin' || userType === 'doctor')) return false;
+                        if (subItem.patientOrSeekerOnly && !(userType === 'patient' || userType === 'seeker')) return false;
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href}>
+                         <Link href={subItem.href} passHref>
                            <SidebarMenuSubButton
                              asChild
                              size="md"

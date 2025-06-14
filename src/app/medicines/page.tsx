@@ -15,120 +15,114 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
 
 interface Medicine {
   id: string;
   name: string;
+  nameKn: string;
   description: string;
-  price: number; // Price in RWF
+  descriptionKn: string;
+  price: number; 
   imageUrl: string;
   category: string;
+  categoryKn: string;
   stock: number;
   aiHint: string;
 }
 
-const mockMedicines: Medicine[] = [
-  { id: 'med1', name: 'Paracetamol 500mg', description: 'Relieves pain and fever.', price: 599, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', stock: 150, aiHint: 'pills medication' },
-  { id: 'med2', name: 'Amoxicillin 250mg', description: 'Antibiotic for bacterial infections.', price: 1250, imageUrl: 'https://placehold.co/300x200.png', category: 'Antibiotics', stock: 80, aiHint: 'capsules pharmacy' },
-  { id: 'med3', name: 'Loratadine 10mg', description: 'Antihistamine for allergies.', price: 875, imageUrl: 'https://placehold.co/300x200.png', category: 'Allergy Relief', stock: 120, aiHint: 'tablets allergy' },
-  { id: 'med4', name: 'Ibuprofen 200mg', description: 'Anti-inflammatory drug.', price: 720, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', stock: 200, aiHint: 'medicine painkiller' },
-  { id: 'med5', name: 'Vitamin C 1000mg', description: 'Immune system support.', price: 1000, imageUrl: 'https://placehold.co/300x200.png', category: 'Vitamins', stock: 300, aiHint: 'supplements health' },
-  { id: 'med6', name: 'Omeprazole 20mg', description: 'Reduces stomach acid.', price: 1530, imageUrl: 'https://placehold.co/300x200.png', category: 'Digestive Health', stock: 0, aiHint: 'acid reducer' },
+// Mock data - in a real app, this would be fetched from the backend
+const mockMedicinesData: Medicine[] = [
+  { id: 'med1', name: 'Paracetamol 500mg', nameKn: 'Parasetamoli 500mg', description: 'Relieves pain and fever.', descriptionKn: 'Igabanya ububabare n\'umuriro.', price: 599, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 150, aiHint: 'pills medication' },
+  { id: 'med2', name: 'Amoxicillin 250mg', nameKn: 'Amogisiline 250mg', description: 'Antibiotic for bacterial infections.', descriptionKn: 'Antibiyotike y\'indwara ziterwa na bagiteri.', price: 1250, imageUrl: 'https://placehold.co/300x200.png', category: 'Antibiotics', categoryKn: 'Antibiyotike', stock: 80, aiHint: 'capsules pharmacy' },
+  { id: 'med3', name: 'Loratadine 10mg', nameKn: 'Loratadine 10mg', description: 'Antihistamine for allergies.', descriptionKn: 'Antihistaminike ya aleriji.', price: 875, imageUrl: 'https://placehold.co/300x200.png', category: 'Allergy Relief', categoryKn: 'Igabanya Aleriji', stock: 120, aiHint: 'tablets allergy' },
+  { id: 'med4', name: 'Ibuprofen 200mg', nameKn: 'Ibiprofene 200mg', description: 'Anti-inflammatory drug.', descriptionKn: 'Umuti ugabanya ububyimbe.', price: 720, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 0, aiHint: 'medicine painkiller' }, // Out of stock
+  { id: 'med5', name: 'Vitamin C 1000mg', nameKn: 'Vitamini C 1000mg', description: 'Immune system support.', descriptionKn: 'Ifasha ubudahangarwa bw\'umubiri.', price: 1000, imageUrl: 'https://placehold.co/300x200.png', category: 'Vitamins', categoryKn: 'Vitamini', stock: 300, aiHint: 'supplements health' },
 ];
 
-interface CartItem extends Medicine {
+interface CartItemClient extends Medicine { // Renamed to avoid conflict if Medicine type changes
   quantity: number;
 }
 
-interface Order {
+interface OrderClient { // Renamed
   id: string;
   date: string;
-  items: CartItem[];
-  total: number; // Total in RWF
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered';
+  items: CartItemClient[];
+  total: number;
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered'; // Simplified status
 }
 
-const mockOrders: Order[] = [
-  { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicines[0], quantity: 2 }, { ...mockMedicines[2], quantity: 1 }], total: (599*2) + 875, status: 'Delivered' },
-  { id: 'order2', date: '2024-07-28', items: [{ ...mockMedicines[1], quantity: 1 }], total: 1250, status: 'Processing' },
+const mockOrdersClient: OrderClient[] = [ // Renamed
+  { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicinesData[0], quantity: 2 }, { ...mockMedicinesData[2], quantity: 1 }], total: (599*2) + 875, status: 'Delivered' },
+  { id: 'order2', date: '2024-07-28', items: [{ ...mockMedicinesData[1], quantity: 1 }], total: 1250, status: 'Processing' },
 ];
 
-const medicineCategories = Array.from(new Set(mockMedicines.map(m => m.category)));
+const medicineCategoriesKn = Array.from(new Set(mockMedicinesData.map(m => m.categoryKn)));
+
 
 export default function MedicinesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Assume not authenticated until backend confirms
+  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedCart = localStorage.getItem('medicineCart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    }
-    return [];
-  });
+  const [cart, setCart] = useState<CartItemClient[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [orders, setOrders] = useState<OrderClient[]>([]);
+
 
   useEffect(() => {
     setIsClient(true);
+    // Simulate auth check and data fetching
+    const loadData = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        // In a real app, this would be an API call to check auth
+        // For prototype, we'll assume user becomes authenticated to see content.
+        setIsAuthenticated(true); 
+        setMedicines(mockMedicinesData); // Load mock data
+        setOrders(mockOrdersClient);     // Load mock orders
+        setIsLoadingPage(false);
+    };
+    loadData();
   }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "Please log in to order medicines.",
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-      }
-    }
-  }, [isClient, router, toast]);
-
-  useEffect(() => {
-    if (isClient) {
-      localStorage.setItem('medicineCart', JSON.stringify(cart));
-    }
-  }, [cart, isClient]);
 
 
   const filteredMedicines = useMemo(() => {
-    return mockMedicines.filter(med =>
-      (med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedCategory === 'all' || med.category === selectedCategory)
+    return medicines.filter(med =>
+      (med.nameKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       med.categoryKn.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (selectedCategory === 'all' || med.categoryKn === selectedCategory)
     );
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, medicines]);
 
   const addToCart = (medicine: Medicine) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === medicine.id);
-      if (existingItem) {
-        if (existingItem.quantity < medicine.stock) {
-          toast({ title: `Added ${medicine.name} to cart.`, description: `Quantity updated.` });
-          return prevCart.map(item =>
-            item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item
-          );
-        } else {
-          toast({ variant: "destructive", title: `Cannot add ${medicine.name}`, description: `Maximum stock (${medicine.stock}) reached in cart.` });
-          return prevCart;
-        }
+    if (!isAuthenticated) {
+        toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango wongere mu gitebo.", "Nyamuneka injira kugirango wongere mu gitebo.") });
+        router.push('/welcome');
+        return;
+    }
+    // UI update is ephemeral, backend would handle cart state
+    const existingItem = cart.find(item => item.id === medicine.id);
+    if (existingItem) {
+      if (existingItem.quantity < medicine.stock) {
+        setCart(prevCart => prevCart.map(item => item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item));
+        toast({ title: t(`${medicine.nameKn} yongewe mu gitebo.`, `${medicine.nameKn} yongewe mu gitebo.`) });
       } else {
-        if (medicine.stock > 0) {
-          toast({ title: `Added ${medicine.name} to cart.` });
-          return [...prevCart, { ...medicine, quantity: 1 }];
-        } else {
-           toast({ variant: "destructive", title: `${medicine.name} is out of stock.` });
-           return prevCart;
-        }
+        toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${medicine.nameKn}`, `Ntushobora kongeraho ${medicine.nameKn}`), description: t(`Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`, `Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`) });
       }
-    });
+    } else {
+      if (medicine.stock > 0) {
+        setCart(prevCart => [...prevCart, { ...medicine, quantity: 1 }]);
+        toast({ title: t(`${medicine.nameKn} yongewe mu gitebo.`, `${medicine.nameKn} yongewe mu gitebo.`) });
+      } else {
+         toast({ variant: "destructive", title: t(`${medicine.nameKn} yashize mu bubiko.`, `${medicine.nameKn} yashize mu bubiko.`) });
+      }
+    }
   };
 
   const updateQuantity = (medicineId: string, change: number) => {
@@ -138,26 +132,26 @@ export default function MedicinesPage() {
           const newQuantity = item.quantity + change;
           if (newQuantity <= 0) return null; 
           if (newQuantity > item.stock) {
-            toast({ variant: "destructive", title: `Cannot add more ${item.name}`, description: `Maximum stock (${item.stock}) reached.` });
+            toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${item.nameKn}`, `Ntushobora kongeraho ${item.nameKn}`), description: t(`Umubare ntarengwa (${item.stock}) wagezweho.`, `Umubare ntarengwa (${item.stock}) wagezweho.`) });
             return { ...item, quantity: item.stock };
           }
           return { ...item, quantity: newQuantity };
         }
         return item;
-      }).filter(Boolean) as CartItem[]
+      }).filter(Boolean) as CartItemClient[]
     );
   };
 
   const removeFromCart = (medicineId: string) => {
     setCart(prevCart => prevCart.filter(item => item.id !== medicineId));
-    toast({ title: "Item removed from cart." });
+    toast({ title: t("Ikintu cyakuwe mu gitebo.", "Ikintu cyakuwe mu gitebo.") });
   };
 
   const cartTotal = useMemo(() => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [cart]);
 
-  const getStatusBadgeClass = (status: Order['status']) => {
+  const getStatusBadgeClass = (status: OrderClient['status']) => {
     switch (status) {
       case 'Delivered':
         return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600';
@@ -172,26 +166,43 @@ export default function MedicinesPage() {
     }
   };
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+        <PageHeader title={t("Gutumiza Imiti", "Gutumiza Imiti")} />
+        <div className="flex flex-col justify-center items-center h-auto py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading medicines...</p>
+          <p className="text-muted-foreground">{t("Gutegura imiti...", "Gutegura imiti...")}</p>
         </div>
       </AppLayout>
     );
   }
+  
+  if (!isAuthenticated) {
+     // This state should ideally not be reached if routing from welcome/login is correct.
+     // But as a fallback if user lands here unauthenticated.
+     return (
+         <AppLayout>
+            <PageHeader title={t("Gutumiza Imiti", "Gutumiza Imiti")} />
+            <Card className="mt-10 text-center p-10">
+                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
+                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango ubashe gutumiza imiti.", "Nyamuneka injira kugirango ubashe gutumiza imiti.")}</CardDescription>
+                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+            </Card>
+         </AppLayout>
+     )
+  }
+
 
   return (
     <AppLayout>
-      <PageHeader title="Order Medicines" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Medicines"}]}>
+      <PageHeader title={t("Gutumiza Imiti", "Gutumiza Imiti")} breadcrumbs={[{label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, {label: t("Imiti", "Imiti")}]}>
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search medicines..."
+              placeholder={t("Shakisha imiti...", "Shakisha imiti...")}
               className="pl-10 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -199,11 +210,11 @@ export default function MedicinesPage() {
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filter by category" />
+              <SelectValue placeholder={t("Yungurura ku cyiciro", "Yungurura ku cyiciro")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {medicineCategories.map(category => (
+              <SelectItem value="all">{t("Ibyiciro Byose", "Ibyiciro Byose")}</SelectItem>
+              {medicineCategoriesKn.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
             </SelectContent>
@@ -214,7 +225,7 @@ export default function MedicinesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <h2 className="text-2xl font-semibold mb-6 font-headline flex items-center">
-            <ListFilter className="mr-3 h-6 w-6 text-primary" /> Medicine Catalog
+            <ListFilter className="mr-3 h-6 w-6 text-primary" /> {t("Urutonde rw'Imiti", "Urutonde rw'Imiti")}
           </h2>
           {filteredMedicines.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -223,24 +234,24 @@ export default function MedicinesPage() {
                   <CardHeader className="p-0 relative overflow-hidden rounded-t-lg">
                     <Image
                       src={med.imageUrl}
-                      alt={med.name}
+                      alt={med.nameKn}
                       width={300}
                       height={200}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       data-ai-hint={med.aiHint}
                     />
                      <Badge variant="secondary" className="absolute top-2 right-2 bg-background/80 dark:bg-background/70 backdrop-blur-sm">
-                        <Tag className="mr-1 h-3 w-3"/>{med.category}
+                        <Tag className="mr-1 h-3 w-3"/>{med.categoryKn}
                     </Badge>
                   </CardHeader>
                   <CardContent className="p-4 flex-grow">
-                    <CardTitle className="text-lg mb-1 font-headline group-hover:text-primary transition-colors">{med.name}</CardTitle>
-                    <CardDescription className="text-sm mb-2 h-10 overflow-hidden text-ellipsis">{med.description}</CardDescription>
+                    <CardTitle className="text-lg mb-1 font-headline group-hover:text-primary transition-colors">{med.nameKn}</CardTitle>
+                    <CardDescription className="text-sm mb-2 h-10 overflow-hidden text-ellipsis">{med.descriptionKn}</CardDescription>
                     <p className="text-xl font-semibold text-primary mt-1">{med.price.toLocaleString()} RWF</p>
                     {med.stock > 0 ? (
-                       <p className="text-xs text-green-600 dark:text-green-400">{med.stock} in stock</p>
+                       <p className="text-xs text-green-600 dark:text-green-400">{med.stock} {t("mu bubiko", "mu bubiko")}</p>
                     ) : (
-                       <p className="text-xs text-destructive dark:text-red-500">Out of stock</p>
+                       <p className="text-xs text-destructive dark:text-red-500">{t("Yashize mu bubiko", "Yashize mu bubiko")}</p>
                     )}
                   </CardContent>
                   <CardFooter className="p-4 border-t">
@@ -250,14 +261,14 @@ export default function MedicinesPage() {
                       disabled={med.stock === 0 || (cart.find(item => item.id === med.id)?.quantity ?? 0) >= med.stock}
                     >
                       <ShoppingCart className="mr-2 h-4 w-4" /> 
-                      { (cart.find(item => item.id === med.id)?.quantity ?? 0) >= med.stock && med.stock > 0 ? 'Max in Cart' : med.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      { (cart.find(item => item.id === med.id)?.quantity ?? 0) >= med.stock && med.stock > 0 ? t('Ntarengwa mu Gitebo', 'Ntarengwa mu Gitebo') : med.stock === 0 ? t('Yashize', 'Yashize') : t('Ongeraho mu Gitebo', 'Ongeraho mu Gitebo')}
                     </Button>
                   </CardFooter>
                 </Card>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-10">No medicines found matching your search or filter.</p>
+            <p className="text-muted-foreground text-center py-10">{t("Nta miti ibonetse ihuye n'ubushakashatsi bwawe.", "Nta miti ibonetse ihuye n'ubushakashatsi bwawe.")}</p>
           )}
         </div>
 
@@ -265,18 +276,18 @@ export default function MedicinesPage() {
           <Card className="shadow-lg sticky top-24 hover-lift dark:border-border">
             <CardHeader>
               <CardTitle className="flex items-center font-headline text-primary">
-                <ShoppingCart className="mr-2 h-6 w-6" /> Your Cart
+                <ShoppingCart className="mr-2 h-6 w-6" /> {t("Igitebo Cyawe", "Igitebo Cyawe")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {cart.length === 0 ? (
-                <p className="text-muted-foreground">Your cart is empty.</p>
+                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa.", "Igitebo cyawe kirimo ubusa.")}</p>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {cart.map(item => (
                     <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg shadow-sm bg-background/50 dark:bg-muted/20 hover:shadow-md transition-shadow">
                       <div className="flex-grow">
-                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="font-medium text-sm">{item.nameKn}</p>
                         <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} RWF x {item.quantity}</p>
                       </div>
                       <div className="flex items-center space-x-1 shrink-0">
@@ -293,10 +304,10 @@ export default function MedicinesPage() {
             {cart.length > 0 && (
               <CardFooter className="flex flex-col space-y-3 border-t pt-4">
                 <div className="flex justify-between w-full text-lg font-semibold">
-                  <span>Total:</span>
+                  <span>{t("Igiteranyo:", "Igiteranyo:")}</span>
                   <span className="text-primary">{cartTotal.toLocaleString()} RWF</span>
                 </div>
-                <Button className="w-full transition-transform hover:scale-105 active:scale-95" onClick={() => router.push('/payment')}>Proceed to Checkout</Button>
+                <Button className="w-full transition-transform hover:scale-105 active:scale-95" onClick={() => router.push('/payment')}>{t("Komeza Kwishyura", "Komeza Kwishyura")}</Button>
               </CardFooter>
             )}
           </Card>
@@ -304,22 +315,22 @@ export default function MedicinesPage() {
       </div>
 
       <div className="mt-12">
-        <h2 className="text-2xl font-semibold mb-6 font-headline">My Orders</h2>
-        {mockOrders.length > 0 ? (
+        <h2 className="text-2xl font-semibold mb-6 font-headline">{t("Ibyo Natumije", "Ibyo Natumije")}</h2>
+        {orders.length > 0 ? (
           <Card className="shadow-lg hover-lift dark:border-border">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Total (RWF)</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Items</TableHead>
+                    <TableHead>{t("ID y'Itumiza", "ID y'Itumiza")}</TableHead>
+                    <TableHead>{t("Itariki", "Itariki")}</TableHead>
+                    <TableHead>{t("Igiteranyo (RWF)", "Igiteranyo (RWF)")}</TableHead>
+                    <TableHead>{t("Uko Bihagaze", "Uko Bihagaze")}</TableHead>
+                    <TableHead>{t("Ibikubiyemo", "Ibikubiyemo")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockOrders.map(order => (
+                  {orders.map(order => (
                     <TableRow key={order.id} className="hover:bg-muted/30 dark:hover:bg-muted/20">
                       <TableCell className="font-medium">{order.id}</TableCell>
                       <TableCell>{order.date}</TableCell>
@@ -329,10 +340,10 @@ export default function MedicinesPage() {
                           variant="outline"
                           className={getStatusBadgeClass(order.status)}
                         >
-                          {order.status}
+                          {t(order.status, order.status === "Delivered" ? "Byagejejweho" : order.status === "Processing" ? "Birimo Gutunganywa" : order.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs">{order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</TableCell>
+                      <TableCell className="text-xs">{order.items.map(item => `${item.nameKn} (x${item.quantity})`).join(', ')}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -340,7 +351,7 @@ export default function MedicinesPage() {
             </CardContent>
           </Card>
         ) : (
-          <p className="text-muted-foreground">You have no past orders.</p>
+          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari.", "Nta byo watumije mbere bihari.")}</p>
         )}
       </div>
     </AppLayout>

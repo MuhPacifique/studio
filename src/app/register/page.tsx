@@ -19,20 +19,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { Phone } from 'lucide-react';
 
-const preferredLanguage = typeof window !== 'undefined' ? (localStorage.getItem('mockUserLang') as 'en' | 'kn' || 'kn') : 'kn';
-const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, { message: t("Full name must be at least 2 characters.", "Amazina yuzuye agomba kuba nibura inyuguti 2.") }),
-  email: z.string().email({ message: t("Invalid email address.", "Aderesi email yanditse nabi.") }),
-  phone: z.string().min(10, { message: t("Phone number must be at least 10 digits.", "Nimero ya telefone igomba kuba nibura imibare 10.") }).regex(/^\+?[0-9\s-()]*$/, t("Invalid phone number format.", "Uburyo bwanditsemo nimero ya telefone ntabwo ari bwo.")),
-  password: z.string().min(6, { message: t("Password must be at least 6 characters.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
+  fullName: z.string().min(2, { message: t("Amazina yuzuye agomba kuba nibura inyuguti 2.", "Amazina yuzuye agomba kuba nibura inyuguti 2.") }),
+  email: z.string().email({ message: t("Aderesi email yanditse nabi.", "Aderesi email yanditse nabi.") }),
+  phone: z.string().min(10, { message: t("Nimero ya telefone igomba kuba nibura imibare 10.", "Nimero ya telefone igomba kuba nibura imibare 10.") }).regex(/^\+?[0-9\s-()]*$/, t("Uburyo bwanditsemo nimero ya telefone ntabwo ari bwo.", "Uburyo bwanditsemo nimero ya telefone ntabwo ari bwo.")),
+  password: z.string().min(6, { message: t("Ijambobanga rigomba kuba nibura inyuguti 6.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
-  message: t("Passwords don't match", "Amagambobanga ntabwo ahura"),
+  message: t("Amagambobanga ntabwo ahura", "Amagambobanga ntabwo ahura"),
   path: ["confirmPassword"],
 });
 
@@ -41,23 +40,20 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const searchParams = useSearchParams();
+  const [roleFromQuery, setRoleFromQuery] = useState<string | null>(null);
+
 
   useEffect(() => {
-    const role = localStorage.getItem('selectedRole');
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if(lang) setCurrentLanguage(lang);
-
-    if (!role || role === 'admin') { 
-      toast({ variant: "destructive", title: currentT("Role not selected", "Uruhare Ntibwahiswemo"), description: currentT("Please select a role before registering.", "Nyamuneka hitamo uruhare mbere yo kwiyandikisha.") });
-      router.replace('/welcome'); 
+    const role = searchParams.get('role');
+    if (role && role !== 'admin') { // Admin registration not allowed via this form
+      setRoleFromQuery(role);
     } else {
-      setSelectedRole(role);
+      toast({ variant: "destructive", title: t("Uruhare Rutemewe", "Uruhare Rutemewe"), description: t("Nyamuneka hitamo uruhare rwemewe mbere yo kwiyandikisha cyangwa admin ntiyiyandikisha hano.", "Nyamuneka hitamo uruhare rwemewe mbere yo kwiyandikisha cyangwa admin ntiyiyandikisha hano.") });
+      router.replace('/welcome'); 
     }
-  }, [router, toast, currentLanguage]); // Added currentLanguage to dependency
+  }, [searchParams, router, toast]);
 
-  const currentT = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -71,19 +67,16 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    // This is a mock registration. In a real app, this would call a backend API.
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const roleToRegister = localStorage.getItem('selectedRole') || 'patient'; 
-
-    localStorage.setItem('mockAuth', roleToRegister);
-    localStorage.setItem('mockUserName', data.fullName);
-    localStorage.setItem('mockUserEmail', data.email);
-    localStorage.setItem('mockUserPhone', data.phone);
-    
+    // Since localStorage for auth is removed, this registration doesn't "persist" a session.
+    // It just simulates a successful registration for UI flow.
     toast({
-      title: currentT("Registration Successful", "Kwiyandikisha Byagenze Neza"),
-      description: `${currentT("Your", "Iyawe")} ${roleToRegister} ${currentT("account has been created. Welcome,", "konti yafunguwe. Murakaza neza,")} ${data.fullName}!`,
+      title: t("Kwiyandikisha Byagenze Neza", "Kwiyandikisha Byagenze Neza"),
+      description: `${t("Konti yawe ya", "Konti yawe ya")} ${roleFromQuery || 'user'} ${t("yafunguwe. Murakaza neza,", "yafunguwe. Murakaza neza,")} ${data.fullName}! (Igerageza)`,
     });
+    // In a real app, backend would set a session cookie/token and redirect.
     router.push('/'); 
   };
   
@@ -93,16 +86,16 @@ export default function RegisterPage() {
     seeker: { en: "Create Health Seeker Account", kn: "Fungura Konti y'Ushaka Ubujyanama" },
   };
 
-  const pageTitle = selectedRole && roleTitles[selectedRole] 
-    ? currentT(roleTitles[selectedRole].en, roleTitles[selectedRole].kn) 
-    : currentT("Create Account", "Fungura Konti");
+  const pageTitle = roleFromQuery && roleTitles[roleFromQuery] 
+    ? t(roleTitles[roleFromQuery].en, roleTitles[roleFromQuery].kn) 
+    : t("Fungura Konti", "Fungura Konti");
 
 
-  if (!selectedRole) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
-         <p>{currentT("Redirecting to role selection...", "Koherezwa ku ihitamo ry'uruhare...")}</p>
-      </div>
+  if (!roleFromQuery) {
+     return (
+         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
+            <p>{t("Gutegura...", "Gutegura...")}</p> {/* Loading... */}
+         </div>
     );
   }
 
@@ -116,7 +109,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
-          <CardDescription>{currentT("Join MediServe Hub today. A (mock) verification code will be sent to your phone.", "Injira muri MediServe Hub uyu munsi. Kode y'igenzura (y'agateganyo) izoherezwa kuri telefone yawe.")}</CardDescription>
+          <CardDescription>{t("Injira muri MediServe Hub uyu munsi. Kode y'igenzura (y'agateganyo) izoherezwa kuri telefone yawe.", "Injira muri MediServe Hub uyu munsi. Kode y'igenzura (y'agateganyo) izoherezwa kuri telefone yawe.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -126,7 +119,7 @@ export default function RegisterPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Full Name", "Amazina Yuzuye")}</FormLabel>
+                    <FormLabel>{t("Amazina Yuzuye", "Amazina Yuzuye")}</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -139,7 +132,7 @@ export default function RegisterPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Email Address", "Aderesi Email")}</FormLabel>
+                    <FormLabel>{t("Aderesi Email", "Aderesi Email")}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
@@ -154,7 +147,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {currentT("Phone Number", "Nimero ya Telefone")}
+                      {t("Nimero ya Telefone", "Nimero ya Telefone")}
                     </FormLabel>
                     <FormControl>
                       <Input type="tel" placeholder="+250 7XX XXX XXX" {...field} />
@@ -168,7 +161,7 @@ export default function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Password", "Ijambobanga")}</FormLabel>
+                    <FormLabel>{t("Ijambobanga", "Ijambobanga")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -181,7 +174,7 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{currentT("Confirm Password", "Emeza Ijambobanga")}</FormLabel>
+                    <FormLabel>{t("Emeza Ijambobanga", "Emeza Ijambobanga")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -190,21 +183,21 @@ export default function RegisterPage() {
                 )}
               />
               <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? currentT("Registering...", "Kwiyandikisha...") : currentT("Register", "Iyandikishe")}
+                {form.formState.isSubmitting ? t("Kwiyandikisha...", "Kwiyandikisha...") : t("Iyandikishe", "Iyandikishe")}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm">
           <p>
-            {currentT("Already have an account?", "Usanzwe ufite konti?")}{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              {currentT("Log in here", "Injira hano")}
+            {t("Usanzwe ufite konti?", "Usanzwe ufite konti?")}{' '}
+            <Link href={`/login?role=${roleFromQuery}`} className="font-medium text-primary hover:underline">
+              {t("Injira hano", "Injira hano")}
             </Link>
           </p>
           <p>
             <Link href="/welcome" className="font-medium text-primary hover:underline">
-              {currentT("Back to Role Selection", "Subira ku Ihitamo ry'Uruhare")}
+              {t("Subira ku Ihitamo ry'Uruhare", "Subira ku Ihitamo ry'Uruhare")}
             </Link>
           </p>
         </CardFooter>

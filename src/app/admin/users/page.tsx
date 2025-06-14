@@ -9,8 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Edit3, Trash2, Search, Save, Camera } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { UserPlus, Edit3, Trash2, Search, Save, Camera, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm, Controller, FormProvider } from 'react-hook-form';
@@ -22,15 +22,17 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent as AlertDialogContentComponent, // Renamed to avoid conflict with DialogContent
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Not directly used, but part of the primitive
 } from "@/components/ui/alert-dialog";
+import { useRouter } from 'next/navigation';
 
 
-// Translation helper
-const t = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
 
 interface User {
   id: string;
@@ -50,38 +52,46 @@ const initialMockUsers: User[] = [
   { id: 'usr5', name: 'Dr. Alex Smith', email: 'doctor@example.com', role: 'Doctor', status: 'Active', joinedDate: '2023-05-01', profileImageUrl: 'https://placehold.co/60x60.png?text=AS' },
 ];
 
-const userFormSchema = (lang: 'en' | 'kn') => z.object({
-  name: z.string().min(2, { message: t("Name must be at least 2 characters.", "Izina rigomba kuba nibura inyuguti 2.", lang) }),
-  email: z.string().email({ message: t("Invalid email address.", "Aderesi email yanditse nabi.", lang) }),
-  role: z.enum(['Patient', 'Admin', 'Doctor', 'Seeker'], { required_error: t("Role is required.", "Uruhare rurasabwa.", lang) }),
-  status: z.enum(['Active', 'Inactive'], { required_error: t("Status is required.", "Uko umukoresha ahagaze birasabwa.", lang) }),
-  profileImageUrl: z.string().url({message: t("Invalid URL for profile image.", "URL y'ishusho y'umwirondoro yanditse nabi.", lang)}).optional().or(z.literal("")),
+const userFormSchema = z.object({
+  name: z.string().min(2, { message: t("Izina rigomba kuba nibura inyuguti 2.", "Izina rigomba kuba nibura inyuguti 2.") }),
+  email: z.string().email({ message: t("Aderesi email yanditse nabi.", "Aderesi email yanditse nabi.") }),
+  role: z.enum(['Patient', 'Admin', 'Doctor', 'Seeker'], { required_error: t("Uruhare rurasabwa.", "Uruhare rurasabwa.") }),
+  status: z.enum(['Active', 'Inactive'], { required_error: t("Uko umukoresha ahagaze birasabwa.", "Uko umukoresha ahagaze birasabwa.") }),
+  profileImageUrl: z.string().url({message: t("URL y'ishusho y'umwirondoro yanditse nabi.", "URL y'ishusho y'umwirondoro yanditse nabi.")}).optional().or(z.literal("")),
 });
 
 type UserFormValues = z.infer<ReturnType<typeof userFormSchema>>;
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const router = useRouter();
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [usersList, setUsersList] = useState<User[]>(initialMockUsers);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [usersList, setUsersList] = useState<User[]>([]);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false); // Combined for add/edit
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+
   useEffect(() => {
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    // Simulate checking admin authentication and fetching initial data
+    const simulateLoad = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsAuthenticatedAdmin(true);
+      setUsersList(initialMockUsers);
+      setIsLoadingPage(false);
+    };
+    simulateLoad();
   }, []);
 
-  const currentT = (enText: string, knText: string) => t(enText, knText, currentLanguage);
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema(currentLanguage)),
+    resolver: zodResolver(userFormSchema),
     defaultValues: { name: '', email: '', role: 'Patient', status: 'Active', profileImageUrl: '' },
   });
 
@@ -103,8 +113,8 @@ export default function AdminUsersPage() {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) { // 1MB limit
-        toast({ variant: "destructive", title: currentT("Image Too Large", "Ifoto ni Nini Cyane"), description: currentT("Please select an image smaller than 1MB.", "Nyamuneka hitamo ifoto iri munsi ya 1MB.")});
+      if (file.size > 1 * 1024 * 1024) { 
+        toast({ variant: "destructive", title: t("Ifoto ni Nini Cyane", "Ifoto ni Nini Cyane"), description: t("Nyamuneka hitamo ifoto iri munsi ya 1MB.", "Nyamuneka hitamo ifoto iri munsi ya 1MB.")});
         return;
       }
       const reader = new FileReader();
@@ -117,18 +127,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleAddUserClick = () => {
-    setEditingUser(null);
-    form.reset({ name: '', email: '', role: 'Patient', status: 'Active', profileImageUrl: '' });
-    setImagePreview(null);
-    setIsAddDialogOpen(true);
-  };
-
-  const handleEditUserClick = (user: User) => {
+  const handleOpenFormDialog = (user: User | null = null) => {
     setEditingUser(user);
-    setImagePreview(user.profileImageUrl || null);
-    form.reset(user);
-    setIsEditDialogOpen(true);
+    // form.reset will be handled by useEffect dependency on editingUser
+    setIsFormDialogOpen(true);
   };
 
   const handleDeleteUserClick = (user: User) => {
@@ -136,30 +138,31 @@ export default function AdminUsersPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleAddUserSubmit = (data: UserFormValues) => {
-    const newUser: User = {
-      ...data,
-      id: `usr${Date.now()}`,
-      joinedDate: new Date().toISOString().split('T')[0],
-      profileImageUrl: imagePreview || data.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(data.name)}`,
-    };
-    setUsersList(prev => [newUser, ...prev]);
-    toast({ title: currentT("User Added", "Umukoresha Yongeweho"), description: currentT(`${data.name} has been added.`, `${data.name} yongeweho.`) });
-    setIsAddDialogOpen(false);
-  };
-
-  const handleEditUserSubmit = (data: UserFormValues) => {
-    if (!editingUser) return;
-    setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data, profileImageUrl: imagePreview || data.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(data.name)}` } : u));
-    toast({ title: currentT("User Updated", "Umukoresha Yahinduwe"), description: currentT(`${data.name}'s information has been updated.`, `Amakuru ya ${data.name} yahinduwe.`) });
-    setIsEditDialogOpen(false);
+  const handleFormSubmit = (data: UserFormValues) => {
+    const profileImageToSave = imagePreview || data.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(data.name)}`;
+    if (editingUser) {
+      setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data, profileImageUrl: profileImageToSave } : u));
+      toast({ title: t("Umukoresha Yahinduwe (Igerageza)", "Umukoresha Yahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`) });
+    } else {
+      const newUser: User = {
+        ...data,
+        id: `usr${Date.now()}`,
+        joinedDate: new Date().toISOString().split('T')[0],
+        profileImageUrl: profileImageToSave,
+      };
+      setUsersList(prev => [newUser, ...prev]);
+      toast({ title: t("Umukoresha Yongeweho (Igerageza)", "Umukoresha Yongeweho (Igerageza)"), description: t(`${data.name} yongeweho. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yongeweho. Ibi bizasabwa koherezwa kuri seriveri.`) });
+    }
+    setIsFormDialogOpen(false);
     setEditingUser(null);
+    form.reset(); 
+    setImagePreview(null);
   };
 
   const confirmDeleteUser = () => {
     if (!userToDelete) return;
     setUsersList(prev => prev.filter(u => u.id !== userToDelete.id));
-    toast({ title: currentT("User Deleted", "Umukoresha Yasibwe"), description: currentT(`${userToDelete.name} has been deleted.`, `${userToDelete.name} yasibwe.`), variant: 'destructive' });
+    toast({ title: t("Umukoresha Yasibwe (Igerageza)", "Umukoresha Yasibwe (Igerageza)"), description: t(`${userToDelete.name} yasibwe. Gusiba nyako bisaba seriveri.`, `${userToDelete.name} yasibwe. Gusiba nyako bisaba seriveri.`), variant: 'destructive' });
     setIsDeleteDialogOpen(false);
     setUserToDelete(null);
   };
@@ -172,65 +175,78 @@ export default function AdminUsersPage() {
   };
 
   const translateRole = (role: User['role']) => {
-    if (currentLanguage === 'kn') {
-        if (role === 'Patient') return 'Umurwayi';
-        if (role === 'Admin') return 'Umunyamabanga';
-        if (role === 'Doctor') return 'Muganga';
-        if (role === 'Seeker') return 'Ushaka Ubujyanama';
-    }
+    if (role === 'Patient') return t('Patient', 'Umurwayi');
+    if (role === 'Admin') return t('Admin', 'Umunyamabanga');
+    if (role === 'Doctor') return t('Doctor', 'Muganga');
+    if (role === 'Seeker') return t('Seeker', 'Ushaka Ubujyanama');
     return role;
   }
 
   const translateStatus = (status: User['status']) => {
-    if (currentLanguage === 'kn') {
-        if (status === 'Active') return 'Arakora';
-        if (status === 'Inactive') return 'Ntarakora';
-    }
+    if (status === 'Active') return t('Active', 'Arakora');
+    if (status === 'Inactive') return t('Inactive', 'Ntarakora');
     return status;
   }
 
+  if (isLoadingPage) {
+    return (
+      <AppLayout>
+        <PageHeader title={t("Manage Users", "Gucunga Abakoresha")} />
+        <div className="flex justify-center items-center py-10">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">{t("Loading users...", "Gutegura abakoresha...")}</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!isAuthenticatedAdmin) {
+    toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
+    router.replace('/admin/login');
+    return null;
+  }
 
   return (
     <AppLayout>
       <PageHeader
-        title={currentT("Manage Users", "Gucunga Abakoresha")}
+        title={t("Manage Users", "Gucunga Abakoresha")}
         breadcrumbs={[
-            { label: currentT("Dashboard", "Imbonerahamwe"), href: "/" }, 
-            { label: currentT("Admin", "Ubuyobozi"), href: "/admin/dashboard" }, 
-            { label: currentT("Users", "Abakoresha") }
+            { label: t("Dashboard", "Imbonerahamwe"), href: "/" }, 
+            { label: t("Admin", "Ubuyobozi"), href: "/admin/dashboard" }, 
+            { label: t("Users", "Abakoresha") }
         ]}
       >
         <div className="flex items-center space-x-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder={currentT("Search users...", "Shakisha abakoresha...")}
+              placeholder={t("Search users...", "Shakisha abakoresha...")}
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleAddUserClick} className="transition-transform hover:scale-105 active:scale-95">
-            <UserPlus className="mr-2 h-4 w-4" /> {currentT("Add New User", "Ongeraho Umukoresha Mushya")}
+          <Button onClick={() => handleOpenFormDialog(null)} className="transition-transform hover:scale-105 active:scale-95">
+            <UserPlus className="mr-2 h-4 w-4" /> {t("Add New User", "Ongeraho Umukoresha Mushya")}
           </Button>
         </div>
       </PageHeader>
       <Card className="shadow-xl hover-lift">
         <CardHeader>
-          <CardTitle className="font-headline">{currentT("User List", "Urutonde rw'Abakoresha")}</CardTitle>
-          <CardDescription>{currentT("View, edit, or remove user accounts. Profile images are mock.", "Reba, hindura, cyangwa ukureho konti z'abakoresha. Amafoto y'umwirondoro ni ay'ikitegererezo.")}</CardDescription>
+          <CardTitle className="font-headline">{t("User List", "Urutonde rw'Abakoresha")}</CardTitle>
+          <CardDescription>{t("View, edit, or remove user accounts. Changes are illustrative.", "Reba, hindura, cyangwa ukureho konti. Impinduka ni iz'ikitegererezo.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{currentT("Avatar", "Ifoto")}</TableHead>
-                <TableHead>{currentT("Name", "Izina")}</TableHead>
-                <TableHead>{currentT("Email", "Email")}</TableHead>
-                <TableHead>{currentT("Role", "Uruhare")}</TableHead>
-                <TableHead>{currentT("Status", "Uko Ahagaze")}</TableHead>
-                <TableHead>{currentT("Joined Date", "Itariki Yinjiyeho")}</TableHead>
-                <TableHead>{currentT("Actions", "Ibikorwa")}</TableHead>
+                <TableHead>{t("Avatar", "Ifoto")}</TableHead>
+                <TableHead>{t("Name", "Izina")}</TableHead>
+                <TableHead>{t("Email", "Email")}</TableHead>
+                <TableHead>{t("Role", "Uruhare")}</TableHead>
+                <TableHead>{t("Status", "Uko Ahagaze")}</TableHead>
+                <TableHead>{t("Joined Date", "Itariki Yinjiyeho")}</TableHead>
+                <TableHead>{t("Actions", "Ibikorwa")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -256,10 +272,10 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>{user.joinedDate}</TableCell>
                   <TableCell className="space-x-2">
-                    <Button variant="outline" size="icon" aria-label={currentT("Edit user", "Hindura umukoresha")} onClick={() => handleEditUserClick(user)} className="hover:border-primary hover:text-primary transition-colors">
+                    <Button variant="outline" size="icon" aria-label={t("Edit user", "Hindura umukoresha")} onClick={() => handleOpenFormDialog(user)} className="hover:border-primary hover:text-primary transition-colors">
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button variant="destructive" size="icon" aria-label={currentT("Delete user", "Siba umukoresha")} onClick={() => handleDeleteUserClick(user)} className="hover:opacity-80 transition-opacity">
+                    <Button variant="destructive" size="icon" aria-label={t("Delete user", "Siba umukoresha")} onClick={() => handleDeleteUserClick(user)} className="hover:opacity-80 transition-opacity">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -268,29 +284,29 @@ export default function AdminUsersPage() {
             </TableBody>
           </Table>
           {filteredUsers.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">{currentT("No users found matching your search.", "Nta bakoresha bahuye n'ubushakashatsi bwawe babonetse.")}</p>
+            <p className="text-center text-muted-foreground py-8">{t("No users found matching your search.", "Nta bakoresha bahuye n'ubushakashatsi bwawe babonetse.")}</p>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={isAddDialogOpen ? setIsAddDialogOpen : setIsEditDialogOpen}>
+      <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(editingUser ? handleEditUserSubmit : handleAddUserSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
             <DialogHeader>
-                <DialogTitle>{editingUser ? currentT('Edit User', 'Hindura Umukoresha') : currentT('Add New User', 'Ongeraho Umukoresha Mushya')}</DialogTitle>
+                <DialogTitle>{editingUser ? t('Edit User', 'Hindura Umukoresha') : t('Add New User', 'Ongeraho Umukoresha Mushya')}</DialogTitle>
                 <DialogDescription>
-                {editingUser ? currentT("Update the user's details.", "Hindura amakuru y'umukoresha.") : currentT("Fill in the details to create a new user.", "Uzuza amakuru kugirango ukore umukoresha mushya.")}
+                {editingUser ? t("Update the user's details. (Mock)", "Hindura amakuru y'umukoresha. (Igerageza)") : t("Fill in the details to create a new user. (Mock)", "Uzuza amakuru kugirango ukore umukoresha mushya. (Igerageza)")}
                 </DialogDescription>
             </DialogHeader>
             
             <div className="flex flex-col items-center space-y-2">
                 <Avatar className="h-24 w-24 border-4 border-primary/50 shadow-md">
-                    <AvatarImage src={imagePreview || form.watch("profileImageUrl") || undefined} alt={currentT("Profile Preview", "Ifoto y'Agateganyo")} data-ai-hint="user placeholder"/>
+                    <AvatarImage src={imagePreview || form.watch("profileImageUrl") || undefined} alt={t("Profile Preview", "Ifoto y'Agateganyo")} data-ai-hint="user placeholder"/>
                     <AvatarFallback className="text-3xl">{form.watch("name") ? getInitials(form.watch("name")) : "U"}</AvatarFallback>
                 </Avatar>
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    <Camera className="mr-2 h-4 w-4"/> {currentT("Change Photo", "Hindura Ifoto")}
+                    <Camera className="mr-2 h-4 w-4"/> {t("Change Photo", "Hindura Ifoto")}
                 </Button>
                 <Input 
                     type="file" 
@@ -304,7 +320,7 @@ export default function AdminUsersPage() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                         <div className="w-full">
-                        <Label htmlFor="profileImageUrl-input-admin-dialog" className="text-xs text-muted-foreground">{currentT("Profile Image URL (or leave blank for auto-selection)", "URL y'Ifoto y'Umwirondoro (cyangwa usige ubusa ngo yihitemo)")}</Label>
+                        <Label htmlFor="profileImageUrl-input-admin-dialog" className="text-xs text-muted-foreground">{t("Profile Image URL (or leave blank for auto-selection)", "URL y'Ifoto y'Umwirondoro (cyangwa usige ubusa ngo yihitemo)")}</Label>
                         <Input id="profileImageUrl-input-admin-dialog" {...field} placeholder="https://example.com/image.png" className="mt-1 text-xs" />
                         {fieldState.error && <p className="text-sm text-destructive mt-1">{fieldState.error.message}</p>}
                         </div>
@@ -313,30 +329,30 @@ export default function AdminUsersPage() {
             </div>
 
             <div>
-              <Label htmlFor="name">{currentT("Full Name", "Amazina Yuzuye")}</Label>
+              <Label htmlFor="name">{t("Full Name", "Amazina Yuzuye")}</Label>
               <Input id="name" {...form.register("name")} className="mt-1" />
               {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
             </div>
             <div>
-              <Label htmlFor="email">{currentT("Email", "Email")}</Label>
+              <Label htmlFor="email">{t("Email", "Email")}</Label>
               <Input id="email" type="email" {...form.register("email")} className="mt-1" />
               {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
             </div>
             <div>
-              <Label htmlFor="role">{currentT("Role", "Uruhare")}</Label>
+              <Label htmlFor="role">{t("Role", "Uruhare")}</Label>
               <Controller
                 name="role"
                 control={form.control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder={currentT("Select a role", "Hitamo uruhare")} />
+                      <SelectValue placeholder={t("Select a role", "Hitamo uruhare")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Patient">{currentT("Patient", "Umurwayi")}</SelectItem>
-                      <SelectItem value="Doctor">{currentT("Doctor", "Muganga")}</SelectItem>
-                      <SelectItem value="Seeker">{currentT("Seeker", "Ushaka Ubujyanama")}</SelectItem>
-                      <SelectItem value="Admin">{currentT("Admin", "Umunyamabanga")}</SelectItem>
+                      <SelectItem value="Patient">{t("Patient", "Umurwayi")}</SelectItem>
+                      <SelectItem value="Doctor">{t("Doctor", "Muganga")}</SelectItem>
+                      <SelectItem value="Seeker">{t("Seeker", "Ushaka Ubujyanama")}</SelectItem>
+                      <SelectItem value="Admin">{t("Admin", "Umunyamabanga")}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -344,18 +360,18 @@ export default function AdminUsersPage() {
               {form.formState.errors.role && <p className="text-sm text-destructive mt-1">{form.formState.errors.role.message}</p>}
             </div>
             <div>
-              <Label htmlFor="status">{currentT("Status", "Uko Ahagaze")}</Label>
+              <Label htmlFor="status">{t("Status", "Uko Ahagaze")}</Label>
               <Controller
                 name="status"
                 control={form.control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder={currentT("Select status", "Hitamo uko ahagaze")} />
+                      <SelectValue placeholder={t("Select status", "Hitamo uko ahagaze")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Active">{currentT("Active", "Arakora")}</SelectItem>
-                      <SelectItem value="Inactive">{currentT("Inactive", "Ntarakora")}</SelectItem>
+                      <SelectItem value="Active">{t("Active", "Arakora")}</SelectItem>
+                      <SelectItem value="Inactive">{t("Inactive", "Ntarakora")}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -363,8 +379,8 @@ export default function AdminUsersPage() {
                {form.formState.errors.status && <p className="text-sm text-destructive mt-1">{form.formState.errors.status.message}</p>}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => editingUser ? setIsEditDialogOpen(false) : setIsAddDialogOpen(false)}>{currentT("Cancel", "Hagarika")}</Button>
-              <Button type="submit" className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" /> {editingUser ? currentT('Save Changes', 'Bika Impinduka') : currentT('Add User', 'Ongeraho Umukoresha')}</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsFormDialogOpen(false); setEditingUser(null); form.reset(); setImagePreview(null);}}>{t("Cancel", "Hagarika")}</Button>
+              <Button type="submit" className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" /> {editingUser ? t('Save Changes', 'Bika Impinduka') : t('Add User', 'Ongeraho Umukoresha')}</Button>
             </DialogFooter>
           </form>
           </FormProvider>
@@ -372,19 +388,19 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContentComponent> {/* Using Renamed Component */}
           <AlertDialogHeader>
-            <AlertDialogTitle>{currentT("Confirm Deletion", "Emeza Gusiba")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Confirm Deletion", "Emeza Gusiba")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {currentT("Are you sure you want to delete this user: ", "Urifuza gusiba uyu mukoresha: ")}
-              <span className="font-semibold">{userToDelete?.name}</span>? {currentT("This action cannot be undone.", "Iki gikorwa ntigishobora gusubizwamo.")}
+              {t("Are you sure you want to delete this user: ", "Urifuza gusiba uyu mukoresha: ")}
+              <span className="font-semibold">{userToDelete?.name}</span>? {t("This action cannot be undone. (Mock)", "Iki gikorwa ntigishobora gusubizwamo. (Igerageza)")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setUserToDelete(null)}>{currentT("Cancel", "Hagarika")}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-transform hover:scale-105 active:scale-95">{currentT("Delete User", "Siba Umukoresha")}</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>{t("Cancel", "Hagarika")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-transform hover:scale-105 active:scale-95">{t("Delete User", "Siba Umukoresha")}</AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </AlertDialogContentComponent>
       </AlertDialog>
 
     </AppLayout>

@@ -15,30 +15,32 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
 
-interface MockDoctor {
+interface MockDoctorClient { // Renamed to avoid conflict
   id: string;
   name: string;
+  nameKn: string;
   specialty: string;
+  specialtyKn: string;
 }
 
-interface Appointment {
+interface AppointmentClient { // Renamed
   id: string;
-  userId: string; // To link appointment to a user
+  userId: string; // This would be actual user ID from backend
   doctorId: string;
   doctorName: string;
-  date: string; // ISO string
+  date: string; 
   time: string;
   reason: string;
   status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
-  type: 'Online' | 'In-Person'; // Added for future use
+  type: 'Online' | 'In-Person';
 }
 
-const mockDoctors: MockDoctor[] = [
-  { id: "doc1", name: "Dr. Emily Carter - General Physician", specialty: "General Physician" },
-  { id: "doc2", name: "Dr. Ben Adams - Pediatrician", specialty: "Pediatrician" },
-  { id: "doc3", name: "Dr. Olivia Chen - Cardiologist", specialty: "Cardiologist" },
-  { id: "doc4", name: "Dr. Ntwari Jean - Umuganga Rusange", specialty: "Umuganga Rusange"},
-  { id: "doc5", name: "Dr. Keza Alice - Umuganga w'Abana", specialty: "Umuganga w'Abana"},
+const mockDoctorsClient: MockDoctorClient[] = [ // Renamed
+  { id: "doc1", name: "Dr. Emily Carter", nameKn: "Dr. Emily Carter", specialty: "General Physician", specialtyKn: "Umuganga Rusange" },
+  { id: "doc2", name: "Dr. Ben Adams", nameKn: "Dr. Ben Adams", specialty: "Pediatrician", specialtyKn: "Umuganga w'Abana" },
+  { id: "doc3", name: "Dr. Olivia Chen", nameKn: "Dr. Olivia Chen", specialty: "Cardiologist", specialtyKn: "Umuganga w'Umutima" },
+  { id: "doc4", name: "Dr. Ntwari Jean", nameKn: "Dr. Ntwari Jean", specialty: "General Physician", specialtyKn: "Umuganga Rusange"},
+  { id: "doc5", name: "Dr. Keza Alice", nameKn: "Dr. Keza Alice", specialty: "Pediatrician", specialtyKn: "Umuganga w'Abana"},
 ];
 
 const availableTimeSlots = [
@@ -46,17 +48,15 @@ const availableTimeSlots = [
   "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
 ];
 
-// Translation helper
-const t = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 export default function BookAppointmentPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
+  // Assume not authenticated until backend confirms
+  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>();
@@ -66,143 +66,129 @@ export default function BookAppointmentPage() {
 
   useEffect(() => {
     setIsClient(true);
+    // Simulate auth check
+    const checkAuth = async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // This is a placeholder. Real auth would check a session/token.
+        setIsAuthenticated(true); // Assume authenticated for prototype
+        setIsLoadingPage(false);
+    };
+    checkAuth();
   }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-      const userId = localStorage.getItem('mockPatientId') || localStorage.getItem('mockUserEmail'); // Use patientId or email as fallback
-
-      if (lang) setCurrentLanguage(lang);
-      setCurrentUserId(userId);
-
-      if (!authStatus || !userId) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe", currentLanguage),
-          description: t("Please log in to book an appointment.", "Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.", currentLanguage),
-        });
-        router.replace('/welcome');
-      } else {
-        setIsAuthenticated(true);
-      }
-    }
-  }, [isClient, router, toast, currentLanguage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate || !selectedDoctorId || !selectedTime || !reason.trim() || !currentUserId) {
+    if (!isAuthenticated) {
+        toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.", "Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.") });
+        router.push('/welcome');
+        return;
+    }
+    if (!selectedDate || !selectedDoctorId || !selectedTime || !reason.trim()) {
       toast({
         variant: "destructive",
-        title: t("Missing Information", "Amakuru Arabura", currentLanguage),
-        description: t("Please select a date, doctor, time slot, and provide a reason for your visit.", "Nyamuneka hitamo itariki, muganga, isaha, kandi utange impamvu y'uruzinduko rwawe.", currentLanguage),
+        title: t("Amakuru Arabura", "Amakuru Arabura"),
+        description: t("Nyamuneka hitamo itariki, muganga, isaha, kandi utange impamvu y'uruzinduko rwawe.", "Nyamuneka hitamo itariki, muganga, isaha, kandi utange impamvu y'uruzinduko rwawe."),
       });
       return;
     }
     setIsSubmitting(true);
     
-    const selectedDoctor = mockDoctors.find(doc => doc.id === selectedDoctorId);
+    const selectedDoctor = mockDoctorsClient.find(doc => doc.id === selectedDoctorId);
     if (!selectedDoctor) {
-        toast({ variant: "destructive", title: t("Doctor not found", "Muganga Ntiyabonetse", currentLanguage) });
+        toast({ variant: "destructive", title: t("Muganga Ntiyabonetse", "Muganga Ntiyabonetse") });
         setIsSubmitting(false);
         return;
     }
 
-    const newAppointment: Appointment = {
-        id: `appt_${Date.now()}`,
-        userId: currentUserId,
-        doctorId: selectedDoctorId,
-        doctorName: selectedDoctor.name,
-        date: selectedDate.toISOString(),
-        time: selectedTime,
-        reason: reason,
-        status: 'Pending',
-        type: 'Online', // Default or allow selection
-    };
+    // Simulate API call to save appointment
+    // const newAppointment: AppointmentClient = { /* ... */ };
+    // Backend would handle saving to database based on schema.sql.
 
-    try {
-        const existingAppointmentsString = localStorage.getItem('userAppointments');
-        const existingAppointments: Appointment[] = existingAppointmentsString ? JSON.parse(existingAppointmentsString) : [];
-        existingAppointments.push(newAppointment);
-        localStorage.setItem('userAppointments', JSON.stringify(existingAppointments));
-
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast({
-          title: t("Appointment Booked", "Igihe Cyafashe", currentLanguage),
-          description: t(`Your appointment with ${selectedDoctor.name.split(" - ")[0]} on ${format(selectedDate, "PPP")} at ${selectedTime} has been requested.`, 
-                          `Igihe cyawe na ${selectedDoctor.name.split(" - ")[0]} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe.`, currentLanguage),
-        });
-        setSelectedDate(new Date());
-        setSelectedDoctorId(undefined);
-        setSelectedTime(undefined);
-        setReason("");
-        router.push('/appointments/my-appointments');
-    } catch (error) {
-        console.error("Error saving appointment:", error);
-        toast({ variant: "destructive", title: t("Booking Failed", "Gufata Igihe Byanze", currentLanguage), description: t("Could not save your appointment.", "Ntibishoboye kubika igihe cyawe.", currentLanguage)});
-    } finally {
-        setIsSubmitting(false);
-    }
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+    toast({
+      title: t("Igihe Cyafashe (Igerageza)", "Igihe Cyafashe (Igerageza)"),
+      description: t(`Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, 
+                      `Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`),
+    });
+    setSelectedDate(new Date());
+    setSelectedDoctorId(undefined);
+    setSelectedTime(undefined);
+    setReason("");
+    router.push('/appointments/my-appointments'); // Navigate to view appointments
+    
+    setIsSubmitting(false);
   };
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">{t("Loading Appointment Booker...", "Gutegura Gufata Igihe...", currentLanguage)}</p>
+          <p className="text-muted-foreground">{t("Gutegura Gufata Igihe...", "Gutegura Gufata Igihe...")}</p>
         </div>
       </AppLayout>
     );
+  }
+  
+   if (!isAuthenticated) {
+     return (
+         <AppLayout>
+            <PageHeader title={t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")} />
+            <Card className="mt-10 text-center p-10">
+                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
+                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango ufashe igihe.", "Nyamuneka injira kugirango ufashe igihe.")}</CardDescription>
+                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
+            </Card>
+         </AppLayout>
+     )
   }
 
   return (
     <AppLayout>
       <PageHeader 
-        title={t("Book an Appointment", "Fata Igihe kwa Muganga", currentLanguage)} 
+        title={t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")} 
         breadcrumbs={[
-          {label: t("Dashboard", "Imbonerahamwe", currentLanguage), href: "/"}, 
-          {label: t("Appointments", "Amateraniro", currentLanguage)}, 
-          {label: t("Book Appointment", "Fata Igihe", currentLanguage)}
+          {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
+          {label: t("Amateraniro", "Amateraniro"), href: "/appointments/my-appointments"}, 
+          {label: t("Fata Igihe", "Fata Igihe")}
         ]}
       />
       
       <Alert className="mb-6 bg-primary/5 border-primary/20">
         <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-headline text-primary">{t("Booking Information", "Amakuru yo Gufata Igihe", currentLanguage)}</AlertTitle>
+        <AlertTitle className="font-headline text-primary">{t("Amakuru yo Gufata Igihe", "Amakuru yo Gufata Igihe")}</AlertTitle>
         <AlertDescription>
-          {t("Select your preferred doctor, date, and time slot. Please provide a brief reason for your visit. All bookings are subject to confirmation.", 
-             "Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa.", currentLanguage)}
+          {t("Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri.", 
+             "Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri.")}
         </AlertDescription>
       </Alert>
 
       <Card className="shadow-xl hover-lift">
         <form onSubmit={handleSubmit}>
           <CardHeader>
-            <CardTitle className="font-headline flex items-center"><CalendarPlus className="mr-2 h-6 w-6 text-primary" /> {t("Appointment Details", "Amakuru y'Igihe", currentLanguage)}</CardTitle>
-            <CardDescription>{t("Fill in the details below to schedule your consultation.", "Uzuza amakuru hano hepfo kugirango ufate igihe cyo kubonana.", currentLanguage)}</CardDescription>
+            <CardTitle className="font-headline flex items-center"><CalendarPlus className="mr-2 h-6 w-6 text-primary" /> {t("Amakuru y'Igihe", "Amakuru y'Igihe")}</CardTitle>
+            <CardDescription>{t("Uzuza amakuru hano hepfo kugirango ufate igihe cyo kubonana.", "Uzuza amakuru hano hepfo kugirango ufate igihe cyo kubonana.")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Select Doctor", "Hitamo Muganga", currentLanguage)}</label>
+                <label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Muganga", "Hitamo Muganga")}</label>
                 <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
                   <SelectTrigger id="doctor" className="w-full">
-                    <SelectValue placeholder={t("Choose a doctor or specialty", "Hitamo muganga cyangwa ubunararibonye", currentLanguage)} />
+                    <SelectValue placeholder={t("Hitamo muganga cyangwa ubunararibonye", "Hitamo muganga cyangwa ubunararibonye")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDoctors.map(doc => (
-                      <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                    {mockDoctorsClient.map(doc => (
+                      <SelectItem key={doc.id} value={doc.id}>{doc.nameKn} ({doc.specialtyKn})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Select Time Slot", "Hitamo Isaha", currentLanguage)}</label>
+                <label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Isaha", "Hitamo Isaha")}</label>
                 <Select value={selectedTime} onValueChange={setSelectedTime} disabled={!selectedDate}>
                   <SelectTrigger id="timeSlot" className="w-full">
-                    <SelectValue placeholder={selectedDate ? t("Choose a time", "Hitamo isaha", currentLanguage) : t("Select a date first", "Hitamo itariki mbere", currentLanguage)} />
+                    <SelectValue placeholder={selectedDate ? t("Hitamo isaha", "Hitamo isaha") : t("Hitamo itariki mbere", "Hitamo itariki mbere")} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableTimeSlots.map(time => (
@@ -214,7 +200,7 @@ export default function BookAppointmentPage() {
             </div>
 
             <div className="flex flex-col items-center md:items-start">
-               <label className="block text-sm font-medium text-foreground mb-2">{t("Select Date", "Hitamo Itariki", currentLanguage)}</label>
+               <label className="block text-sm font-medium text-foreground mb-2">{t("Hitamo Itariki", "Hitamo Itariki")}</label>
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -225,10 +211,10 @@ export default function BookAppointmentPage() {
             </div>
             
             <div>
-              <label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Reason for Visit", "Impamvu y'Uruzinduko", currentLanguage)}</label>
+              <label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Impamvu y'Uruzinduko", "Impamvu y'Uruzinduko")}</label>
               <Textarea 
                 id="reason" 
-                placeholder={t("Briefly describe the reason for your appointment (e.g., regular check-up, specific symptom)...", "Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...", currentLanguage)} 
+                placeholder={t("Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...", "Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...")} 
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
@@ -240,12 +226,12 @@ export default function BookAppointmentPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("Requesting Appointment...", "Gusaba Igihe...", currentLanguage)}
+                  {t("Gusaba Igihe...", "Gusaba Igihe...")}
                 </>
               ) : (
                 <>
                   <CalendarPlus className="mr-2 h-4 w-4" />
-                  {t("Request Appointment", "Saba Igihe", currentLanguage)}
+                  {t("Saba Igihe", "Saba Igihe")}
                 </>
               )}
             </Button>
