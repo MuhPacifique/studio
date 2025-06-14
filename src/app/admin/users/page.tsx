@@ -42,7 +42,7 @@ const userFormSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   role: z.enum(['Patient', 'Admin', 'Doctor', 'Seeker'], { required_error: "Role is required." }),
   status: z.enum(['Active', 'Inactive'], { required_error: "Status is required." }),
-  profileImageUrl: z.string().url().optional().or(z.literal("")),
+  profileImageUrl: z.string().url({message: "Invalid URL for profile image."}).optional().or(z.literal("")),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -84,8 +84,9 @@ export default function AdminUsersPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        form.setValue("profileImageUrl", reader.result as string); 
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue("profileImageUrl", result); // Set for form submission (Data URL)
       };
       reader.readAsDataURL(file);
     }
@@ -113,17 +114,17 @@ export default function AdminUsersPage() {
       ...data,
       id: `usr${Date.now()}`,
       joinedDate: new Date().toISOString().split('T')[0],
-      profileImageUrl: imagePreview || data.profileImageUrl, 
+      profileImageUrl: imagePreview || data.profileImageUrl, // Use preview if available (Data URL), else form value (could be manual URL)
     };
     setUsersList(prev => [newUser, ...prev]);
-    toast({ title: "User Added", description: `${data.name} has been added.` });
+    toast({ title: "User Added (Mock)", description: `${data.name} has been added.` });
     setIsAddDialogOpen(false);
   };
 
   const handleEditUserSubmit = (data: UserFormValues) => {
     if (!editingUser) return;
     setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data, profileImageUrl: imagePreview || data.profileImageUrl } : u));
-    toast({ title: "User Updated", description: `${data.name}'s information has been updated.` });
+    toast({ title: "User Updated (Mock)", description: `${data.name}'s information has been updated.` });
     setIsEditDialogOpen(false);
     setEditingUser(null);
   };
@@ -132,7 +133,7 @@ export default function AdminUsersPage() {
     if (!deletingUserId) return;
     const userToDelete = usersList.find(u => u.id === deletingUserId);
     setUsersList(prev => prev.filter(u => u.id !== deletingUserId));
-    toast({ title: "User Deleted", description: `${userToDelete?.name || 'User'} has been deleted.`, variant: 'destructive' });
+    toast({ title: "User Deleted (Mock)", description: `${userToDelete?.name || 'User'} has been deleted.`, variant: 'destructive' });
     setIsDeleteDialogOpen(false);
     setDeletingUserId(null);
   };
@@ -169,7 +170,7 @@ export default function AdminUsersPage() {
       <Card className="shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline">User List</CardTitle>
-          <CardDescription>View, edit, or remove user accounts.</CardDescription>
+          <CardDescription>View, edit, or remove user accounts. Profile images are mock.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -196,11 +197,11 @@ export default function AdminUsersPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
+                    <Badge variant={user.role === 'Admin' ? 'destructive' : (user.role === 'Doctor' ? 'secondary' : 'default')} className={user.role === 'Admin' ? "" : (user.role === 'Doctor' ? "" : "bg-primary/80 text-primary-foreground")}>{user.role}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={user.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:bg-green-500/30 dark:text-green-300 border border-green-500/50' : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/50'}
+                      className={user.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:bg-green-700/30 dark:text-green-300 border border-green-500/50' : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/50'}
                     >
                       {user.status}
                     </Badge>
@@ -248,13 +249,14 @@ export default function AdminUsersPage() {
                     accept="image/png, image/jpeg, image/gif" 
                     onChange={handleImageChange}
                 />
+                {/* Hidden input to store profileImageUrl (Data URL from preview or manually entered URL) */}
                 <FormField
                   control={form.control}
                   name="profileImageUrl"
                   render={({ field }) => (
-                    <FormItem className="w-full hidden"> {/* Hidden, managed by preview logic */}
-                      <Label htmlFor="profileImageUrl-input" className="sr-only">Profile Image URL</Label>
-                      <Input id="profileImageUrl-input" {...field} placeholder="Image URL (mock)" />
+                    <FormItem className="w-full">
+                      <Label htmlFor="profileImageUrl-input-admin" className="text-xs text-muted-foreground">Profile Image URL (or leave blank for auto-selection)</Label>
+                      <Input id="profileImageUrl-input-admin" {...field} placeholder="https://example.com/image.png" className="mt-1 text-xs" />
                       <FormMessage />
                     </FormItem>
                   )}

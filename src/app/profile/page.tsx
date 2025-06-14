@@ -149,18 +149,22 @@ export default function ProfilePage() {
         const result = reader.result as string;
         setImagePreview(result);
         form.setValue("profileImageUrl", result); 
-        localStorage.setItem('mockUserProfileImage', result); // Update local storage immediately for UserNav
-        
-        // Dispatch a storage event to notify UserNav to update
-        window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage' }));
+        // Note: In a real app, you'd upload the file here and get a URL from the server.
+        // For mock, we'll save the Data URL or a placeholder.
       };
       reader.readAsDataURL(file);
     }
   };
 
   const onSubmit = (data: ProfileFormValues) => {
-    const updatedData = { ...data, profileImageUrl: imagePreview || data.profileImageUrl };
+    // If imagePreview exists, it means a new image was selected (or an existing one re-selected).
+    // We use this for the mock "save" to localStorage.
+    // In a real app, `data.profileImageUrl` would likely be a URL from your backend after upload.
+    const updatedProfileImageUrl = imagePreview || data.profileImageUrl || "";
+
+    const updatedData: ProfileFormValues = { ...data, profileImageUrl: updatedProfileImageUrl };
     setCurrentUser(updatedData); 
+
     localStorage.setItem('mockUserName', updatedData.fullName);
     localStorage.setItem('mockUserEmail', updatedData.email);
     localStorage.setItem('mockUserPhone', updatedData.phone || "");
@@ -169,16 +173,7 @@ export default function ProfilePage() {
     localStorage.setItem('mockUserCity', updatedData.city || "");
     localStorage.setItem('mockUserCountry', updatedData.country || "Rwanda");
     localStorage.setItem('mockUserBio', updatedData.bio || "");
-    
-    if (imagePreview) { // If a new image was previewed, it's already in localStorage from handleImageChange
-        localStorage.setItem('mockUserProfileImage', imagePreview);
-    } else if (updatedData.profileImageUrl === "") { // If URL was cleared and no new preview
-        localStorage.removeItem('mockUserProfileImage');
-    }
-    // Ensure mockUserProfileImage is updated for UserNav
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage' }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserName' }));
-
+    localStorage.setItem('mockUserProfileImage', updatedProfileImageUrl); // Save the potentially new image URL
 
     localStorage.setItem('mockUserLang', updatedData.preferredLanguage || "en");
     localStorage.setItem('mockUserMarketing', String(updatedData.enableMarketingEmails || false));
@@ -193,9 +188,14 @@ export default function ProfilePage() {
     const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] || '' : '';
     setInitials((firstInitial + lastInitial).toUpperCase() || "U");
 
+    // Trigger a storage event to notify UserNav about profile image change
+    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage', newValue: updatedProfileImageUrl }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserName', newValue: updatedData.fullName }));
+
+
     toast({
       title: "Profile Updated (Mock)",
-      description: "Your profile information has been saved.",
+      description: "Your profile information has been saved to localStorage.",
     });
      form.reset(updatedData); 
   };
@@ -239,6 +239,17 @@ export default function ProfilePage() {
                     className="hidden" 
                     accept="image/png, image/jpeg, image/gif" 
                     onChange={handleImageChange}
+                />
+                 <FormField
+                  control={form.control}
+                  name="profileImageUrl"
+                  render={({ field }) => (
+                    <FormItem className="w-full hidden"> {/* Hidden, managed by preview logic */}
+                      <Label htmlFor="profileImageUrl-input" className="sr-only">Profile Image URL</Label>
+                      <Input id="profileImageUrl-input" {...field} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
               <div>

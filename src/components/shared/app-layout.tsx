@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -23,7 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen>
       <Sidebar variant="sidebar" collapsible="icon" side="left" className="border-r">
         <SidebarHeader className="p-4 border-b border-sidebar-border">
-          <Link href="/" className="flex items-center gap-2 text-sidebar-foreground hover:text-sidebar-accent-foreground transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-sidebar-foreground hover:text-sidebar-accent-foreground transition-colors group">
             <LogoIcon className="h-8 w-8" />
             <h1 className="text-xl font-bold truncate font-headline">MediServe Hub</h1>
           </Link>

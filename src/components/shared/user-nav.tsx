@@ -25,7 +25,7 @@ const useAuth = () => {
   const [userName, setUserName] = React.useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
   const [isClient, setIsClient] = React.useState(false);
-  const router = useRouter(); // For programmatic navigation
+  const router = useRouter(); 
 
   React.useEffect(() => {
     setIsClient(true);
@@ -42,13 +42,15 @@ const useAuth = () => {
         if (mockAuth) {
           setIsAuthenticated(true);
           setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
-          setProfileImageUrl(storedProfileImage);
+          setProfileImageUrl(storedProfileImage); // Load image from localStorage
           if (mockAuth === 'admin') {
             setUserType('admin');
+          } else if (mockAuth === 'doctor') {
+            setUserType('doctor');
           } else if (storedRole) {
             setUserType(storedRole);
           } else {
-            setUserType('patient'); // Default fallback
+            setUserType('patient'); 
           }
         } else {
           setIsAuthenticated(false);
@@ -58,15 +60,14 @@ const useAuth = () => {
         }
       };
 
-      updateAuthState(); // Initial state sync
+      updateAuthState(); 
 
       const handleStorageChange = (event: StorageEvent) => {
-        // Only update if relevant keys change
         if (
           event.key === 'mockAuth' ||
           event.key === 'mockUserName' ||
           event.key === 'selectedRole' ||
-          event.key === 'mockUserProfileImage'
+          event.key === 'mockUserProfileImage' // Listen for profile image changes
         ) {
           updateAuthState();
         }
@@ -77,29 +78,10 @@ const useAuth = () => {
         window.removeEventListener('storage', handleStorageChange);
       };
     }
-  }, [isClient]); // Effect runs once when isClient becomes true
-
-  const login = (type: Role, name: string, email?: string, phone?: string, image?: string) => {
-    if (isClient) {
-      localStorage.setItem('mockAuth', type);
-      localStorage.setItem('selectedRole', type);
-      localStorage.setItem('mockUserName', name);
-      if (email) localStorage.setItem('mockUserEmail', email);
-      if (phone) localStorage.setItem('mockUserPhone', phone);
-      if (image) localStorage.setItem('mockUserProfileImage', image);
-      else localStorage.removeItem('mockUserProfileImage');
-
-      // Manually trigger state update for immediate feedback on current tab
-      setIsAuthenticated(true);
-      setUserType(type);
-      setUserName(name);
-      setProfileImageUrl(image || null);
-    }
-  };
+  }, [isClient]); 
 
   const logout = () => {
     if (isClient) {
-      // Clear all relevant mock data from localStorage
       const keysToRemove = [
         'mockAuth', 'mockUserName', 'selectedRole', 'mockUserEmail', 
         'mockUserPhone', 'mockUserProfileImage', 'mockUserDOB', 
@@ -109,17 +91,16 @@ const useAuth = () => {
       ];
       keysToRemove.forEach(key => localStorage.removeItem(key));
 
-      // Reset state
       setIsAuthenticated(false);
       setUserType(null);
       setUserName(null);
       setProfileImageUrl(null);
       
-      router.push('/welcome'); // Use Next.js router
+      router.push('/welcome'); 
     }
   };
 
-  return { isAuthenticated, userType, userName, profileImageUrl, login, logout, isClient };
+  return { isAuthenticated, userType, userName, profileImageUrl, logout, isClient };
 };
 
 export function UserNav() {

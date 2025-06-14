@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export function LogoIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -10,7 +11,7 @@ export function LogoIcon(props: React.SVGProps<SVGSVGElement>) {
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-6 w-6"
+      className="h-6 w-6 transition-transform duration-300 ease-in-out group-hover:rotate-90"
       {...props}
     >
       <path d="M12 5v14M5 12h14" />
