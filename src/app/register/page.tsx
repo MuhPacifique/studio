@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -19,10 +20,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Phone } from 'lucide-react';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
+  phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }).regex(/^\+?[0-9\s-()]*$/, "Invalid phone number format."),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
@@ -41,21 +44,26 @@ export default function RegisterPage() {
     defaultValues: {
       fullName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    // Mock storing user info for dashboard access
+    localStorage.setItem('mockAuth', 'patient');
+    localStorage.setItem('mockUserName', data.fullName);
+    localStorage.setItem('mockUserEmail', data.email);
+    localStorage.setItem('mockUserPhone', data.phone);
+    
     toast({
       title: "Registration Successful",
-      description: "Your account has been created. Please log in.",
+      description: "Your account has been created. Welcome!",
     });
-    // In a real app, you might auto-login or send a verification email
-    router.push('/login');
+    router.push('/'); // Redirect to dashboard
   };
 
   return (
@@ -67,7 +75,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Create Patient Account</CardTitle>
-          <CardDescription>Join MediServe Hub today.</CardDescription>
+          <CardDescription>Join MediServe Hub today. A verification code will be (mock) sent to your phone.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -100,6 +108,22 @@ export default function RegisterPage() {
               />
               <FormField
                 control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Phone Number
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="+250 7XX XXX XXX" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
@@ -124,7 +148,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+              <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Registering..." : "Register"}
               </Button>
             </form>

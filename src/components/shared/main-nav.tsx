@@ -18,11 +18,13 @@ import {
   ClipboardList,
   Users,
   Settings,
-  BookOpen, // For Educational Articles
-  HeartPulse, // For Wellness Tips
-  LifeBuoy, // For Health Resources section
+  BookOpen, 
+  HeartPulse, 
+  LifeBuoy, 
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  MessageCircleQuestion, // Placeholder for Forums
+  Users2 // Placeholder for Support Groups
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -39,7 +41,7 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   subItems?: NavItem[];
-  requiresAuth?: boolean; // Added to control visibility based on auth for non-admin items
+  requiresAuth?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -56,6 +58,16 @@ const navItems: NavItem[] = [
       { href: '/health-resources/wellness-tips', label: 'Wellness Tips', icon: HeartPulse, requiresAuth: true },
     ]
   },
+  { 
+    href: '#community-support', 
+    label: 'Community & Support', 
+    icon: Users2, 
+    requiresAuth: true,
+    subItems: [
+      { href: '/community-support/forums', label: 'Patient Forums', icon: MessageCircleQuestion, requiresAuth: true },
+      { href: '/community-support/support-groups', label: 'Support Groups', icon: Users2, requiresAuth: true },
+    ]
+  },
   { href: '/symptom-analyzer', label: 'Symptom Analyzer', icon: ActivitySquare, requiresAuth: true },
   { href: '/faq', label: 'Medical FAQ', icon: MessageSquareQuote, requiresAuth: true },
   { href: '/test-yourself', label: 'Test Yourself', icon: FlaskConical, requiresAuth: true },
@@ -70,7 +82,7 @@ const navItems: NavItem[] = [
       { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
       { href: '/admin/users', label: 'Manage Users', icon: Users, adminOnly: true },
       { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill, adminOnly: true },
-      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true }, // Changed icon
+      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true },
       { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope, adminOnly: true },
       { href: '/admin/settings', label: 'System Settings', icon: Settings, adminOnly: true },
     ]
@@ -117,7 +129,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         currentOpenSubMenus[item.label] = true;
       }
     });
-    setOpenSubMenus(currentOpenSubMenus);
+    setOpenSubMenus(prev => ({...prev, ...currentOpenSubMenus}));
   }, [pathname]);
 
   const toggleSubMenu = (label: string) => {
@@ -125,10 +137,9 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   };
   
   if (!isClient) {
-    // Render skeleton or nothing during SSR and initial client render
     return (
       <div className={cn("flex flex-col space-y-1 p-2", className)}>
-        {[...Array(8)].map((_, i) => (
+        {[...Array(10)].map((_, i) => ( // Increased skeleton items
           <div key={i} className="h-8 w-full bg-sidebar-accent/30 rounded-md animate-pulse"></div>
         ))}
       </div>
@@ -142,7 +153,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
     if (item.requiresAuth) {
       return isAuthenticated;
     }
-    return true; // Items that don't require auth and are not adminOnly
+    return true;
   });
 
   return (
@@ -162,8 +173,8 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   isActive={pathname === item.href}
                   tooltip={item.label}
                   className={cn(
-                    "justify-start w-full transition-colors duration-150 ease-in-out",
-                    pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "justify-start w-full transition-all duration-200 ease-in-out hover:pl-3",
+                    pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <span>
@@ -181,8 +192,8 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   tooltip={item.label}
                   onClick={() => toggleSubMenu(item.label)}
                   className={cn(
-                    "justify-between w-full transition-colors duration-150 ease-in-out", 
-                     item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "justify-between w-full transition-all duration-200 ease-in-out", 
+                     item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <div className="flex items-center truncate">
@@ -193,7 +204,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 </SidebarMenuButton>
                 {openSubMenus[item.label] && (
                   <SidebarMenuSub className="mt-1">
-                    {item.subItems.filter(subItem => !subItem.adminOnly || userType === 'admin').map((subItem) => ( // Filter sub-items as well
+                    {item.subItems.filter(subItem => !subItem.adminOnly || userType === 'admin').map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
                          <Link href={subItem.href}>
                            <SidebarMenuSubButton
@@ -201,7 +212,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                              size="md"
                              isActive={pathname === subItem.href}
                              className={cn(
-                               "transition-colors duration-150 ease-in-out",
+                               "transition-all duration-150 ease-in-out hover:pl-1",
                                pathname === subItem.href ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                              )}
                            >

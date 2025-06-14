@@ -5,13 +5,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Video, Phone, UserCheck, CalendarDays, Mic, VideoOff, MicOff, ScreenShare, PhoneOff, Loader2 } from 'lucide-react';
+import { Video, Phone, UserCheck, CalendarDays, Mic, VideoOff, MicOff, ScreenShare, PhoneOff, Loader2, Send, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const mockDoctors = [
   { id: "doc1", name: "Dr. Emily Carter", specialty: "General Physician", available: true, avatarHint: "doctor portrait" },
@@ -19,6 +21,12 @@ const mockDoctors = [
   { id: "doc3", name: "Dr. Olivia Chen", specialty: "Cardiologist", available: true, avatarHint: "medical professional" },
 ];
 
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'doctor';
+  text: string;
+  timestamp: string;
+}
 
 export default function OnlineConsultationPage() {
   const router = useRouter();
@@ -32,6 +40,9 @@ export default function OnlineConsultationPage() {
   const [selectedDoctor, setSelectedDoctor] = React.useState<typeof mockDoctors[0] | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -54,7 +65,7 @@ export default function OnlineConsultationPage() {
   }, [isClient, router, toast]);
 
   useEffect(() => {
-    if (isCallActive && isAuthenticated) { // Ensure user is authenticated before trying to get camera
+    if (isCallActive && isAuthenticated) {
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -93,6 +104,9 @@ export default function OnlineConsultationPage() {
     if (doctor.available) {
       setSelectedDoctor(doctor);
       setIsCallActive(true);
+      setChatMessages([
+        { id: 'msg1', sender: 'doctor', text: `Hello! I'm ${doctor.name}. How can I help you today?`, timestamp: new Date().toLocaleTimeString() }
+      ]);
       toast({ title: `Starting call with ${doctor.name}` });
     } else {
       toast({ variant: "destructive", title: `${doctor.name} is offline.` });
@@ -104,7 +118,30 @@ export default function OnlineConsultationPage() {
     setSelectedDoctor(null);
     setIsMuted(false);
     setIsVideoOff(false);
+    setChatMessages([]);
     toast({ title: "Call Ended" });
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentMessage.trim()) return;
+    const newMessage: ChatMessage = {
+      id: `msg${Date.now()}`,
+      sender: 'user',
+      text: currentMessage,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setChatMessages(prev => [...prev, newMessage]);
+    setCurrentMessage('');
+    // Mock doctor response
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        id: `doc_resp${Date.now()}`,
+        sender: 'doctor',
+        text: "Okay, I understand. Tell me more about that.",
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+    }, 1500);
   };
 
   const toggleMute = () => setIsMuted(!isMuted);
@@ -119,7 +156,7 @@ export default function OnlineConsultationPage() {
   if (!isClient || !isAuthenticated) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+        <div className="flex flex-col justify-center items-center h-screen bg-background text-foreground">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
           <p className="text-muted-foreground">Loading Online Consultation...</p>
         </div>
@@ -132,10 +169,10 @@ export default function OnlineConsultationPage() {
       <PageHeader title="Online Doctor Consultation" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Online Consultation"}]} />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-xl overflow-hidden">
             <CardHeader>
-              <CardTitle className="font-headline flex items-center">
+              <CardTitle className="font-headline flex items-center text-xl">
                 <Video className="mr-2 h-6 w-6 text-primary" /> 
                 {isCallActive && selectedDoctor ? `In call with ${selectedDoctor.name}` : "Ready for your consultation?"}
               </CardTitle>
@@ -143,82 +180,142 @@ export default function OnlineConsultationPage() {
                 {isCallActive ? "You are currently in a virtual consultation." : "Connect with qualified doctors from home."}
               </CardDescription>
             </CardHeader>
-            <CardContent className={`aspect-[16/9] bg-gray-900 flex items-center justify-center relative ${isCallActive ? 'border-2 border-primary animate-pulse-border' : ''}`}>
+            <CardContent className={`aspect-[16/9] bg-black flex items-center justify-center relative ${isCallActive ? 'border-2 border-primary animate-pulse-border' : 'border-2 border-muted'}`}>
               {isCallActive ? (
                 <>
-                  <Image 
-                    src="https://placehold.co/800x450.png" 
-                    alt="Doctor's Video Feed" 
-                    layout="fill" 
-                    objectFit="cover"
-                    data-ai-hint="doctor video call"
-                    className={`${isVideoOff ? 'opacity-50' : ''}`}
-                  />
-                  <div className="absolute top-4 right-4 p-1 bg-black/50 rounded-lg w-1/4 max-w-[200px] aspect-[16/9]">
+                  {/* Mock Doctor's Video Feed */}
+                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                     <Image 
+                        src="https://placehold.co/800x450.png" 
+                        alt="Doctor's Video Feed (Mock)" 
+                        layout="fill" 
+                        objectFit="cover"
+                        data-ai-hint="doctor professional"
+                        className={`${isCallActive ? 'opacity-70' : 'opacity-30'}`}
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 p-4 bg-black/30">
+                        <UserCheck className="h-16 w-16 mb-2 opacity-80" />
+                        <p className="text-lg font-medium">{selectedDoctor?.name} (Mock Video)</p>
+                        <p className="text-sm opacity-70">{selectedDoctor?.specialty}</p>
+                      </div>
+                  </div>
+
+                  {/* User's Video Feed */}
+                  <div className="absolute top-4 right-4 p-1 bg-black/70 rounded-lg w-1/4 max-w-[200px] aspect-[16/9] shadow-lg border border-primary/50">
                      <video ref={videoRef} className={`w-full h-full rounded-md object-cover ${isVideoOff ? 'hidden' : 'block'}`} autoPlay muted playsInline />
                      {isVideoOff && (
                         <div className="w-full h-full flex items-center justify-center bg-gray-700 rounded-md">
                             <VideoOff className="h-10 w-10 text-white" />
                         </div>
                      )}
+                     <p className="absolute bottom-1 left-1 text-xs text-white bg-black/50 px-1 rounded">You</p>
                   </div>
+
                   {hasCameraPermission === false && isCallActive && (
-                     <Alert variant="destructive" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-md z-10">
+                     <Alert variant="destructive" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-md z-20">
                         <VideoOff className="h-5 w-5" />
                         <AlertTitle>Camera Access Denied</AlertTitle>
                         <AlertDescription>
-                            Please enable camera permissions to share your video. You can still hear the doctor.
+                            Please enable camera permissions to share your video.
                         </AlertDescription>
                     </Alert>
                   )}
                 </>
               ) : (
-                <div className="text-center text-white p-4">
+                <div className="text-center text-muted-foreground p-4">
                   <Video className="h-24 w-24 mx-auto mb-4 text-primary" />
                   <p className="text-xl mb-2">Your video call will appear here.</p>
-                  <p className="text-muted-foreground">Select a doctor to start your consultation.</p>
+                  <p>Select a doctor to start your consultation.</p>
                 </div>
               )}
             </CardContent>
             {isCallActive && (
-                <CardContent className="p-4 bg-card border-t flex justify-center space-x-2 sm:space-x-4">
-                    <Button variant={isMuted ? "destructive" : "secondary"} onClick={toggleMute} className="rounded-full p-2 sm:p-3 transition-all" aria-label={isMuted ? "Unmute" : "Mute"}>
+                <CardFooter className="p-4 bg-card border-t flex justify-center space-x-2 sm:space-x-3">
+                    <Button variant={isMuted ? "destructive" : "secondary"} onClick={toggleMute} className="rounded-full p-2 sm:p-3 transition-all hover:scale-110 active:scale-95" aria-label={isMuted ? "Unmute" : "Mute"}>
                       {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </Button>
-                    <Button variant="destructive" onClick={handleEndCall} className="rounded-full p-2 sm:p-3 transition-all" aria-label="End Call">
+                    <Button variant="destructive" onClick={handleEndCall} className="rounded-full p-2 sm:p-3 transition-all hover:scale-110 active:scale-95" aria-label="End Call">
                       <PhoneOff className="h-5 w-5" />
                     </Button>
-                     <Button variant={isVideoOff ? "destructive" : "secondary"} onClick={toggleVideo} className="rounded-full p-2 sm:p-3 transition-all" aria-label={isVideoOff ? "Start Video" : "Stop Video"}>
+                     <Button variant={isVideoOff ? "destructive" : "secondary"} onClick={toggleVideo} className="rounded-full p-2 sm:p-3 transition-all hover:scale-110 active:scale-95" aria-label={isVideoOff ? "Start Video" : "Stop Video"}>
                       {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
                     </Button>
-                    <Button variant="secondary" className="rounded-full p-2 sm:p-3 transition-all" aria-label="Share Screen (Not Implemented)">
+                    <Button variant="secondary" className="rounded-full p-2 sm:p-3 transition-all hover:scale-110 active:scale-95" aria-label="Share Screen (Not Implemented)">
                       <ScreenShare className="h-5 w-5" />
                     </Button>
-                </CardContent>
+                </CardFooter>
             )}
           </Card>
+          
+          {/* Mock Chat Interface */}
+          {isCallActive && selectedDoctor && (
+            <Card className="shadow-xl">
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center text-lg">
+                  <MessageSquare className="mr-2 h-5 w-5 text-primary"/> Chat with {selectedDoctor.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-64 w-full pr-4">
+                  <div className="space-y-4">
+                    {chatMessages.map(msg => (
+                      <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[70%] p-3 rounded-lg ${msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                          <p className="text-sm">{msg.text}</p>
+                          <p className={`text-xs mt-1 ${msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70'}`}>{msg.timestamp}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+              <CardFooter>
+                <form onSubmit={handleSendMessage} className="flex w-full items-center space-x-2">
+                  <Input 
+                    type="text" 
+                    placeholder="Type your message..." 
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button type="submit" size="icon" className="transition-transform hover:scale-110 active:scale-95">
+                    <Send className="h-4 w-4"/>
+                  </Button>
+                </form>
+              </CardFooter>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg sticky top-24">
             <CardHeader>
               <CardTitle className="font-headline flex items-center"><UserCheck className="mr-2 h-5 w-5 text-primary" /> Available Doctors</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               {mockDoctors.map(doc => (
-                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div key={doc.id} className={`flex items-center justify-between p-3 border rounded-lg transition-all duration-200 ${selectedDoctor?.id === doc.id ? 'bg-primary/10 border-primary shadow-md scale-105' : 'hover:shadow-md hover:scale-[1.02]'}`}>
                   <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint={doc.avatarHint} />
-                      <AvatarFallback>{doc.name.substring(0,1)}</AvatarFallback>
+                    <Avatar className="h-12 w-12 border-2 border-primary/50">
+                      <AvatarImage src={`https://placehold.co/60x60.png`} data-ai-hint={doc.avatarHint} />
+                      <AvatarFallback className="bg-muted text-muted-foreground">{doc.name.substring(0,1)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium">{doc.name}</p>
                       <p className="text-xs text-muted-foreground">{doc.specialty}</p>
+                      <span className={`text-xs font-semibold ${doc.available ? 'text-green-500' : 'text-red-500'}`}>
+                        {doc.available ? 'Online' : 'Offline'}
+                      </span>
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => handleStartCall(doc)} disabled={!doc.available || (isCallActive && selectedDoctor?.id !== doc.id) || (isCallActive && selectedDoctor?.id === doc.id) }>
-                    {isCallActive && selectedDoctor?.id === doc.id ? 'In Call' : (doc.available ? 'Start Call' : 'Offline')}
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleStartCall(doc)} 
+                    disabled={!doc.available || (isCallActive && selectedDoctor?.id !== doc.id) || (isCallActive && selectedDoctor?.id === doc.id) }
+                    className="transition-transform hover:scale-105 active:scale-95"
+                  >
+                    {isCallActive && selectedDoctor?.id === doc.id ? <PhoneOff className="h-4 w-4 mr-1"/> : <Phone className="h-4 w-4 mr-1"/> }
+                    {isCallActive && selectedDoctor?.id === doc.id ? 'In Call' : (doc.available ? 'Call' : 'Offline')}
                   </Button>
                 </div>
               ))}
@@ -242,9 +339,9 @@ export default function OnlineConsultationPage() {
       </div>
       <style jsx global>{`
         @keyframes pulse-border {
-          0% { border-color: hsl(var(--primary) / 0.5); }
-          50% { border-color: hsl(var(--primary)); }
-          100% { border-color: hsl(var(--primary) / 0.5); }
+          0% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
+          50% { border-color: hsl(var(--primary)); box-shadow: 0 0 15px hsl(var(--primary)/0.5); }
+          100% { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 5px hsl(var(--primary)/0.2); }
         }
         .animate-pulse-border {
           animation: pulse-border 2s infinite;
