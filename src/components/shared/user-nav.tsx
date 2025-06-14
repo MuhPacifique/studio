@@ -14,85 +14,119 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase } from 'lucide-react'; 
+import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
 
 const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState<'patient' | 'admin' | 'doctor' | 'seeker' | null>(null); 
-  const [userName, setUserName] = useState<string | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false); 
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [userType, setUserType] = React.useState<Role | null>(null);
+  const [userName, setUserName] = React.useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
+  const [isClient, setIsClient] = React.useState(false);
+  const router = useRouter(); // For programmatic navigation
 
-  useEffect(() => {
-    setIsClient(true); 
+  React.useEffect(() => {
+    setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (isClient) { 
-      const mockAuth = localStorage.getItem('mockAuth');
-      const storedUserName = localStorage.getItem('mockUserName');
-      const storedRole = localStorage.getItem('selectedRole') as Role | null;
-      const storedProfileImage = localStorage.getItem('mockUserProfileImage');
-
-      if (mockAuth) {
-        setIsAuthenticated(true);
-        setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
-        setProfileImageUrl(storedProfileImage);
-        if (mockAuth === 'admin') {
-          setUserType('admin');
-        } else if (storedRole) {
-          setUserType(storedRole);
-        } else {
-           setUserType('patient'); 
-        }
-      } else {
-        setIsAuthenticated(false);
-        setUserType(null);
-        setUserName(null);
-        setProfileImageUrl(null);
-      }
-    }
-  }, [isClient]);
-
-
-  const login = (type: 'patient' | 'admin' | 'doctor' | 'seeker', name: string) => {
+  React.useEffect(() => {
     if (isClient) {
-      localStorage.setItem('mockAuth', type); 
-      localStorage.setItem('selectedRole', type); 
+      const updateAuthState = () => {
+        const mockAuth = localStorage.getItem('mockAuth');
+        const storedUserName = localStorage.getItem('mockUserName');
+        const storedRole = localStorage.getItem('selectedRole') as Role | null;
+        const storedProfileImage = localStorage.getItem('mockUserProfileImage');
+
+        if (mockAuth) {
+          setIsAuthenticated(true);
+          setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
+          setProfileImageUrl(storedProfileImage);
+          if (mockAuth === 'admin') {
+            setUserType('admin');
+          } else if (storedRole) {
+            setUserType(storedRole);
+          } else {
+            setUserType('patient'); // Default fallback
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUserType(null);
+          setUserName(null);
+          setProfileImageUrl(null);
+        }
+      };
+
+      updateAuthState(); // Initial state sync
+
+      const handleStorageChange = (event: StorageEvent) => {
+        // Only update if relevant keys change
+        if (
+          event.key === 'mockAuth' ||
+          event.key === 'mockUserName' ||
+          event.key === 'selectedRole' ||
+          event.key === 'mockUserProfileImage'
+        ) {
+          updateAuthState();
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }
+  }, [isClient]); // Effect runs once when isClient becomes true
+
+  const login = (type: Role, name: string, email?: string, phone?: string, image?: string) => {
+    if (isClient) {
+      localStorage.setItem('mockAuth', type);
+      localStorage.setItem('selectedRole', type);
+      localStorage.setItem('mockUserName', name);
+      if (email) localStorage.setItem('mockUserEmail', email);
+      if (phone) localStorage.setItem('mockUserPhone', phone);
+      if (image) localStorage.setItem('mockUserProfileImage', image);
+      else localStorage.removeItem('mockUserProfileImage');
+
+      // Manually trigger state update for immediate feedback on current tab
       setIsAuthenticated(true);
       setUserType(type);
       setUserName(name);
+      setProfileImageUrl(image || null);
     }
   };
 
   const logout = () => {
     if (isClient) {
-      localStorage.removeItem('mockAuth');
-      localStorage.removeItem('mockUserName');
-      localStorage.removeItem('selectedRole');
-      localStorage.removeItem('mockUserProfileImage');
+      // Clear all relevant mock data from localStorage
+      const keysToRemove = [
+        'mockAuth', 'mockUserName', 'selectedRole', 'mockUserEmail', 
+        'mockUserPhone', 'mockUserProfileImage', 'mockUserDOB', 
+        'mockUserAddress', 'mockUserCity', 'mockUserCountry', 'mockUserBio',
+        'mockUserLang', 'mockUserMarketing', 'mockUserAppNotifs', 'mockUserTheme',
+        'mockUserEmergencyName', 'mockUserEmergencyPhone', 'mockUser2FA'
+      ];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // Reset state
       setIsAuthenticated(false);
       setUserType(null);
       setUserName(null);
       setProfileImageUrl(null);
-      window.location.href = '/welcome'; 
+      
+      router.push('/welcome'); // Use Next.js router
     }
   };
 
   return { isAuthenticated, userType, userName, profileImageUrl, login, logout, isClient };
 };
 
-type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
-
-
 export function UserNav() {
   const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient } = useAuth();
-  const [initials, setInitials] = useState("U");
-  const router = useRouter();
+  const [initials, setInitials] = React.useState("U");
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (userName) {
       const nameParts = userName.split(' ');
       const firstInitial = nameParts[0]?.[0] || '';
@@ -102,33 +136,14 @@ export function UserNav() {
       setInitials("U");
     }
   }, [userName]);
-  
-  // Effect to update avatar when localStorage changes (e.g. after profile save)
-  useEffect(() => {
-    if (isClient) {
-      const handleStorageChange = () => {
-        const storedImage = localStorage.getItem('mockUserProfileImage');
-        // This is a bit of a hack for reactivity; proper state management (Context/Redux) would be better for complex apps.
-        // For now, we re-trigger the UserNav's internal state update.
-        const newUserName = localStorage.getItem('mockUserName');
-        if (newUserName) setUserName(newUserName); // to trigger re-render of initials
-        // @ts-ignore
-        if (profileImageUrl !== storedImage) (UserNav as any).forceUpdate?.(); 
-      };
-      window.addEventListener('storage', handleStorageChange);
-      return () => window.removeEventListener('storage', handleStorageChange);
-    }
-  }, [isClient, profileImageUrl]);
-
 
   if (!isClient) {
     return (
-        <div className="flex items-center space-x-2">
-            <Button variant="ghost" className="h-10 w-10 rounded-full animate-pulse bg-muted"></Button>
-        </div>
+      <div className="flex items-center space-x-2">
+        <Button variant="ghost" className="h-10 w-10 rounded-full animate-pulse bg-muted"></Button>
+      </div>
     );
   }
-
 
   if (!isAuthenticated) {
     return (
@@ -146,16 +161,13 @@ export function UserNav() {
       </div>
     );
   }
-  
-  const currentProfileImageUrl = isClient ? localStorage.getItem('mockUserProfileImage') : null;
-
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
-            <AvatarImage src={currentProfileImageUrl || `https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar professional" />
+            <AvatarImage src={profileImageUrl || undefined} alt={userName || "User"} data-ai-hint="user avatar professional" />
             <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -172,7 +184,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/profile"> 
+            <Link href="/profile">
               <UserCircle className="mr-2 h-4 w-4" />
               <span>My Profile</span>
             </Link>
@@ -203,5 +215,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-
-    
