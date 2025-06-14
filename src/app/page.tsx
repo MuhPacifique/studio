@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuestion, FlaskConical, Video, CreditCard, ArrowRight } from 'lucide-react';
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 
 const features = [
@@ -37,7 +37,7 @@ const features = [
     title: "Medical FAQ",
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
-    icon: MessageSquareQuestion,
+    icon: MessageSquareQuote,
     color: "text-yellow-500",
     bgColor: "bg-yellow-50 hover:bg-yellow-100",
   },

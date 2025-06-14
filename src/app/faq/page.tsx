@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, MessageSquareQuestion, HelpCircle, Send, ShieldAlert } from 'lucide-react';
+import { Loader2, MessageSquareQuote, HelpCircle, Send, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { answerMedicalQuestion, type AnswerMedicalQuestionOutput } from '@/ai/flows/medical-faq';
 
@@ -128,7 +128,7 @@ export default function FaqPage() {
 
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center"><MessageSquareQuestion className="mr-2 h-6 w-6 text-primary" /> Commonly Asked Questions</CardTitle>
+          <CardTitle className="font-headline flex items-center"><MessageSquareQuote className="mr-2 h-6 w-6 text-primary" /> Commonly Asked Questions</CardTitle>
         </CardHeader>
         <CardContent>
           {displayedFaqs.length > 0 ? (
