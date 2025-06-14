@@ -15,7 +15,7 @@ import {
   CreditCard,
   LayoutDashboard,
   ActivitySquare,
-  ClipboardList as ClipboardListIcon, // Renamed to avoid conflict
+  ClipboardList as ClipboardListIcon, 
   Users,
   Settings,
   BookOpen, 
@@ -41,6 +41,7 @@ import {
 interface NavItem {
   href: string;
   label: string;
+  labelKn: string; // Kinyarwanda label
   icon: React.ElementType;
   adminOnly?: boolean;
   doctorOnly?: boolean;
@@ -50,79 +51,85 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: Home, requiresAuth: true },
-  { href: '/medicines', label: 'Order Medicines', icon: Pill, requiresAuth: true, patientOnly: true },
-  { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
+  { href: '/', label: 'Dashboard', labelKn: 'Imbonerahamwe', icon: Home, requiresAuth: true },
+  { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imithi', icon: Pill, requiresAuth: true, patientOnly: true },
+  { href: '/medical-tests', label: 'Medical Tests', labelKn: 'Ibipimo bya Muganga', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
   { 
     href: '#appointments', 
     label: 'Appointments', 
+    labelKn: 'Amateraniro',
     icon: CalendarCheck2, 
     requiresAuth: true,
     patientOnly: true,
     subItems: [
-      { href: '/appointments/book', label: 'Book Appointment', icon: CalendarPlus, requiresAuth: true, patientOnly: true },
-      { href: '/appointments/my-appointments', label: 'My Appointments', icon: CalendarCheck2, requiresAuth: true, patientOnly: true },
+      { href: '/appointments/book', label: 'Book Appointment', labelKn: 'Fata Igihe', icon: CalendarPlus, requiresAuth: true, patientOnly: true },
+      { href: '/appointments/my-appointments', label: 'My Appointments', labelKn: 'Amateraniro Yanjye', icon: CalendarCheck2, requiresAuth: true, patientOnly: true },
     ]
   },
   { 
     href: '#my-health', 
     label: 'My Health', 
+    labelKn: 'Ubuzima Bwanjye',
     icon: FileHeart, 
     requiresAuth: true,
     patientOnly: true, 
     subItems: [
-      { href: '/my-health/prescriptions', label: 'My Prescriptions', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
+      { href: '/my-health/prescriptions', label: 'My Prescriptions', labelKn: 'Imiti Nandikiwe', icon: ClipboardListIcon, requiresAuth: true, patientOnly: true },
     ]
   },
   { 
     href: '#health-resources', 
     label: 'Health Resources', 
+    labelKn: 'Amakuru y\'Ubuzima',
     icon: LifeBuoy, 
     requiresAuth: true,
     subItems: [
-      { href: '/health-resources/articles', label: 'Educational Articles', icon: BookOpen, requiresAuth: true },
-      { href: '/health-resources/wellness-tips', label: 'Wellness Tips', icon: HeartPulse, requiresAuth: true },
+      { href: '/health-resources/articles', label: 'Educational Articles', labelKn: 'Inyandiko Zigisha', icon: BookOpen, requiresAuth: true },
+      { href: '/health-resources/wellness-tips', label: 'Wellness Tips', labelKn: 'Inama z\'Ubuzima', icon: HeartPulse, requiresAuth: true },
     ]
   },
   { 
     href: '#community-support', 
     label: 'Community & Support', 
+    labelKn: 'Ubufatanye & Ubufasha',
     icon: Users2, 
     requiresAuth: true,
     subItems: [
-      { href: '/community-support/forums', label: 'Patient Forums', icon: MessageCircleQuestion, requiresAuth: true },
-      { href: '/community-support/support-groups', label: 'Support Groups', icon: Users2, requiresAuth: true },
+      { href: '/community-support/forums', label: 'Patient Forums', labelKn: 'Ibiganiro by\'Abarwayi', icon: MessageCircleQuestion, requiresAuth: true },
+      { href: '/community-support/support-groups', label: 'Support Groups', labelKn: 'Amatsinda y\'Ubufasha', icon: Users2, requiresAuth: true },
     ]
   },
-  { href: '/symptom-analyzer', label: 'Symptom Analyzer', icon: ActivitySquare, requiresAuth: true },
-  { href: '/faq', label: 'Medical FAQ', icon: MessageSquareQuote, requiresAuth: true },
-  { href: '/test-yourself', label: 'Test Yourself', icon: FlaskConical, requiresAuth: true },
-  { href: '/online-consultation', label: 'Online Consultation', icon: Video, requiresAuth: true },
-  { href: '/payment', label: 'Make Payment', icon: CreditCard, requiresAuth: true, patientOnly: true },
+  { href: '/symptom-analyzer', label: 'Symptom Analyzer', labelKn: 'Isesengura ry\'Ibimenyetso', icon: ActivitySquare, requiresAuth: true },
+  { href: '/faq', label: 'Medical FAQ', labelKn: 'FAQ y\'Ubuzima', icon: MessageSquareQuote, requiresAuth: true },
+  { href: '/test-yourself', label: 'Test Yourself', labelKn: 'Isúzumé Ubwawe', icon: FlaskConical, requiresAuth: true },
+  { href: '/online-consultation', label: 'Online Consultation', labelKn: 'Ubujyanama kuri Interineti', icon: Video, requiresAuth: true },
+  { href: '/payment', label: 'Make Payment', labelKn: 'Kwishyura', icon: CreditCard, requiresAuth: true, patientOnly: true },
   { 
     href: '/doctor/dashboard', 
     label: 'Doctor Portal', 
+    labelKn: 'Irembo rya Muganga',
     icon: Stethoscope, 
     doctorOnly: true, 
     requiresAuth: true, 
     subItems: [
-        { href: '/doctor/dashboard', label: 'Doctor Overview', icon: LayoutDashboard, doctorOnly: true, requiresAuth: true },
-        { href: '/doctor/prescribe', label: 'Prescribe / Advise', icon: ClipboardListIcon, doctorOnly: true, requiresAuth: true },
+        { href: '/doctor/dashboard', label: 'Doctor Overview', labelKn: 'Incámáke ya Muganga', icon: LayoutDashboard, doctorOnly: true, requiresAuth: true },
+        { href: '/doctor/prescribe', label: 'Prescribe / Advise', labelKn: 'Kwandika Imiti / Inama', icon: ClipboardListIcon, doctorOnly: true, requiresAuth: true },
     ]
   },
   { 
     href: '#admin-section', 
     label: 'Admin Section', 
+    labelKn: 'Igice cy\'Ubuyobozi',
     icon: LayoutDashboard, 
     adminOnly: true,
     requiresAuth: true,
     subItems: [
-      { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true, requiresAuth: true },
-      { href: '/admin/users', label: 'Manage Users', icon: Users, adminOnly: true, requiresAuth: true },
-      { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill, adminOnly: true, requiresAuth: true },
-      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true, requiresAuth: true },
-      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope, adminOnly: true, requiresAuth: true },
-      { href: '/admin/settings', label: 'System Settings', icon: Settings, adminOnly: true, requiresAuth: true },
+      { href: '/admin/dashboard', label: 'Overview', labelKn: 'Incámáke', icon: LayoutDashboard, adminOnly: true, requiresAuth: true },
+      { href: '/admin/users', label: 'Manage Users', labelKn: 'Gucunga Abakoresha', icon: Users, adminOnly: true, requiresAuth: true },
+      { href: '/admin/inventory', label: 'Manage Inventory', labelKn: 'Gucunga Ububiko', icon: Pill, adminOnly: true, requiresAuth: true },
+      { href: '/admin/services', label: 'Manage Services', labelKn: 'Gucunga Serivisi', icon: Settings, adminOnly: true, requiresAuth: true },
+      { href: '/admin/analytics', label: 'Analytics', labelKn: 'Isesengura', icon: Stethoscope, adminOnly: true, requiresAuth: true },
+      { href: '/admin/settings', label: 'System Settings', labelKn: 'Igenamiterere rya Sisitemu', icon: Settings, adminOnly: true, requiresAuth: true },
     ]
   },
 ];
@@ -133,6 +140,7 @@ const useAuth = () => {
   const [userType, setUserType] = useState<UserRole>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'kn'>('kn'); // Default to Kinyarwanda
 
   useEffect(() => {
     setIsClient(true);
@@ -142,6 +150,7 @@ const useAuth = () => {
     if (isClient) {
       const mockAuth = localStorage.getItem('mockAuth');
       const storedRole = localStorage.getItem('selectedRole') as UserRole;
+      const storedLang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
       
       if (mockAuth) {
         setIsAuthenticated(true);
@@ -153,16 +162,21 @@ const useAuth = () => {
         setUserType(null);
         setIsAuthenticated(false);
       }
+      if (storedLang) {
+        setPreferredLanguage(storedLang);
+      }
     }
   }, [isClient]);
-  return { userType, isAuthenticated, isClient };
+  return { userType, isAuthenticated, isClient, preferredLanguage };
 };
 
 
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
-  const { userType, isAuthenticated, isClient } = useAuth();
+  const { userType, isAuthenticated, isClient, preferredLanguage } = useAuth();
   const [openSubMenus, setOpenSubMenus] = React.useState<Record<string, boolean>>({});
+
+  const t = (label: string, labelKn: string) => preferredLanguage === 'kn' ? labelKn : label;
 
   useEffect(() => {
     const currentOpenSubMenus: Record<string, boolean> = {};
@@ -215,13 +229,13 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href}>
+              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   variant="default"
                   size="default"
                   isActive={pathname === item.href}
-                  tooltip={item.label}
+                  tooltip={t(item.label, item.labelKn)}
                   className={cn(
                     "justify-start w-full transition-all duration-200 ease-in-out hover:pl-3",
                     pathname === item.href ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -229,7 +243,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 >
                   <span>
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate">{t(item.label, item.labelKn)}</span>
                   </span>
                 </SidebarMenuButton>
               </Link>
@@ -239,7 +253,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   variant="default"
                   size="default"
                   isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
-                  tooltip={item.label}
+                  tooltip={t(item.label, item.labelKn)}
                   onClick={() => toggleSubMenu(item.label)}
                   className={cn(
                     "justify-between w-full transition-all duration-200 ease-in-out", 
@@ -248,7 +262,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 >
                   <span className="flex items-center truncate">
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate">{t(item.label, item.labelKn)}</span>
                   </span>
                   {openSubMenus[item.label] ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />}
                 </SidebarMenuButton>
@@ -263,7 +277,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href}>
+                         <Link href={subItem.href} passHref legacyBehavior>
                            <SidebarMenuSubButton
                              asChild
                              size="md"
@@ -275,7 +289,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                            >
                              <span className="flex items-center">
                               <subItem.icon className="mr-2 h-4 w-4 flex-shrink-0" />
-                              <span className="truncate">{subItem.label}</span>
+                              <span className="truncate">{t(subItem.label, subItem.labelKn)}</span>
                              </span>
                            </SidebarMenuSubButton>
                          </Link>

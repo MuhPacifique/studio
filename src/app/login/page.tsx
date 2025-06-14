@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -22,10 +22,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Phone } from 'lucide-react';
 
+// Assuming Kinyarwanda is the default language.
+const preferredLanguage = typeof window !== 'undefined' ? (localStorage.getItem('mockUserLang') as 'en' | 'kn' || 'kn') : 'kn';
+const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  phone: z.string().optional().refine(val => !val || val.length >= 10, { message: "Phone number must be at least 10 digits if provided."}),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  email: z.string().email({ message: t("Invalid email address.", "Aderesi email yanditse nabi.") }),
+  phone: z.string().optional().refine(val => !val || val.length >= 10, { message: t("Phone number must be at least 10 digits if provided.", "Nimero ya telefone igomba kuba nibura imibare 10 niba yatanzwe.")}),
+  password: z.string().min(6, { message: t("Password must be at least 6 characters.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -33,10 +37,14 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   useEffect(() => {
     const role = localStorage.getItem('selectedRole');
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) setCurrentLanguage(lang);
+
     if (!role) {
       router.replace('/welcome'); 
     } else {
@@ -53,6 +61,8 @@ export default function LoginPage() {
     },
   });
 
+  const currentT = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
+
   const onSubmit = async (data: LoginFormValues) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -62,25 +72,24 @@ export default function LoginPage() {
     let userName = "User";
     let patientId: string | null = null;
 
-    // Mock success/failure 
     if (role === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Dr. Alex Smith";
     } else if ((role === 'patient' || role === 'seeker') && data.email === "patient@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Patty Patient";
-        patientId = "patient123"; // Assign a mock patient ID
+        patientId = "patient123"; 
     } else if (role === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Sam Seeker";
-        patientId = "seeker123"; // Assign a mock patient ID
+        patientId = "seeker123"; 
     }
 
 
     if (loginSuccess) {
       toast({
-        title: "Login Successful",
-        description: `Welcome back, ${userName}!`,
+        title: currentT("Login Successful", "Kwinjira Byagenze Neza"),
+        description: `${currentT("Welcome back", "Murakaza neza")}, ${userName}!`,
       });
       localStorage.setItem('mockAuth', role); 
       localStorage.setItem('mockUserName', userName); 
@@ -89,21 +98,30 @@ export default function LoginPage() {
       if (patientId) {
         localStorage.setItem('mockPatientId', patientId);
       } else {
-        localStorage.removeItem('mockPatientId'); // Clear if not relevant
+        localStorage.removeItem('mockPatientId'); 
       }
       router.push('/');
     } else {
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid credentials for the selected role.",
+        title: currentT("Login Failed", "Kwinjira Byanze"),
+        description: currentT("Invalid credentials for the selected role.", "Amakuru watanze ntabwo ariyo kuri uru ruhare."),
       });
       form.setError("email", { type: "manual", message: " " });
-      form.setError("password", { type: "manual", message: "Invalid credentials." });
+      form.setError("password", { type: "manual", message: currentT("Invalid credentials.", "Amakuru watanze ntabwo ariyo.") });
     }
   };
+  
+  const roleTitles: Record<string, { en: string, kn: string }> = {
+    patient: { en: "Patient Login", kn: "Kwinjira kw'Umurwayi" },
+    doctor: { en: "Doctor Login", kn: "Kwinjira kwa Muganga" },
+    seeker: { en: "Health Seeker Login", kn: "Kwinjira k'Ushaka Ubujyanama" },
+    admin: { en: "Administrator Login", kn: "Kwinjira k'Umunyamabanga"}
+  };
 
-  const pageTitle = selectedRole ? `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Login` : "Login";
+  const pageTitle = selectedRole && roleTitles[selectedRole] 
+    ? currentT(roleTitles[selectedRole].en, roleTitles[selectedRole].kn) 
+    : currentT("Login", "Injira");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
@@ -114,7 +132,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
-          <CardDescription>Access your MediServe Hub account. You may receive a (mock) verification code.</CardDescription>
+          <CardDescription>{currentT("Access your MediServe Hub account. You may receive a (mock) verification code.", "Injira muri konti yawe ya MediServe Hub. Ushobora kwakira kode y'igenzura (y'agateganyo).")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -124,7 +142,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel>{currentT("Email Address", "Aderesi Email")}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
@@ -139,7 +157,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                      Phone Number (Optional for login, for verification)
+                      {currentT("Phone Number (Optional for login, for verification)", "Nimero ya Telefone (Si ngombwa kwinjira, ni iy'igenzura)")}
                     </FormLabel>
                     <FormControl>
                       <Input type="tel" placeholder="+250 7XX XXX XXX" {...field} />
@@ -153,7 +171,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{currentT("Password", "Ijambobanga")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -162,21 +180,21 @@ export default function LoginPage() {
                 )}
               />
               <Button type="submit" className="w-full transition-transform hover:scale-105 active:scale-95" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Logging in..." : "Log In"}
+                {form.formState.isSubmitting ? currentT("Logging in...", "Kwinjira...") : currentT("Log In", "Injira")}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm">
           <p>
-            Need an account?{' '}
+            {currentT("Need an account?", "Ukeneye konti?")}{' '}
             <Link href="/register" className="font-medium text-primary hover:underline">
-              Register here
+              {currentT("Register here", "Iyandikishe hano")}
             </Link>
           </p>
            <p>
             <Link href="/welcome" className="font-medium text-primary hover:underline">
-              Back to Role Selection
+              {currentT("Back to Role Selection", "Subira ku Ihitamo ry'Uruhare")}
             </Link>
           </p>
         </CardFooter>
@@ -184,5 +202,4 @@ export default function LoginPage() {
     </div>
   );
 }
-
     

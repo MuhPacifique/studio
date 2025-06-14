@@ -12,16 +12,18 @@ import { cn } from '@/lib/utils';
 
 type Role = "patient" | "doctor" | "seeker" | "admin";
 
-const roles: { name: Role; title: string; description: string; icon: React.ElementType; color: string, bgColor: string, borderColor: string }[] = [
-  { name: "patient", title: "Patient", description: "Access your health records, book appointments, and connect with healthcare providers.", icon: User, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
-  { name: "doctor", title: "Doctor", description: "Manage your schedule, consult with patients, and access medical tools.", icon: Briefcase, color: "text-accent", bgColor: "bg-accent/5 hover:bg-accent/10", borderColor: "border-accent/20" },
-  { name: "seeker", title: "Health Seeker", description: "Explore health resources, find information, and connect with support communities.", icon: UserCog, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
-  { name: "admin", title: "Administrator", description: "Manage platform settings, users, and oversee system operations.", icon: Shield, color: "text-destructive", bgColor: "bg-destructive/5 hover:bg-destructive/10 dark:text-destructive-foreground dark:bg-destructive/10", borderColor: "border-destructive/20" },
+const roles: { name: Role; title: string; titleKn: string; description: string; descriptionKn: string; icon: React.ElementType; color: string, bgColor: string, borderColor: string }[] = [
+  { name: "patient", title: "Patient", titleKn: "Umurwayi", description: "Access your health records, book appointments, and connect with healthcare providers.", descriptionKn: "Reba dosiye yawe y'ubuzima, fata igihe cyo kwa muganga, kandi uvugane n'abaganga.", icon: User, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
+  { name: "doctor", title: "Doctor", titleKn: "Muganga", description: "Manage your schedule, consult with patients, and access medical tools.", descriptionKn: "Genzura gahunda yawe, vugana n'abarwayi, kandi ukoreshe ibikoresho bya muganga.", icon: Briefcase, color: "text-accent", bgColor: "bg-accent/5 hover:bg-accent/10", borderColor: "border-accent/20" },
+  { name: "seeker", title: "Health Seeker", titleKn: "Ushaka Ubujyanama", description: "Explore health resources, find information, and connect with support communities.", descriptionKn: "Shakisha amakuru y'ubuzima, menya byinshi, kandi uhure n'imiryango itanga ubufasha.", icon: UserCog, color: "text-primary", bgColor: "bg-primary/5 hover:bg-primary/10", borderColor: "border-primary/20" },
+  { name: "admin", title: "Administrator", titleKn: "Umunyamabanga", description: "Manage platform settings, users, and oversee system operations.", descriptionKn: "Genzura igenamiterere rya porogaramu, abakoresha, kandi ureberere imikorere ya sisitemu.", icon: Shield, color: "text-destructive", bgColor: "bg-destructive/5 hover:bg-destructive/10 dark:text-destructive-foreground dark:bg-destructive/10", borderColor: "border-destructive/20" },
 ];
 
 export default function WelcomePage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  // Assuming Kinyarwanda is the default for now
+  const [language, setLanguage] = useState<'en' | 'kn'>('kn'); 
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
@@ -38,6 +40,8 @@ export default function WelcomePage() {
     return "/register";
   };
 
+  const t = (enText: string, knText: string) => language === 'kn' ? knText : enText;
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4 selection:bg-primary selection:text-primary-foreground">
@@ -48,9 +52,12 @@ export default function WelcomePage() {
       
       <Card className="w-full max-w-3xl shadow-2xl dark:shadow-primary/10">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl sm:text-3xl font-headline gradient-text">Welcome to MediServe Hub!</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline gradient-text">{t('Welcome to MediServe Hub!', 'Murakaza neza kuri MediServe Hub!')}</CardTitle>
           <CardDescription className="text-md sm:text-lg text-muted-foreground">
-            {selectedRole ? `You've selected: ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}. Now, please login or register.` : "Please select your role to continue."}
+            {selectedRole ? 
+              t(`You've selected: ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}. Now, please login or register.`, `Wahisemo: ${roles.find(r=>r.name === selectedRole)?.titleKn}. Noneho, injira cyangwa wiyandikishe.`) 
+              : t("Please select your role to continue.", "Nyamuneka hitamo uruhare rwawe kugirango ukomeze.")
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -63,13 +70,13 @@ export default function WelcomePage() {
                   onClick={() => handleRoleSelect(role.name)}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className={`text-xl font-medium font-headline ${role.color}`}>{role.title}</CardTitle>
+                    <CardTitle className={`text-xl font-medium font-headline ${role.color}`}>{t(role.title, role.titleKn)}</CardTitle>
                     <role.icon className={`h-8 w-8 ${role.color} opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110`} />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
+                    <p className="text-sm text-muted-foreground">{t(role.description, role.descriptionKn)}</p>
                      <div className={`flex items-center pt-3 text-sm font-medium ${role.color} group-hover:underline`}>
-                        I am a {role.title} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                        {t(`I am a ${role.title}`, `Ndi ${role.titleKn}`)} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </CardContent>
                 </Card>
@@ -83,13 +90,13 @@ export default function WelcomePage() {
                     onClick={() => router.push(getLoginPath())}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xl font-medium font-headline text-primary">Login</CardTitle>
+                    <CardTitle className="text-xl font-medium font-headline text-primary">{t('Login', 'Injira')}</CardTitle>
                     <LogIn className="h-8 w-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110" />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">Access your existing account.</p>
+                    <p className="text-sm text-muted-foreground">{t('Access your existing account.', 'Injira muri konti yawe isanzwe.')}</p>
                      <div className="flex items-center pt-3 text-sm font-medium text-primary group-hover:underline">
-                        Proceed to Login <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                        {t('Proceed to Login', 'Komeza Winjire')} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </CardContent>
                 </Card>
@@ -100,13 +107,13 @@ export default function WelcomePage() {
                         onClick={() => router.push(getRegisterPath())}
                     >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl font-medium font-headline text-accent">Register</CardTitle>
+                        <CardTitle className="text-xl font-medium font-headline text-accent">{t('Register', 'Iyandikishe')}</CardTitle>
                         <UserPlus className="h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground">Create a new account.</p>
+                        <p className="text-sm text-muted-foreground">{t('Create a new account.', 'Fungura konti nshya.')}</p>
                         <div className="flex items-center pt-3 text-sm font-medium text-accent group-hover:underline">
-                            Create Account <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                            {t('Create Account', 'Fungura Konti')} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                         </div>
                     </CardContent>
                     </Card>
@@ -116,17 +123,17 @@ export default function WelcomePage() {
                         className="opacity-60 cursor-not-allowed bg-muted/10 border-2 border-muted/30"
                     >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl font-medium font-headline text-muted-foreground">Register</CardTitle>
+                        <CardTitle className="text-xl font-medium font-headline text-muted-foreground">{t('Register', 'Iyandikishe')}</CardTitle>
                         <UserPlus className="h-8 w-8 text-muted-foreground opacity-80 transition-opacity" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground">Admin registration is managed internally.</p>
+                        <p className="text-sm text-muted-foreground">{t('Admin registration is managed internally.', 'Kwiyandikisha kw\'abanyamabanga bikorerwa imbere.')}</p>
                     </CardContent>
                     </Card>
                 )}
               </div>
               <Button variant="outline" onClick={() => setSelectedRole(null)} className="w-full sm:w-auto hover:bg-muted/80 transition-colors">
-                Back to Role Selection
+                {t('Back to Role Selection', 'Subira ku Ihitamo ry\'Uruhare')}
               </Button>
             </div>
           )}

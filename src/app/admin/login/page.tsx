@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -21,9 +21,13 @@ import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation'; 
 
+const preferredLanguage = typeof window !== 'undefined' ? (localStorage.getItem('mockUserLang') as 'en' | 'kn' || 'kn') : 'kn';
+const t = (enText: string, knText: string) => preferredLanguage === 'kn' ? knText : enText;
+
+
 const adminLoginSchema = z.object({
-  username: z.string().min(3, { message: "Username must be at least 3 characters." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  username: z.string().min(3, { message: t("Username must be at least 3 characters.", "Izina ry'ukoresha rigomba kuba nibura inyuguti 3.") }),
+  password: z.string().min(6, { message: t("Password must be at least 6 characters.", "Ijambobanga rigomba kuba nibura inyuguti 6.") }),
 });
 
 type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
@@ -31,6 +35,14 @@ type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
 export default function AdminLoginPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+
+  useEffect(() => {
+    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
+    if (lang) setCurrentLanguage(lang);
+  }, []);
+
+  const currentT = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
 
   const form = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),
@@ -41,25 +53,26 @@ export default function AdminLoginPage() {
   });
 
   const onSubmit = async (data: AdminLoginFormValues) => {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Updated admin credentials
     if (data.username === "reponsekdz06@gmail.com" && data.password === "20072025") {
       toast({
-        title: "Admin Login Successful",
-        description: "Welcome, Administrator!",
+        title: currentT("Admin Login Successful", "Kwinjira kw'Umunyamabanga Byagenze Neza"),
+        description: currentT("Welcome, Administrator!", "Murakaza neza, Munyamabanga!"),
       });
-      localStorage.setItem('mockAuth', 'admin'); // Mock auth
-      router.push('/admin/dashboard'); // Redirect to admin dashboard
+      localStorage.setItem('mockAuth', 'admin'); 
+      localStorage.setItem('selectedRole', 'admin');
+      localStorage.setItem('mockUserName', "Admin User");
+      localStorage.setItem('mockUserEmail', data.username);
+      router.push('/admin/dashboard'); 
     } else {
       toast({
         variant: "destructive",
-        title: "Admin Login Failed",
-        description: "Invalid username or password.",
+        title: currentT("Admin Login Failed", "Kwinjira kw'Umunyamabanga Byanze"),
+        description: currentT("Invalid username or password.", "Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo."),
       });
       form.setError("username", { type: "manual", message: " " });
-      form.setError("password", { type: "manual", message: "Invalid username or password." });
+      form.setError("password", { type: "manual", message: currentT("Invalid username or password.", "Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo.") });
     }
   };
 
@@ -71,8 +84,8 @@ export default function AdminLoginPage() {
       </Link>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Administrator Login</CardTitle>
-          <CardDescription>Access the MediServe Hub admin panel.</CardDescription>
+          <CardTitle className="text-2xl font-headline">{currentT("Administrator Login", "Kwinjira kw'Umunyamabanga")}</CardTitle>
+          <CardDescription>{currentT("Access the MediServe Hub admin panel.", "Injira mu gice cy'ubuyobozi cya MediServe Hub.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -82,7 +95,7 @@ export default function AdminLoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username (Email)</FormLabel>
+                    <FormLabel>{currentT("Username (Email)", "Izina ry'ukoresha (Email)")}</FormLabel>
                     <FormControl>
                       <Input placeholder="your.admin.email@example.com" {...field} />
                     </FormControl>
@@ -95,7 +108,7 @@ export default function AdminLoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{currentT("Password", "Ijambobanga")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -104,16 +117,16 @@ export default function AdminLoginPage() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Authenticating..." : "Log In as Admin"}
+                {form.formState.isSubmitting ? currentT("Authenticating...", "Kugenzura...") : currentT("Log In as Admin", "Injira nk'Umunyamabanga")}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="text-center text-sm">
           <p>
-            Not an admin?{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              Patient Login
+            {currentT("Not an admin?", "Ntabwo uri umunyamabanga?")}{' '}
+            <Link href="/welcome" className="font-medium text-primary hover:underline">
+              {currentT("User Login/Selection", "Injira nk'Ukoresha / Hitamo Uruhare")}
             </Link>
           </p>
         </CardFooter>
