@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,80 +9,80 @@ body {
 
 @layer base {
   :root {
-    --background: 220 20% 97%; /* Light Cool Gray */
-    --foreground: 220 10% 20%; /* Dark Gray */
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 10%; /* Dark Gray (Almost Black) */
     --card: 0 0% 100%; /* White */
-    --card-foreground: 220 10% 20%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 20%;
-    --primary: 210 75% 55%; /* #4A90E2 - Vibrant Blue */
+    --popover-foreground: 0 0% 10%;
+    --primary: 140 70% 40%; /* Green */
     --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 215 30% 92%; /* Light grayish blue */
-    --secondary-foreground: 215 25% 35%; /* Darker grayish blue */
-    --muted: 220 15% 90%; /* Lighter Gray */
-    --muted-foreground: 220 10% 45%; /* Medium Gray */
-    --accent: 170 60% 45%; /* #34BE82 - Vibrant Teal/Green */
+    --secondary: 0 0% 95%; /* Light Gray */
+    --secondary-foreground: 0 0% 20%; /* Dark Gray */
+    --muted: 0 0% 90%; /* Lighter Gray */
+    --muted-foreground: 0 0% 40%; /* Medium Gray */
+    --accent: 140 60% 50%; /* Lighter Green */
     --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 70% 55%; /* #E55050 - Soft Red */
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 85%; /* Light Gray Border */
-    --input: 220 15% 88%;
-    --ring: 210 75% 55%; /* Primary color for rings */
+    --destructive: 0 0% 10%; /* Dark Gray (Almost Black) for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White */
+    --border: 0 0% 85%; /* Light Gray Border */
+    --input: 0 0% 90%; /* Light Gray Input */
+    --ring: 140 70% 40%; /* Green */
     
-    --chart-1: 210 75% 55%; /* Primary Blue */
-    --chart-2: 170 60% 45%; /* Accent Teal/Green */
-    --chart-3: 25 85% 60%; /* Warm Orange */
-    --chart-4: 260 65% 65%; /* Soft Purple */
-    --chart-5: 340 70% 60%; /* Pink/Magenta */
+    --chart-1: 140 70% 40%; /* Green */
+    --chart-2: 140 60% 50%; /* Lighter Green */
+    --chart-3: 140 50% 60%; /* Even Lighter Green */
+    --chart-4: 0 0% 50%; /* Medium Gray */
+    --chart-5: 0 0% 70%; /* Light Gray */
     --radius: 0.5rem;
 
     /* Sidebar light theme */
-    --sidebar-background: 210 70% 48%; /* Darker Primary Blue */
-    --sidebar-foreground: 0 0% 100%; 
-    --sidebar-primary: 0 0% 100%; /* White for active item background */
-    --sidebar-primary-foreground: 210 70% 48%; /* Darker Primary Blue for active item text */
-    --sidebar-accent: 210 70% 42%; /* Even Darker Primary for hover */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 70% 40%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 140 70% 35%; /* Darker Green */
+    --sidebar-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 0 0% 100%; /* White (active item background) */
+    --sidebar-primary-foreground: 140 70% 35%; /* Darker Green (active item text) */
+    --sidebar-accent: 140 70% 30%; /* Even Darker Green (hover) */
+    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-border: 140 70% 25%; /* Darkest Green */
+    --sidebar-ring: 0 0% 100%; /* White */
   }
 
   .dark {
-    --background: 220 15% 12%; /* Very Dark Cool Gray */
-    --foreground: 220 15% 88%; /* Light Gray */
-    --card: 220 15% 18%; /* Dark Gray */
-    --card-foreground: 220 15% 88%;
-    --popover: 220 15% 18%;
-    --popover-foreground: 220 15% 88%;
-    --primary: 210 75% 60%; /* Brighter Blue for Dark Mode */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 15% 25%; /* Darker grayish blue */
-    --secondary-foreground: 220 15% 75%; /* Lighter grayish blue */
-    --muted: 220 15% 22%; /* Darker Gray */
-    --muted-foreground: 220 10% 65%; /* Medium-Light Gray */
-    --accent: 170 60% 50%; /* Brighter Teal/Green for Dark Mode */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 60% 50%; /* Slightly softer Red for Dark Mode */
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 28%; /* Dark Gray Border */
-    --input: 220 15% 25%;
-    --ring: 210 75% 60%; /* Primary color for rings */
+    --background: 0 0% 8%; /* Very Dark Gray (Almost Black) */
+    --foreground: 0 0% 95%; /* Light Gray (Almost White) */
+    --card: 0 0% 12%; /* Dark Gray */
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 140 70% 50%; /* Brighter Green */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 0 0% 15%; /* Darker Gray */
+    --secondary-foreground: 0 0% 85%; /* Lighter Gray */
+    --muted: 0 0% 20%; /* Dark Gray */
+    --muted-foreground: 0 0% 60%; /* Medium Gray */
+    --accent: 140 60% 60%; /* Lighter Brighter Green */
+    --accent-foreground: 0 0% 100%; /* White */
+    --destructive: 0 0% 90%; /* Light Gray (Almost White) for destructive actions */
+    --destructive-foreground: 0 0% 10%; /* Dark Gray (Almost Black) */
+    --border: 0 0% 25%; /* Medium Dark Gray Border */
+    --input: 0 0% 20%; /* Dark Gray Input */
+    --ring: 140 70% 50%; /* Brighter Green */
 
-    --chart-1: 210 75% 60%;
-    --chart-2: 170 60% 50%;
-    --chart-3: 30 80% 65%;
-    --chart-4: 260 60% 70%;
-    --chart-5: 330 65% 65%;
+    --chart-1: 140 70% 50%; /* Brighter Green */
+    --chart-2: 140 60% 60%; /* Lighter Brighter Green */
+    --chart-3: 140 50% 70%; /* Even Lighter Brighter Green */
+    --chart-4: 0 0% 50%; /* Medium Gray */
+    --chart-5: 0 0% 30%; /* Dark Gray */
     
     /* Sidebar dark theme */
-    --sidebar-background: 220 15% 10%; /* Very Dark, almost black */
-    --sidebar-foreground: 220 15% 85%; 
-    --sidebar-primary: 210 75% 55%; /* Primary Blue for active item background */
-    --sidebar-primary-foreground: 0 0% 100%; /* White for active item text */
-    --sidebar-accent: 220 15% 20%; /* Darker Gray for hover */
-    --sidebar-accent-foreground: 210 75% 65%; /* Brighter Primary for hover text */
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 210 75% 55%;
+    --sidebar-background: 0 0% 5%; /* Near Black */
+    --sidebar-foreground: 0 0% 90%; /* Light Gray (Almost White) */
+    --sidebar-primary: 140 70% 50%; /* Brighter Green (active item background) */
+    --sidebar-primary-foreground: 0 0% 100%; /* White (active item text) */
+    --sidebar-accent: 0 0% 15%; /* Dark Gray (hover) */
+    --sidebar-accent-foreground: 140 70% 60%; /* Lighter Brighter Green (hover text) */
+    --sidebar-border: 0 0% 10%; /* Darker Gray */
+    --sidebar-ring: 140 70% 50%; /* Brighter Green */
   }
 }
 

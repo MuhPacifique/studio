@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -43,8 +44,8 @@ export default function AdminLoginPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Mock admin credentials
-    if (data.username === "admin" && data.password === "adminpass") {
+    // Updated admin credentials
+    if (data.username === "reponsekdz06@gmail.com" && data.password === "20072025") {
       toast({
         title: "Admin Login Successful",
         description: "Welcome, Administrator!",
@@ -81,9 +82,9 @@ export default function AdminLoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Username (Email)</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin_username" {...field} />
+                      <Input placeholder="your.admin.email@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
