@@ -38,7 +38,7 @@ export default function LoginPage() {
   useEffect(() => {
     const role = localStorage.getItem('selectedRole');
     if (!role) {
-      router.replace('/welcome'); // If no role selected, go back to role selection
+      router.replace('/welcome'); 
     } else {
       setSelectedRole(role);
     }
@@ -56,22 +56,24 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const role = localStorage.getItem('selectedRole') || 'patient'; // Default to patient if somehow not set
+    const role = localStorage.getItem('selectedRole') || 'patient'; 
 
-    // Mock success/failure 
-    // For demo, let's assume a generic patient login and a specific doctor login.
     let loginSuccess = false;
     let userName = "User";
+    let patientId: string | null = null;
 
+    // Mock success/failure 
     if (role === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Dr. Alex Smith";
-    } else if (role !== 'admin' && data.email === "patient@example.com" && data.password === "password") {
+    } else if ((role === 'patient' || role === 'seeker') && data.email === "patient@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Patty Patient";
+        patientId = "patient123"; // Assign a mock patient ID
     } else if (role === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = "Sam Seeker";
+        patientId = "seeker123"; // Assign a mock patient ID
     }
 
 
@@ -80,10 +82,15 @@ export default function LoginPage() {
         title: "Login Successful",
         description: `Welcome back, ${userName}!`,
       });
-      localStorage.setItem('mockAuth', role); // Use selected role for mockAuth
+      localStorage.setItem('mockAuth', role); 
       localStorage.setItem('mockUserName', userName); 
       localStorage.setItem('mockUserEmail', data.email);
       localStorage.setItem('mockUserPhone', data.phone || "");
+      if (patientId) {
+        localStorage.setItem('mockPatientId', patientId);
+      } else {
+        localStorage.removeItem('mockPatientId'); // Clear if not relevant
+      }
       router.push('/');
     } else {
       toast({
@@ -177,3 +184,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

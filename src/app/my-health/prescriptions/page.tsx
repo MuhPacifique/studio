@@ -21,6 +21,7 @@ interface PrescribedMedicineItem {
 }
 interface Prescription {
   id: string;
+  patientId: string; 
   doctorName: string;
   datePrescribed: string; 
   medicines: PrescribedMedicineItem[];
@@ -28,47 +29,13 @@ interface Prescription {
   status: 'Active' | 'Completed' | 'Expired';
 }
 
-const mockUserPrescriptions: Prescription[] = [
-  { 
-    id: 'rx1', 
-    doctorName: 'Dr. Emily Carter', 
-    datePrescribed: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), 
-    medicines: [
-      { id: 'med1', name: 'Amoxicillin 250mg', dosage: '1 capsule', frequency: '3 times a day', duration: '7 days' },
-      { id: 'med2', name: 'Paracetamol 500mg', dosage: '2 tablets', frequency: 'As needed for pain/fever (max 4 times a day)', duration: '3 days' },
-    ],
-    notes: 'Complete the full course of Amoxicillin. Stay hydrated.',
-    status: 'Active' 
-  },
-  { 
-    id: 'rx2', 
-    doctorName: 'Dr. Olivia Chen', 
-    datePrescribed: new Date(new Date().setDate(new Date().getDate() - 40)).toISOString(), 
-    medicines: [
-      { id: 'med3', name: 'Loratadine 10mg', dosage: '1 tablet', frequency: 'Once daily', duration: '30 days' },
-    ],
-    status: 'Completed'
-  },
-   { 
-    id: 'rx3', 
-    doctorName: 'Dr. Ben Adams', 
-    datePrescribed: new Date(new Date().setDate(new Date().getDate() - 100)).toISOString(), 
-    medicines: [
-      { id: 'med4', name: 'Ibuprofen 200mg Syrup', dosage: '5ml', frequency: 'Every 6-8 hours for fever', duration: 'Until fever subsides' },
-    ],
-    notes: 'For child\'s fever. Consult if fever persists over 3 days.',
-    status: 'Expired'
-  },
-];
-
-
 export default function MyPrescriptionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // In a real app, these would be fetched based on the logged-in user
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(mockUserPrescriptions); 
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); 
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
@@ -86,20 +53,34 @@ export default function MyPrescriptionsPage() {
         router.replace('/welcome'); 
       } else {
         setIsAuthenticated(true);
+        // Load prescriptions from localStorage
+        const currentPatientId = localStorage.getItem('mockPatientId');
+        const allPrescriptionsString = localStorage.getItem('allPrescriptions');
+        if (allPrescriptionsString && currentPatientId) {
+          try {
+            const allPrescriptions: Prescription[] = JSON.parse(allPrescriptionsString);
+            const userPrescriptions = allPrescriptions.filter(rx => rx.patientId === currentPatientId);
+            setPrescriptions(userPrescriptions.sort((a, b) => new Date(b.datePrescribed).getTime() - new Date(a.datePrescribed).getTime()));
+          } catch (error) {
+            console.error("Error parsing prescriptions from localStorage:", error);
+            toast({variant: "destructive", title: "Error", description: "Could not load your prescriptions."})
+          }
+        }
+        setIsLoadingData(false);
       }
     }
   }, [isClient, router, toast]);
   
-  const getStatusBadgeVariant = (status: Prescription['status']): "default" | "secondary" | "outline" => {
+  const getStatusBadgeVariant = (status: Prescription['status']): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
-      case 'Active': return 'default'; // Primary color for active
+      case 'Active': return 'default'; 
       case 'Completed': return 'secondary';
-      case 'Expired': return 'outline'; // Destructive might be too much for 'expired'
+      case 'Expired': return 'outline'; 
       default: return 'outline';
     }
   };
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || !isAuthenticated || isLoadingData) {
     return (
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen">
@@ -140,7 +121,7 @@ export default function MyPrescriptionsPage() {
                   <h4 className="font-semibold mb-2 flex items-center"><Pill className="mr-2 h-5 w-5 text-primary"/>Medicines:</h4>
                   <ul className="space-y-2 pl-2">
                     {rx.medicines.map(med => (
-                      <li key={med.id} className="text-sm p-2 border-l-2 border-primary/30 bg-muted/30 rounded-r-md">
+                      <li key={med.id} className="text-sm p-2 border-l-2 border-primary/30 bg-muted/30 dark:bg-muted/10 rounded-r-md">
                         <p><span className="font-medium">{med.name}</span></p>
                         <p className="text-xs text-muted-foreground">
                           Dosage: {med.dosage} | Frequency: {med.frequency} | Duration: {med.duration}
@@ -152,7 +133,7 @@ export default function MyPrescriptionsPage() {
                 {rx.notes && (
                   <div>
                     <h4 className="font-semibold mb-1 flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>Doctor's Notes:</h4>
-                    <p className="text-sm text-muted-foreground bg-primary/5 p-3 rounded-md border border-primary/20">{rx.notes}</p>
+                    <p className="text-sm text-muted-foreground bg-primary/5 dark:bg-primary/10 p-3 rounded-md border border-primary/20">{rx.notes}</p>
                   </div>
                 )}
               </CardContent>
@@ -183,3 +164,5 @@ export default function MyPrescriptionsPage() {
     </AppLayout>
   );
 }
+
+    

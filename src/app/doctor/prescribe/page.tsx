@@ -24,16 +24,28 @@ interface MockMedicine {
   name: string;
 }
 
-interface PrescribedMedicine extends MockMedicine {
+interface PrescribedMedicineItem extends MockMedicine {
   dosage: string;
   frequency: string;
   duration: string;
 }
 
+interface Prescription {
+  id: string;
+  patientId: string; // Added to link to patient
+  doctorName: string;
+  datePrescribed: string;
+  medicines: PrescribedMedicineItem[];
+  notes?: string;
+  status: 'Active' | 'Completed' | 'Expired';
+}
+
+
 const mockPatients: MockPatient[] = [
-  { id: 'p1', name: 'Alice Wonderland' },
-  { id: 'p2', name: 'Bob The Builder' },
-  { id: 'p3', name: 'Charlie Brown' },
+  { id: 'patient123', name: 'Patty Patient (patient@example.com)' }, // Matches login mock
+  { id: 'aliceW', name: 'Alice Wonderland' },
+  { id: 'bobB', name: 'Bob The Builder' },
+  { id: 'charlieB', name: 'Charlie Brown' },
 ];
 
 const allMockMedicines: MockMedicine[] = [
@@ -54,7 +66,7 @@ export default function PrescribeMedicinePage() {
   const [selectedPatient, setSelectedPatient] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<MockMedicine[]>([]);
-  const [prescription, setPrescription] = useState<PrescribedMedicine[]>([]);
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescribedMedicineItem[]>([]); // Renamed from 'prescription' to avoid conflict
   const [currentDosage, setCurrentDosage] = useState('');
   const [currentFrequency, setCurrentFrequency] = useState('');
   const [currentDuration, setCurrentDuration] = useState('');
@@ -89,37 +101,77 @@ export default function PrescribeMedicinePage() {
     setSearchResults(filtered);
   }, [searchTerm]);
 
-  const handleAddMedicineToPrescription = (medicine: MockMedicine) => {
+  const handleAddMedicineToPrescription = () => { // Changed to take no arguments
+    const selectedMedicine = searchResults.find(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (!selectedMedicine) {
+        toast({ variant: "destructive", title: "No Medicine Selected", description: "Please select a medicine from the search results or ensure your search term matches an available medicine." });
+        return;
+    }
     if (!currentDosage || !currentFrequency || !currentDuration) {
         toast({ variant: "destructive", title: "Missing Details", description: "Please provide dosage, frequency, and duration for the medicine." });
         return;
     }
-    setPrescription(prev => [...prev, { ...medicine, dosage: currentDosage, frequency: currentFrequency, duration: currentDuration }]);
-    setSearchTerm(''); // Clear search after adding
+    setPrescriptionItems(prev => [...prev, { ...selectedMedicine, dosage: currentDosage, frequency: currentFrequency, duration: currentDuration }]);
+    setSearchTerm(''); 
     setCurrentDosage('');
     setCurrentFrequency('');
     setCurrentDuration('');
-    toast({ title: `${medicine.name} added to prescription.` });
+    toast({ title: `${selectedMedicine.name} added to prescription.` });
+  };
+  
+  const handleSelectMedicineFromSearch = (medicine: MockMedicine) => {
+    setSearchTerm(medicine.name); // Fill search bar with selected medicine
+    setSearchResults([]); // Clear search results after selection
   };
 
+
   const handleRemoveMedicine = (medicineId: string) => {
-    setPrescription(prev => prev.filter(med => med.id !== medicineId));
+    setPrescriptionItems(prev => prev.filter(med => med.id !== medicineId));
   };
 
   const handleSubmitPrescription = async () => {
-    if (!selectedPatient || prescription.length === 0) {
+    if (!selectedPatient || prescriptionItems.length === 0) {
       toast({ variant: "destructive", title: "Incomplete Prescription", description: "Please select a patient and add at least one medicine." });
       return;
     }
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-    setIsLoading(false);
-    toast({ title: "Prescription Sent (Mock)", description: `Prescription for ${mockPatients.find(p=>p.id === selectedPatient)?.name} has been recorded.` });
-    // Reset form
-    setSelectedPatient(undefined);
-    setPrescription([]);
-    setPatientNotes('');
-    router.push('/doctor/dashboard');
+
+    const doctorName = localStorage.getItem('mockUserName') || "Dr. Default";
+    const newPrescription: Prescription = {
+      id: `rx${Date.now()}`,
+      patientId: selectedPatient,
+      doctorName,
+      datePrescribed: new Date().toISOString(),
+      medicines: prescriptionItems,
+      notes: patientNotes,
+      status: 'Active',
+    };
+
+    try {
+      const existingPrescriptionsString = localStorage.getItem('allPrescriptions');
+      const existingPrescriptions: Prescription[] = existingPrescriptionsString ? JSON.parse(existingPrescriptionsString) : [];
+      existingPrescriptions.push(newPrescription);
+      localStorage.setItem('allPrescriptions', JSON.stringify(existingPrescriptions));
+      
+      await new Promise(resolve => setTimeout(resolve, 1500)); 
+      setIsLoading(false);
+      toast({ title: "Prescription Saved", description: `Prescription for ${mockPatients.find(p=>p.id === selectedPatient)?.name} has been saved.` });
+      
+      setSelectedPatient(undefined);
+      setPrescriptionItems([]);
+      setPatientNotes('');
+      setSearchTerm('');
+      setCurrentDosage('');
+      setCurrentFrequency('');
+      setCurrentDuration('');
+      router.push('/doctor/dashboard');
+
+    } catch (error) {
+        setIsLoading(false);
+        console.error("Failed to save prescription:", error);
+        toast({ variant: "destructive", title: "Save Failed", description: "Could not save the prescription." });
+    }
   };
 
   if (!isClient || !isAuthenticatedDoctor) {
@@ -167,7 +219,7 @@ export default function PrescribeMedicinePage() {
             </Select>
           </div>
 
-          <div className="space-y-4 p-4 border rounded-md bg-muted/30">
+          <div className="space-y-4 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
             <h3 className="font-semibold text-lg mb-2 text-primary">Add Medicine</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -182,7 +234,7 @@ export default function PrescribeMedicinePage() {
             {searchResults.length > 0 && (
               <div className="border rounded-md max-h-40 overflow-y-auto bg-background shadow">
                 {searchResults.map(med => (
-                  <div key={med.id} className="p-2 hover:bg-muted/50 cursor-pointer text-sm" onClick={() => handleAddMedicineToPrescription(med)}>
+                  <div key={med.id} className="p-2 hover:bg-muted/50 cursor-pointer text-sm" onClick={() => handleSelectMedicineFromSearch(med)}>
                     {med.name}
                   </div>
                 ))}
@@ -205,12 +257,15 @@ export default function PrescribeMedicinePage() {
                     <Input id="duration" placeholder="e.g., 7 days" value={currentDuration} onChange={(e) => setCurrentDuration(e.target.value)} />
                 </div>
              </div>
+             <Button type="button" onClick={handleAddMedicineToPrescription} className="mt-2" disabled={!searchTerm || !currentDosage || !currentFrequency || !currentDuration}>
+                <PlusCircle className="mr-2 h-4 w-4"/> Add to Prescription
+             </Button>
           </div>
           
-          {prescription.length > 0 && (
+          {prescriptionItems.length > 0 && (
             <div className="space-y-3">
               <h3 className="font-semibold text-lg text-primary">Current Prescription Items:</h3>
-              {prescription.map(med => (
+              {prescriptionItems.map(med => (
                 <Card key={med.id} className="p-4 flex justify-between items-start bg-background shadow-sm">
                   <div>
                     <p className="font-medium">{med.name}</p>
@@ -241,13 +296,15 @@ export default function PrescribeMedicinePage() {
           <Button 
             className="w-full sm:w-auto ml-auto transition-transform hover:scale-105 active:scale-95" 
             onClick={handleSubmitPrescription}
-            disabled={isLoading || !selectedPatient || prescription.length === 0}
+            disabled={isLoading || !selectedPatient || prescriptionItems.length === 0}
           >
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
-            {isLoading ? 'Sending...' : 'Send Prescription (Mock)'}
+            {isLoading ? 'Sending...' : 'Save & Send Prescription'}
           </Button>
         </CardFooter>
       </Card>
     </AppLayout>
   );
 }
+
+    
