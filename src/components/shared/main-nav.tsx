@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -94,7 +95,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
             {!item.subItems ? (
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   variant="default"
                   size="default"
@@ -129,7 +130,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   <SidebarMenuSub>
                     {item.subItems.map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href} legacyBehavior passHref>
+                         <Link href={subItem.href}>
                            <SidebarMenuSubButton
                              size="md"
                              isActive={pathname === subItem.href}
