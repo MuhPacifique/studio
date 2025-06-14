@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock } from 'lucide-react';
+import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock, Camera } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, Controller } from 'react-hook-form';
@@ -31,9 +30,10 @@ const profileSchema = z.object({
   city: z.string().optional(),
   country: z.string().optional(),
   bio: z.string().max(200, "Bio must be 200 characters or less.").optional(),
-  preferredLanguage: z.string().optional(),
+  profileImageUrl: z.string().url().optional().or(z.literal("")), // For mock image URL
   
   // Preferences
+  preferredLanguage: z.string().optional(),
   enableMarketingEmails: z.boolean().optional(),
   enableAppNotifications: z.boolean().optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
@@ -48,8 +48,8 @@ const profileSchema = z.object({
   confirmNewPassword: z.string().optional(),
   enableTwoFactor: z.boolean().optional(),
 }).refine(data => {
-    if (data.newPassword && !data.confirmNewPassword) return false; // If new password, confirm is needed
-    if (data.newPassword && data.newPassword !== data.confirmNewPassword) return false; // Passwords must match
+    if (data.newPassword && !data.confirmNewPassword) return false; 
+    if (data.newPassword && data.newPassword !== data.confirmNewPassword) return false;
     return true;
 }, {
     message: "New passwords do not match or confirmation is missing.",
@@ -64,6 +64,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [initials, setInitials] = useState("U");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [currentUser, setCurrentUser] = useState<ProfileFormValues>({
     fullName: "User Name",
@@ -74,6 +76,7 @@ export default function ProfilePage() {
     city: "",
     country: "Rwanda",
     bio: "",
+    profileImageUrl: "",
     preferredLanguage: "en",
     enableMarketingEmails: false,
     enableAppNotifications: true,
@@ -97,6 +100,7 @@ export default function ProfilePage() {
       const authStatus = localStorage.getItem('mockAuth');
       const storedUserName = localStorage.getItem('mockUserName') || "Patty Patient";
       const storedUserEmail = localStorage.getItem('mockUserEmail') || "patient@example.com";
+      const storedProfileImage = localStorage.getItem('mockUserProfileImage');
 
       if (!authStatus) {
         toast({
@@ -104,7 +108,7 @@ export default function ProfilePage() {
           title: "Access Denied",
           description: "Please log in to view your profile.",
         });
-        router.replace('/welcome'); // Redirect to welcome page
+        router.replace('/welcome'); 
       } else {
         const userData: ProfileFormValues = {
           fullName: authStatus === 'admin' ? "Admin User" : storedUserName,
@@ -115,9 +119,10 @@ export default function ProfilePage() {
           city: localStorage.getItem('mockUserCity') || "Kigali",
           country: localStorage.getItem('mockUserCountry') || "Rwanda",
           bio: localStorage.getItem('mockUserBio') || "Passionate about health and wellness. Exploring new ways to stay fit and informed.",
+          profileImageUrl: storedProfileImage || "",
           preferredLanguage: localStorage.getItem('mockUserLang') || "en",
           enableMarketingEmails: localStorage.getItem('mockUserMarketing') === 'true',
-          enableAppNotifications: localStorage.getItem('mockUserAppNotifs') !== 'false', // default true
+          enableAppNotifications: localStorage.getItem('mockUserAppNotifs') !== 'false', 
           theme: (localStorage.getItem('mockUserTheme') as ProfileFormValues['theme']) || 'system',
           emergencyContactName: localStorage.getItem('mockUserEmergencyName') || "Jane Doe",
           emergencyContactPhone: localStorage.getItem('mockUserEmergencyPhone') || "0788654321",
@@ -125,6 +130,7 @@ export default function ProfilePage() {
         };
         setCurrentUser(userData);
         form.reset(userData); 
+        if(userData.profileImageUrl) setImagePreview(userData.profileImageUrl);
 
         const nameParts = userData.fullName.split(' ');
         const firstInitial = nameParts[0]?.[0] || '';
@@ -134,25 +140,45 @@ export default function ProfilePage() {
     }
   }, [isClient, router, toast, form]);
 
-  const onSubmit = (data: ProfileFormValues) => {
-    setCurrentUser(data); 
-    localStorage.setItem('mockUserName', data.fullName);
-    localStorage.setItem('mockUserEmail', data.email);
-    localStorage.setItem('mockUserPhone', data.phone || "");
-    localStorage.setItem('mockUserDOB', data.dob || "");
-    localStorage.setItem('mockUserAddress', data.address || "");
-    localStorage.setItem('mockUserCity', data.city || "");
-    localStorage.setItem('mockUserCountry', data.country || "Rwanda");
-    localStorage.setItem('mockUserBio', data.bio || "");
-    localStorage.setItem('mockUserLang', data.preferredLanguage || "en");
-    localStorage.setItem('mockUserMarketing', String(data.enableMarketingEmails || false));
-    localStorage.setItem('mockUserAppNotifs', String(data.enableAppNotifications !== false));
-    localStorage.setItem('mockUserTheme', data.theme || "system");
-    localStorage.setItem('mockUserEmergencyName', data.emergencyContactName || "");
-    localStorage.setItem('mockUserEmergencyPhone', data.emergencyContactPhone || "");
-    localStorage.setItem('mockUser2FA', String(data.enableTwoFactor || false));
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        // For mock purposes, we can set a placeholder or the data URL to form state
+        // In a real app, you'd upload this file and get back a URL
+        form.setValue("profileImageUrl", reader.result as string); // Or a placeholder after "upload"
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    const nameParts = data.fullName.split(' ');
+  const onSubmit = (data: ProfileFormValues) => {
+    const updatedData = { ...data, profileImageUrl: imagePreview || data.profileImageUrl };
+    setCurrentUser(updatedData); 
+    localStorage.setItem('mockUserName', updatedData.fullName);
+    localStorage.setItem('mockUserEmail', updatedData.email);
+    localStorage.setItem('mockUserPhone', updatedData.phone || "");
+    localStorage.setItem('mockUserDOB', updatedData.dob || "");
+    localStorage.setItem('mockUserAddress', updatedData.address || "");
+    localStorage.setItem('mockUserCity', updatedData.city || "");
+    localStorage.setItem('mockUserCountry', updatedData.country || "Rwanda");
+    localStorage.setItem('mockUserBio', updatedData.bio || "");
+    if (imagePreview) {
+        localStorage.setItem('mockUserProfileImage', imagePreview);
+    } else if (updatedData.profileImageUrl === "") {
+        localStorage.removeItem('mockUserProfileImage');
+    }
+    localStorage.setItem('mockUserLang', updatedData.preferredLanguage || "en");
+    localStorage.setItem('mockUserMarketing', String(updatedData.enableMarketingEmails || false));
+    localStorage.setItem('mockUserAppNotifs', String(updatedData.enableAppNotifications !== false));
+    localStorage.setItem('mockUserTheme', updatedData.theme || "system");
+    localStorage.setItem('mockUserEmergencyName', updatedData.emergencyContactName || "");
+    localStorage.setItem('mockUserEmergencyPhone', updatedData.emergencyContactPhone || "");
+    localStorage.setItem('mockUser2FA', String(updatedData.enableTwoFactor || false));
+
+    const nameParts = updatedData.fullName.split(' ');
     const firstInitial = nameParts[0]?.[0] || '';
     const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] || '' : '';
     setInitials((firstInitial + lastInitial).toUpperCase() || "U");
@@ -161,7 +187,7 @@ export default function ProfilePage() {
       title: "Profile Updated (Mock)",
       description: "Your profile information has been saved.",
     });
-     form.reset(data); // Reset form with new values, clearing password fields
+     form.reset(updatedData); 
   };
 
   if (!isClient || !localStorage.getItem('mockAuth')) {
@@ -182,11 +208,29 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 shadow-xl hover-lift">
           <CardHeader>
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
-                <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={form.watch("fullName")} data-ai-hint="profile avatar professional" />
-                <AvatarFallback className="text-3xl text-primary font-semibold">{initials}</AvatarFallback>
-              </Avatar>
+            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="relative group">
+                <Avatar className="h-32 w-32 border-4 border-primary shadow-md">
+                  <AvatarImage src={imagePreview || form.watch("profileImageUrl") || `https://placehold.co/128x128.png?text=${initials}`} alt={form.watch("fullName")} />
+                  <AvatarFallback className="text-4xl text-primary font-semibold">{initials}</AvatarFallback>
+                </Avatar>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Change profile picture"
+                >
+                    <Camera className="h-4 w-4"/>
+                </Button>
+                <Input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/png, image/jpeg, image/gif" 
+                    onChange={handleImageChange}
+                />
+              </div>
               <div>
                 <CardTitle className="text-3xl font-headline gradient-text">{form.watch("fullName")}</CardTitle>
                 <CardDescription className="text-md">{form.watch("email")}</CardDescription>
@@ -196,7 +240,7 @@ export default function ProfilePage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
-                <Accordion type="multiple" defaultValue={['personal', 'contact']} className="w-full">
+                <Accordion type="multiple" defaultValue={['personal', 'contact', 'preferences']} className="w-full">
                   <AccordionItem value="personal" className="border-b-0">
                     <AccordionTrigger className="hover:no-underline text-xl font-semibold text-primary py-3 group">
                        <Briefcase className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /> Basic Information
@@ -338,3 +382,5 @@ export default function ProfilePage() {
     </AppLayout>
   );
 }
+
+    

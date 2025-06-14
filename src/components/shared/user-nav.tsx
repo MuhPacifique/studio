@@ -22,6 +22,7 @@ const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<'patient' | 'admin' | 'doctor' | 'seeker' | null>(null); 
   const [userName, setUserName] = useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); 
 
   useEffect(() => {
@@ -33,21 +34,24 @@ const useAuth = () => {
       const mockAuth = localStorage.getItem('mockAuth');
       const storedUserName = localStorage.getItem('mockUserName');
       const storedRole = localStorage.getItem('selectedRole') as Role | null;
+      const storedProfileImage = localStorage.getItem('mockUserProfileImage');
 
       if (mockAuth) {
         setIsAuthenticated(true);
         setUserName(storedUserName || (mockAuth === 'admin' ? 'Admin User' : 'Valued User'));
+        setProfileImageUrl(storedProfileImage);
         if (mockAuth === 'admin') {
           setUserType('admin');
         } else if (storedRole) {
           setUserType(storedRole);
         } else {
-           setUserType('patient'); // Default if role somehow not set but authenticated
+           setUserType('patient'); 
         }
       } else {
         setIsAuthenticated(false);
         setUserType(null);
         setUserName(null);
+        setProfileImageUrl(null);
       }
     }
   }, [isClient]);
@@ -55,8 +59,8 @@ const useAuth = () => {
 
   const login = (type: 'patient' | 'admin' | 'doctor' | 'seeker', name: string) => {
     if (isClient) {
-      localStorage.setItem('mockAuth', type); // 'mockAuth' signifies general auth status
-      localStorage.setItem('selectedRole', type); // 'selectedRole' stores the specific role
+      localStorage.setItem('mockAuth', type); 
+      localStorage.setItem('selectedRole', type); 
       setIsAuthenticated(true);
       setUserType(type);
       setUserName(name);
@@ -68,21 +72,23 @@ const useAuth = () => {
       localStorage.removeItem('mockAuth');
       localStorage.removeItem('mockUserName');
       localStorage.removeItem('selectedRole');
+      localStorage.removeItem('mockUserProfileImage');
       setIsAuthenticated(false);
       setUserType(null);
       setUserName(null);
-      window.location.href = '/welcome'; // Redirect to welcome page after logout
+      setProfileImageUrl(null);
+      window.location.href = '/welcome'; 
     }
   };
 
-  return { isAuthenticated, userType, userName, login, logout, isClient };
+  return { isAuthenticated, userType, userName, profileImageUrl, login, logout, isClient };
 };
 
 type Role = 'patient' | 'admin' | 'doctor' | 'seeker';
 
 
 export function UserNav() {
-  const { isAuthenticated, userType, userName, logout, isClient } = useAuth();
+  const { isAuthenticated, userType, userName, profileImageUrl, logout, isClient } = useAuth();
   const [initials, setInitials] = useState("U");
   const router = useRouter();
 
@@ -96,6 +102,24 @@ export function UserNav() {
       setInitials("U");
     }
   }, [userName]);
+  
+  // Effect to update avatar when localStorage changes (e.g. after profile save)
+  useEffect(() => {
+    if (isClient) {
+      const handleStorageChange = () => {
+        const storedImage = localStorage.getItem('mockUserProfileImage');
+        // This is a bit of a hack for reactivity; proper state management (Context/Redux) would be better for complex apps.
+        // For now, we re-trigger the UserNav's internal state update.
+        const newUserName = localStorage.getItem('mockUserName');
+        if (newUserName) setUserName(newUserName); // to trigger re-render of initials
+        // @ts-ignore
+        if (profileImageUrl !== storedImage) (UserNav as any).forceUpdate?.(); 
+      };
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, [isClient, profileImageUrl]);
+
 
   if (!isClient) {
     return (
@@ -122,13 +146,16 @@ export function UserNav() {
       </div>
     );
   }
+  
+  const currentProfileImageUrl = isClient ? localStorage.getItem('mockUserProfileImage') : null;
+
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
-            <AvatarImage src={`https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar professional" />
+            <AvatarImage src={currentProfileImageUrl || `https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar professional" />
             <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -176,3 +203,5 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
+    

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Edit3, Trash2, Search, Save } from 'lucide-react';
+import { UserPlus, Edit3, Trash2, Search, Save, Camera } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,28 +17,32 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Patient' | 'Admin';
+  role: 'Patient' | 'Admin' | 'Doctor' | 'Seeker';
   status: 'Active' | 'Inactive';
   joinedDate: string;
+  profileImageUrl?: string; 
 }
 
 const initialMockUsers: User[] = [
-  { id: 'usr1', name: 'Alice Wonderland', email: 'alice@example.com', role: 'Patient', status: 'Active', joinedDate: '2023-01-15' },
-  { id: 'usr2', name: 'Bob The Builder', email: 'bob@example.com', role: 'Patient', status: 'Inactive', joinedDate: '2023-02-20' },
-  { id: 'usr3', name: 'Charlie Brown', email: 'charlie@example.com', role: 'Patient', status: 'Active', joinedDate: '2023-03-10' },
-  { id: 'usr4', name: 'Dr. Diana Prince', email: 'diana.admin@mediserve.com', role: 'Admin', status: 'Active', joinedDate: '2022-12-01' },
+  { id: 'usr1', name: 'Alice Wonderland', email: 'alice@example.com', role: 'Patient', status: 'Active', joinedDate: '2023-01-15', profileImageUrl: 'https://placehold.co/60x60.png?text=AW' },
+  { id: 'usr2', name: 'Bob The Builder', email: 'bob@example.com', role: 'Patient', status: 'Inactive', joinedDate: '2023-02-20', profileImageUrl: 'https://placehold.co/60x60.png?text=BB' },
+  { id: 'usr3', name: 'Charlie Brown', email: 'charlie@example.com', role: 'Seeker', status: 'Active', joinedDate: '2023-03-10', profileImageUrl: 'https://placehold.co/60x60.png?text=CB' },
+  { id: 'usr4', name: 'Dr. Diana Prince', email: 'diana.admin@mediserve.com', role: 'Admin', status: 'Active', joinedDate: '2022-12-01', profileImageUrl: 'https://placehold.co/60x60.png?text=DP' },
+  { id: 'usr5', name: 'Dr. Alex Smith', email: 'doctor@example.com', role: 'Doctor', status: 'Active', joinedDate: '2023-05-01', profileImageUrl: 'https://placehold.co/60x60.png?text=AS' },
 ];
 
 const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
-  role: z.enum(['Patient', 'Admin'], { required_error: "Role is required." }),
+  role: z.enum(['Patient', 'Admin', 'Doctor', 'Seeker'], { required_error: "Role is required." }),
   status: z.enum(['Active', 'Inactive'], { required_error: "Status is required." }),
+  profileImageUrl: z.string().url().optional().or(z.literal("")),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -52,17 +56,21 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: { name: '', email: '', role: 'Patient', status: 'Active' },
+    defaultValues: { name: '', email: '', role: 'Patient', status: 'Active', profileImageUrl: '' },
   });
 
   useEffect(() => {
     if (editingUser) {
       form.reset(editingUser);
+      setImagePreview(editingUser.profileImageUrl || null);
     } else {
-      form.reset({ name: '', email: '', role: 'Patient', status: 'Active' });
+      form.reset({ name: '', email: '', role: 'Patient', status: 'Active', profileImageUrl: '' });
+      setImagePreview(null);
     }
   }, [editingUser, form]);
 
@@ -71,9 +79,22 @@ export default function AdminUsersPage() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        form.setValue("profileImageUrl", reader.result as string); // For mock
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddUserClick = () => {
     setEditingUser(null);
-    form.reset({ name: '', email: '', role: 'Patient', status: 'Active' });
+    form.reset({ name: '', email: '', role: 'Patient', status: 'Active', profileImageUrl: '' });
+    setImagePreview(null);
     setIsAddDialogOpen(true);
   };
 
@@ -92,6 +113,7 @@ export default function AdminUsersPage() {
       ...data,
       id: `usr${Date.now()}`,
       joinedDate: new Date().toISOString().split('T')[0],
+      profileImageUrl: imagePreview || data.profileImageUrl, // Use preview if available
     };
     setUsersList(prev => [newUser, ...prev]);
     toast({ title: "User Added", description: `${data.name} has been added.` });
@@ -100,7 +122,7 @@ export default function AdminUsersPage() {
 
   const handleEditUserSubmit = (data: UserFormValues) => {
     if (!editingUser) return;
-    setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data } : u));
+    setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data, profileImageUrl: imagePreview || data.profileImageUrl } : u));
     toast({ title: "User Updated", description: `${data.name}'s information has been updated.` });
     setIsEditDialogOpen(false);
     setEditingUser(null);
@@ -114,6 +136,14 @@ export default function AdminUsersPage() {
     setIsDeleteDialogOpen(false);
     setDeletingUserId(null);
   };
+  
+  const getInitials = (name: string) => {
+    const nameParts = name.split(' ');
+    const firstInitial = nameParts[0]?.[0] || '';
+    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] || '' : '';
+    return (firstInitial + lastInitial).toUpperCase() || "U";
+  };
+
 
   return (
     <AppLayout>
@@ -145,6 +175,7 @@ export default function AdminUsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Avatar</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
@@ -156,6 +187,12 @@ export default function AdminUsersPage() {
             <TableBody>
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(user.name)}`} alt={user.name} data-ai-hint="user avatar professional"/>
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                  </TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
@@ -187,9 +224,8 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit User Dialog */}
       <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={isAddDialogOpen ? setIsAddDialogOpen : setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
             <DialogDescription>
@@ -197,6 +233,35 @@ export default function AdminUsersPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(editingUser ? handleEditUserSubmit : handleAddUserSubmit)} className="space-y-4 py-4">
+            <div className="flex flex-col items-center space-y-2">
+                <Avatar className="h-24 w-24">
+                    <AvatarImage src={imagePreview || form.watch("profileImageUrl") || `https://placehold.co/96x96.png?text=${form.watch("name") ? getInitials(form.watch("name")) : 'U' }`} alt="Profile Preview"/>
+                    <AvatarFallback>{form.watch("name") ? getInitials(form.watch("name")) : "U"}</AvatarFallback>
+                </Avatar>
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Camera className="mr-2 h-4 w-4"/> Change Photo (Mock)
+                </Button>
+                <Input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/png, image/jpeg, image/gif" 
+                    onChange={handleImageChange}
+                />
+                <FormField
+                  control={form.control}
+                  name="profileImageUrl"
+                  render={({ field }) => (
+                    <FormItem className="w-full hidden"> {/* Hidden, managed by preview logic */}
+                      <FormControl>
+                        <Input {...field} placeholder="Image URL (mock)" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input id="name" {...form.register("name")} className="mt-1" />
@@ -219,6 +284,8 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Patient">Patient</SelectItem>
+                      <SelectItem value="Doctor">Doctor</SelectItem>
+                      <SelectItem value="Seeker">Seeker</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -253,7 +320,6 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -272,3 +338,5 @@ export default function AdminUsersPage() {
     </AppLayout>
   );
 }
+
+    
