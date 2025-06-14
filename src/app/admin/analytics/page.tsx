@@ -1,9 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BarChart, LineChart, PieChart, Users, Activity, DollarSign } from 'lucide-react';
 import {
   ChartContainer,
