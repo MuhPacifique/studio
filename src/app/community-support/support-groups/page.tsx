@@ -23,14 +23,14 @@ interface SupportGroup {
   memberCount: number;
   category: string;
   isPrivate: boolean;
-  isJoined?: boolean; // Added for mock state
-  isRequested?: boolean; // Added for mock state
+  isJoined?: boolean; 
+  isRequested?: boolean; 
 }
 
 const initialMockSupportGroups: SupportGroup[] = [
   { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', isPrivate: false, isJoined: false },
   { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', isPrivate: true, isJoined: false },
-  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', isPrivate: false, isJoined: true }, // Example of already joined
+  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', isPrivate: false, isJoined: true }, 
   { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false, isJoined: false },
 ];
 
@@ -40,7 +40,13 @@ export default function SupportGroupsPage() {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [groups, setGroups] = useState<SupportGroup[]>(initialMockSupportGroups);
+  const [groups, setGroups] = useState<SupportGroup[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedGroups = localStorage.getItem('supportGroupsState');
+      return savedGroups ? JSON.parse(savedGroups) : initialMockSupportGroups;
+    }
+    return initialMockSupportGroups;
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -62,10 +68,20 @@ export default function SupportGroupsPage() {
     }
   }, [isClient, router, toast]);
 
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('supportGroupsState', JSON.stringify(groups));
+    }
+  }, [groups, isClient]);
+
   const handleJoinGroup = (groupId: string) => {
     setGroups(prevGroups => 
       prevGroups.map(group => {
         if (group.id === groupId) {
+          if (group.isJoined) { // If already joined, navigate to group page
+            router.push(`/community-support/support-groups/${groupId}`);
+            return group;
+          }
           if (group.isPrivate && !group.isRequested) {
             toast({ title: "Request Sent (Mock)", description: `Your request to join "${group.name}" has been sent.`});
             return { ...group, isRequested: true };
@@ -77,12 +93,6 @@ export default function SupportGroupsPage() {
         return group;
       })
     );
-    // In a real app, you might navigate after joining, or the button would change to "View Group"
-    // For this mock, we'll let the button text update and then clicking it again could navigate
-    const group = groups.find(g => g.id === groupId);
-    if(group && (group.isJoined || (!group.isPrivate && !group.isRequested))) {
-        router.push(`/community-support/support-groups/${groupId}`);
-    }
   };
 
   const filteredGroups = groups.filter(group =>
@@ -128,7 +138,7 @@ export default function SupportGroupsPage() {
         </div>
       </PageHeader>
 
-      <Card className="mb-6 shadow-lg bg-primary/5 hover-lift">
+      <Card className="mb-6 shadow-lg bg-primary/5 hover-lift dark:bg-primary/10 dark:border-primary/20">
         <CardHeader>
             <CardTitle className="font-headline text-primary flex items-center">
                 <Users2 className="mr-2 h-6 w-6"/> Find Your Community
@@ -141,23 +151,26 @@ export default function SupportGroupsPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredGroups.map(group => (
-          <Card key={group.id} className="flex flex-col shadow-lg hover-lift group transition-all duration-300 ease-in-out hover:border-primary/50">
+          <Card key={group.id} className="flex flex-col shadow-lg hover-lift group transition-all duration-300 ease-in-out hover:border-primary/50 dark:border-border">
              <Link href={`/community-support/support-groups/${group.id}`} className="block">
-                <Image 
-                src={group.imageUrl} 
-                alt={group.name} 
-                width={400} 
-                height={200} 
-                className="w-full h-48 object-cover rounded-t-lg group-hover:opacity-90 transition-opacity"
-                data-ai-hint={group.aiHint} 
-                />
+                <div className="relative overflow-hidden rounded-t-lg">
+                  <Image 
+                    src={group.imageUrl} 
+                    alt={group.name} 
+                    width={400} 
+                    height={200} 
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    data-ai-hint={group.aiHint} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent group-hover:from-black/30 transition-all"></div>
+                </div>
             </Link>
-            <CardHeader>
+            <CardHeader className="pt-4">
               <div className="flex justify-between items-start">
                 <Link href={`/community-support/support-groups/${group.id}`} className="block">
                     <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
                 </Link>
-                {group.isPrivate && <Badge variant="secondary">Private</Badge>}
+                {group.isPrivate && <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">Private</Badge>}
                 {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">Public</Badge>}
               </div>
               <Badge variant="outline" className="w-fit mt-1">{group.category}</Badge>
@@ -174,10 +187,10 @@ export default function SupportGroupsPage() {
                 size="sm" 
                 className="transition-transform group-hover:scale-105 active:scale-95"
                 onClick={() => handleJoinGroup(group.id)}
-                disabled={group.isJoined && group.isPrivate && group.isRequested}
+                disabled={group.isPrivate && group.isRequested && !group.isJoined}
               >
-                {group.isJoined ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <UserPlus className="ml-2 h-4 w-4" />}
-                {group.isJoined ? (group.isPrivate ? 'View Group' : 'View Group') : (group.isPrivate ? (group.isRequested ? 'Requested' : 'Request to Join') : 'Join Group')}
+                {group.isJoined ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <UserPlus className="mr-2 h-4 w-4" />}
+                {group.isJoined ? 'View Group' : (group.isPrivate ? (group.isRequested ? 'Requested' : 'Request to Join') : 'Join Group')}
               </Button>
             </CardFooter>
           </Card>

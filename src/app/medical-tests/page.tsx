@@ -30,7 +30,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test1',
     name: 'Complete Blood Count (CBC)',
     description: 'Measures various components of your blood, including red and white blood cells, hemoglobin, and platelets.',
-    price: 7500, // Price in RWF
+    price: 7500, 
     turnaroundTime: '24 hours',
     preparation: 'No special preparation needed.',
     imageUrl: 'https://placehold.co/400x300.png',
@@ -42,7 +42,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test2',
     name: 'Lipid Panel',
     description: 'Measures fats and fatty substances used as a source of energy by your body. Lipids include cholesterol, triglycerides, HDL, and LDL.',
-    price: 12000, // Price in RWF
+    price: 12000, 
     turnaroundTime: '48 hours',
     preparation: 'Fasting for 9-12 hours is typically required.',
     imageUrl: 'https://placehold.co/400x300.png',
@@ -54,7 +54,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test3',
     name: 'Thyroid Stimulating Hormone (TSH) Test',
     description: 'Measures the amount of TSH in your blood. TSH is produced by the pituitary gland and helps regulate thyroid function.',
-    price: 9000, // Price in RWF
+    price: 9000, 
     turnaroundTime: '2-3 days',
     imageUrl: 'https://placehold.co/400x300.png',
     aiHint: 'hormone test endocrinology',
@@ -65,7 +65,7 @@ const mockMedicalTests: MedicalTest[] = [
     id: 'test4',
     name: 'Urinalysis',
     description: 'A test of your urine. It\'s used to detect and manage a wide range of disorders, such as urinary tract infections, kidney disease, and diabetes.',
-    price: 5000, // Price in RWF
+    price: 5000, 
     turnaroundTime: '24 hours',
     preparation: 'Provide a clean-catch urine sample.',
     imageUrl: 'https://placehold.co/400x300.png',
@@ -101,6 +101,14 @@ export default function MedicalTestsPage() {
     }
   }, [isClient, router, toast]);
 
+  const handleBookTest = (testName: string) => {
+    toast({
+      title: "Test Booking Initiated (Mock)",
+      description: `You have started the booking process for ${testName}. Please follow the next steps.`,
+    });
+    // In a real app, this would navigate to a booking confirmation page or a payment flow.
+  };
+
   if (!isClient || !isAuthenticated) {
     return (
       <AppLayout>
@@ -117,21 +125,21 @@ export default function MedicalTestsPage() {
       <PageHeader title="Available Medical Tests" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Medical Tests"}]}/>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {mockMedicalTests.map((test) => (
-          <Card key={test.id} className="flex flex-col shadow-lg hover-lift group">
-            <div className="relative">
+          <Card key={test.id} className="flex flex-col shadow-lg hover-lift group dark:border-border">
+            <div className="relative overflow-hidden rounded-t-lg">
               <Image
                 src={test.imageUrl}
                 alt={test.name}
                 width={400}
                 height={250}
-                className="w-full h-56 object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
                 data-ai-hint={test.aiHint}
               />
-              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm">
+              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/80 dark:bg-background/70 backdrop-blur-sm">
                 <test.icon className="mr-1.5 h-4 w-4 text-muted-foreground"/> {test.category}
               </Badge>
             </div>
-            <CardHeader>
+            <CardHeader className="pt-4">
               <CardTitle className="font-headline group-hover:text-primary transition-colors">{test.name}</CardTitle>
               <CardDescription className="text-primary font-semibold text-lg">{test.price.toLocaleString()} RWF</CardDescription>
             </CardHeader>
@@ -149,7 +157,10 @@ export default function MedicalTestsPage() {
               </div>
             </CardContent>
             <CardFooter className="border-t pt-4">
-                <Button className="w-full transition-transform hover:scale-105 active:scale-95">
+                <Button 
+                  onClick={() => handleBookTest(test.name)}
+                  className="w-full transition-transform hover:scale-105 active:scale-95"
+                >
                     <ClipboardList className="mr-2 h-4 w-4" /> Book This Test
                 </Button>
             </CardFooter>

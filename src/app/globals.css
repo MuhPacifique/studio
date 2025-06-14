@@ -65,32 +65,32 @@ body {
   }
 
   .dark {
-    --background: 224 71.4% 6.1%; /* Dark Blue-Black */
+    --background: 0 0% 2%; /* Strong Black */
     --foreground: 0 0% 95%; /* Almost White */
     
-    --card: 224 71.4% 10.1%; /* Slightly Lighter Dark Blue-Black for cards */
+    --card: 0 0% 5%; /* Very Dark Gray for cards, slightly lighter than background */
     --card-foreground: 0 0% 95%; /* Almost White */
     
-    --popover: 224 71.4% 8.1%; /* Darker Popover */
+    --popover: 0 0% 4%; /* Darker Popover */
     --popover-foreground: 0 0% 95%; /* Almost White */
 
     --primary: 142.1 70.6% 50.3%; /* Slightly brighter Green for dark mode */
-    --primary-foreground: 0 0% 98%; /* Almost White */
+    --primary-foreground: 0 0% 4%; /* Black text on primary for contrast */
 
-    --secondary: 220 15% 20%; /* Dark Cool Gray */
+    --secondary: 220 15% 15%; /* Dark Cool Gray */
     --secondary-foreground: 220 10% 78%; /* Lighter Cool Gray Text */
 
-    --muted: 220 15% 18%; /* Dark Cool Gray for muted elements */
-    --muted-foreground: 220 10% 60%; /* Medium Cool Gray Text */
+    --muted: 0 0% 10%; /* Dark Gray for muted elements */
+    --muted-foreground: 0 0% 60%; /* Medium Gray Text */
 
     --accent: 205 90% 60%; /* Slightly Brighter Blue for Dark Mode */
-    --accent-foreground: 0 0% 98%; /* Almost White */
+    --accent-foreground: 0 0% 4%; /* Black text on accent for contrast */
 
     --destructive: 0 62.8% 55.6%; /* Brighter Red for dark mode */
     --destructive-foreground: 0 0% 98%; /* Almost White */
 
-    --border: 220 15% 25%; /* Darker Cool Gray Border */
-    --input: 220 15% 16%;   /* Even Darker Cool Gray Input BG */
+    --border: 0 0% 15%; /* Darker Gray Border */
+    --input: 0 0% 8%;   /* Darker Gray Input BG */
     --ring: 142.1 70.6% 50.3%; /* Brighter Green for Focus Rings */
 
     --chart-1: 142.1 70.6% 50.3%; /* Vibrant Green */
@@ -100,13 +100,13 @@ body {
     --chart-5: 260 70% 65%;   /* Purple */
     
     /* Sidebar dark theme */
-    --sidebar-background: 224 71.4% 8%; /* Darker Blue-Black for sidebar */
+    --sidebar-background: 0 0% 6%; /* Darker Gray for sidebar */
     --sidebar-foreground: 0 0% 92%; /* Off-White */
     --sidebar-primary: 142.1 70.6% 50.3%; /* Brighter Green (active item background) */
-    --sidebar-primary-foreground: 0 0% 98%; /* Almost White (active item text) */
-    --sidebar-accent: 220 15% 18%; /* Dark Cool Gray (hover) */
+    --sidebar-primary-foreground: 0 0% 4%; /* Black (active item text) */
+    --sidebar-accent: 0 0% 12%; /* Dark Cool Gray (hover) */
     --sidebar-accent-foreground: 142.1 70.6% 60.3%; /* Even Brighter Green (hover text) */
-    --sidebar-border: 220 15% 15%; /* Darker Cool Gray Border for sidebar */
+    --sidebar-border: 0 0% 10%; /* Darker Cool Gray Border for sidebar */
     --sidebar-ring: 205 90% 60%; /* Brighter Blue */
   }
 }
@@ -125,12 +125,16 @@ body {
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
 }
+.dark .gradient-text {
+   @apply bg-gradient-to-r from-primary to-green-400; /* Adjusted for dark mode visibility */
+}
+
 
 .hover-lift {
-  @apply transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/10;
+  @apply transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/20;
 }
 .dark .hover-lift {
-   @apply hover:shadow-lg hover:shadow-primary/20;
+   @apply hover:shadow-lg hover:shadow-[hsl(var(--primary))]/30;
 }
 
 

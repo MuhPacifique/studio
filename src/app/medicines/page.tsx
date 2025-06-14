@@ -20,7 +20,7 @@ interface Medicine {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Price in RWF
   imageUrl: string;
   category: string;
   stock: number;
@@ -44,12 +44,12 @@ interface Order {
   id: string;
   date: string;
   items: CartItem[];
-  total: number;
+  total: number; // Total in RWF
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered';
 }
 
 const mockOrders: Order[] = [
-  { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicines[0], quantity: 2 }, { ...mockMedicines[2], quantity: 1 }], total: 2073, status: 'Delivered' },
+  { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicines[0], quantity: 2 }, { ...mockMedicines[2], quantity: 1 }], total: (599*2) + 875, status: 'Delivered' },
   { id: 'order2', date: '2024-07-28', items: [{ ...mockMedicines[1], quantity: 1 }], total: 1250, status: 'Processing' },
 ];
 
@@ -63,7 +63,13 @@ export default function MedicinesPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedCart = localStorage.getItem('medicineCart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    }
+    return [];
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -84,6 +90,12 @@ export default function MedicinesPage() {
       }
     }
   }, [isClient, router, toast]);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('medicineCart', JSON.stringify(cart));
+    }
+  }, [cart, isClient]);
 
 
   const filteredMedicines = useMemo(() => {
@@ -207,17 +219,17 @@ export default function MedicinesPage() {
           {filteredMedicines.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredMedicines.map((med) => (
-                <Card key={med.id} className="flex flex-col shadow-lg hover-lift group">
-                  <CardHeader className="p-0 relative">
+                <Card key={med.id} className="flex flex-col shadow-lg hover-lift group dark:border-border">
+                  <CardHeader className="p-0 relative overflow-hidden rounded-t-lg">
                     <Image
                       src={med.imageUrl}
                       alt={med.name}
                       width={300}
                       height={200}
-                      className="w-full h-48 object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       data-ai-hint={med.aiHint}
                     />
-                     <Badge variant="secondary" className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm">
+                     <Badge variant="secondary" className="absolute top-2 right-2 bg-background/80 dark:bg-background/70 backdrop-blur-sm">
                         <Tag className="mr-1 h-3 w-3"/>{med.category}
                     </Badge>
                   </CardHeader>
@@ -250,7 +262,7 @@ export default function MedicinesPage() {
         </div>
 
         <div>
-          <Card className="shadow-lg sticky top-24 hover-lift">
+          <Card className="shadow-lg sticky top-24 hover-lift dark:border-border">
             <CardHeader>
               <CardTitle className="flex items-center font-headline text-primary">
                 <ShoppingCart className="mr-2 h-6 w-6" /> Your Cart
@@ -262,7 +274,7 @@ export default function MedicinesPage() {
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {cart.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg shadow-sm bg-background/50 hover:shadow-md transition-shadow">
+                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg shadow-sm bg-background/50 dark:bg-muted/20 hover:shadow-md transition-shadow">
                       <div className="flex-grow">
                         <p className="font-medium text-sm">{item.name}</p>
                         <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} RWF x {item.quantity}</p>
@@ -294,7 +306,7 @@ export default function MedicinesPage() {
       <div className="mt-12">
         <h2 className="text-2xl font-semibold mb-6 font-headline">My Orders</h2>
         {mockOrders.length > 0 ? (
-          <Card className="shadow-lg hover-lift">
+          <Card className="shadow-lg hover-lift dark:border-border">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -308,7 +320,7 @@ export default function MedicinesPage() {
                 </TableHeader>
                 <TableBody>
                   {mockOrders.map(order => (
-                    <TableRow key={order.id} className="hover:bg-muted/30">
+                    <TableRow key={order.id} className="hover:bg-muted/30 dark:hover:bg-muted/20">
                       <TableCell className="font-medium">{order.id}</TableCell>
                       <TableCell>{order.date}</TableCell>
                       <TableCell>{order.total.toLocaleString()}</TableCell>
