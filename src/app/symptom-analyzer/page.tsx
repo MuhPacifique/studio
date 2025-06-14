@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,13 +10,38 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, ActivitySquare, ShieldAlert, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeSymptoms, type SymptomAnalyzerOutput } from '@/ai/flows/symptom-analyzer'; // Ensure path is correct
+import { analyzeSymptoms, type SymptomAnalyzerOutput } from '@/ai/flows/symptom-analyzer';
+import { useRouter } from 'next/navigation';
 
 export default function SymptomAnalyzerPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [symptoms, setSymptoms] = useState('');
   const [result, setResult] = useState<SymptomAnalyzerOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to use the Symptom Analyzer.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,6 +71,17 @@ export default function SymptomAnalyzerPage() {
       setIsLoading(false);
     }
   };
+  
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading Symptom Analyzer...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

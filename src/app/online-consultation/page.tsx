@@ -7,10 +7,11 @@ import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Video, Phone, UserCheck, CalendarDays, Mic, VideoOff, MicOff, ScreenShare, PhoneOff } from 'lucide-react';
+import { Video, Phone, UserCheck, CalendarDays, Mic, VideoOff, MicOff, ScreenShare, PhoneOff, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRouter } from 'next/navigation';
 
 const mockDoctors = [
   { id: "doc1", name: "Dr. Emily Carter", specialty: "General Physician", available: true, avatarHint: "doctor portrait" },
@@ -20,16 +21,40 @@ const mockDoctors = [
 
 
 export default function OnlineConsultationPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [isCallActive, setIsCallActive] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(false);
   const [isVideoOff, setIsVideoOff] = React.useState(false);
   const [selectedDoctor, setSelectedDoctor] = React.useState<typeof mockDoctors[0] | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
-    if (isCallActive) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in for online consultations.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
+
+  useEffect(() => {
+    if (isCallActive && isAuthenticated) { // Ensure user is authenticated before trying to get camera
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -45,22 +70,26 @@ export default function OnlineConsultationPage() {
             title: 'Camera Access Denied',
             description: 'Please enable camera permissions in your browser settings for video consultation.',
           });
-          setIsCallActive(false); // End call if permission is denied
+          setIsCallActive(false); 
           setSelectedDoctor(null);
         }
       };
       getCameraPermission();
     } else {
-      // Stop camera stream when call ends
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
         videoRef.current.srcObject = null;
       }
     }
-  }, [isCallActive, toast]);
+  }, [isCallActive, toast, isAuthenticated]);
 
   const handleStartCall = (doctor: typeof mockDoctors[0]) => {
+    if (!isAuthenticated) {
+        toast({ variant: "destructive", title: "Please log in first."});
+        router.push('/login');
+        return;
+    }
     if (doctor.available) {
       setSelectedDoctor(doctor);
       setIsCallActive(true);
@@ -83,10 +112,20 @@ export default function OnlineConsultationPage() {
     setIsVideoOff(!isVideoOff);
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getVideoTracks().forEach(track => track.enabled = isVideoOff); // Note: isVideoOff is previous state here
+      stream.getVideoTracks().forEach(track => track.enabled = isVideoOff); 
     }
   };
 
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading Online Consultation...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -107,7 +146,6 @@ export default function OnlineConsultationPage() {
             <CardContent className={`aspect-[16/9] bg-gray-900 flex items-center justify-center relative ${isCallActive ? 'border-2 border-primary animate-pulse-border' : ''}`}>
               {isCallActive ? (
                 <>
-                  {/* Remote Doctor's Video (Placeholder) */}
                   <Image 
                     src="https://placehold.co/800x450.png" 
                     alt="Doctor's Video Feed" 
@@ -116,7 +154,6 @@ export default function OnlineConsultationPage() {
                     data-ai-hint="doctor video call"
                     className={`${isVideoOff ? 'opacity-50' : ''}`}
                   />
-                   {/* Local User's Video */}
                   <div className="absolute top-4 right-4 p-1 bg-black/50 rounded-lg w-1/4 max-w-[200px] aspect-[16/9]">
                      <video ref={videoRef} className={`w-full h-full rounded-md object-cover ${isVideoOff ? 'hidden' : 'block'}`} autoPlay muted playsInline />
                      {isVideoOff && (

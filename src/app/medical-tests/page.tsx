@@ -1,20 +1,23 @@
+
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, CheckCircle, Clock } from 'lucide-react';
+import { ClipboardList, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface MedicalTest {
   id: string;
   name: string;
   description: string;
   price: number;
-  turnaroundTime: string; // e.g., "24-48 hours"
-  preparation?: string; // e.g., "Fasting required for 8 hours prior"
+  turnaroundTime: string; 
+  preparation?: string; 
   imageUrl: string;
   aiHint: string;
 }
@@ -62,6 +65,42 @@ const mockMedicalTests: MedicalTest[] = [
 ];
 
 export default function MedicalTestsPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to view medical tests.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
+
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading medical tests...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <PageHeader title="Available Medical Tests" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Medical Tests"}]}/>

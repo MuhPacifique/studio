@@ -1,13 +1,15 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight } from 'lucide-react';
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const features = [
   {
@@ -61,6 +63,42 @@ const features = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to access the dashboard.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
+
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <PageHeader title="Welcome to MediServe Hub" />

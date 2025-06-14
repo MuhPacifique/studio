@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, MessageSquareQuote, HelpCircle, Send, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { answerMedicalQuestion, type AnswerMedicalQuestionOutput } from '@/ai/flows/medical-faq';
+import { useRouter } from 'next/navigation';
 
 interface FAQItem {
   question: string;
@@ -24,11 +26,35 @@ const commonFAQs: FAQItem[] = [
 ];
 
 export default function FaqPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [question, setQuestion] = useState('');
   const [aiAnswer, setAiAnswer] = useState<AnswerMedicalQuestionOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const [displayedFaqs, setDisplayedFaqs] = useState<FAQItem[]>(commonFAQs);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to access the Medical FAQ.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -47,7 +73,6 @@ export default function FaqPage() {
     try {
       const response = await answerMedicalQuestion({ question });
       setAiAnswer(response);
-      // Optionally add to displayed FAQs if unique, or just show separately
     } catch (error)
     {
       console.error("Medical FAQ Error:", error);
@@ -60,6 +85,17 @@ export default function FaqPage() {
       setIsLoading(false);
     }
   };
+
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading Medical FAQ...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -109,12 +145,12 @@ export default function FaqPage() {
       </Card>
 
       {aiAnswer && !isLoading && (
-        <Card className="mb-8 shadow-lg bg-green-50 border-green-200">
+        <Card className="mb-8 shadow-lg bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700">
           <CardHeader>
-            <CardTitle className="font-headline text-green-700">AI Generated Answer</CardTitle>
+            <CardTitle className="font-headline text-green-700 dark:text-green-400">AI Generated Answer</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-green-600 whitespace-pre-wrap">{aiAnswer.answer}</p>
+            <p className="text-green-600 dark:text-green-300 whitespace-pre-wrap">{aiAnswer.answer}</p>
           </CardContent>
         </Card>
       )}

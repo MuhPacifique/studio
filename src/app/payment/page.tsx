@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +15,11 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Smartphone, DollarSign } from 'lucide-react';
+import { CreditCard, Smartphone, DollarSign, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const paymentSchema = z.object({
-  amount: z.coerce.number().min(1, { message: "Amount must be at least $1." }),
+  amount: z.coerce.number().min(100, { message: "Amount must be at least 100 RWF." }),
   paymentMethod: z.enum(["creditCard", "mobileMoney", "other"], {
     required_error: "You need to select a payment method.",
   }),
@@ -38,7 +40,7 @@ const paymentSchema = z.object({
     }
   }
   if (data.paymentMethod === "mobileMoney") {
-    if (!data.mobileNumber || !/^\d{10,15}$/.test(data.mobileNumber)) {
+    if (!data.mobileNumber || !/^\d{9,15}$/.test(data.mobileNumber)) { // Rwanda mobile numbers are typically 10 digits like 07XXXXXXXX
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid mobile number.", path: ["mobileNumber"] });
     }
   }
@@ -47,26 +49,61 @@ const paymentSchema = z.object({
 type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 export default function PaymentPage() {
+  const router = useRouter();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: 100,
+      amount: 5000, // Default amount in RWF
       paymentMethod: undefined,
     },
   });
 
   const paymentMethod = form.watch("paymentMethod");
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to make a payment.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
+
+
   const onSubmit = async (data: PaymentFormValues) => {
-    // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast({
       title: "Payment Processed (Mock)",
-      description: `Successfully processed $${data.amount.toFixed(2)} via ${data.paymentMethod}. This is a demo, no actual payment was made.`,
+      description: `Successfully processed ${data.amount.toLocaleString()} RWF via ${data.paymentMethod}. This is a demo, no actual payment was made.`,
     });
     form.reset();
   };
+
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading Payment Gateway...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -74,7 +111,7 @@ export default function PaymentPage() {
       <Card className="w-full max-w-2xl mx-auto shadow-xl">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />Secure Payment Gateway</CardTitle>
-          <CardDescription>Complete your payment for services or orders. This is a demonstration and no real transaction will occur.</CardDescription>
+          <CardDescription>Complete your payment for services or orders in RWF. This is a demonstration and no real transaction will occur.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -84,9 +121,9 @@ export default function PaymentPage() {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount (USD)</FormLabel>
+                    <FormLabel>Amount (RWF)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter amount" {...field} />
+                      <Input type="number" placeholder="Enter amount in RWF" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,7 +168,7 @@ export default function PaymentPage() {
               />
 
               {paymentMethod === 'creditCard' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/30">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
                   <h3 className="text-lg font-medium">Card Details</h3>
                   <FormField control={form.control} name="cardNumber" render={({ field }) => (
                     <FormItem>
@@ -160,11 +197,11 @@ export default function PaymentPage() {
               )}
 
               {paymentMethod === 'mobileMoney' && (
-                <div className="space-y-6 p-4 border rounded-md bg-muted/30">
+                <div className="space-y-6 p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
                    <h3 className="text-lg font-medium">Mobile Money Details</h3>
                   <FormField control={form.control} name="mobileNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mobile Number</FormLabel>
+                      <FormLabel>Mobile Number (e.g. 07xxxxxxx)</FormLabel>
                       <FormControl><Input type="tel" placeholder="Enter mobile number" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -178,7 +215,6 @@ export default function PaymentPage() {
                         <SelectContent>
                           <SelectItem value="mtn">MTN Mobile Money</SelectItem>
                           <SelectItem value="airtel">Airtel Money</SelectItem>
-                          <SelectItem value="vodafone">Vodafone Cash</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -186,14 +222,14 @@ export default function PaymentPage() {
               )}
               
               {paymentMethod === 'other' && (
-                 <div className="p-4 border rounded-md bg-muted/30">
+                 <div className="p-4 border rounded-md bg-muted/30 dark:bg-muted/10">
                     <p className="text-muted-foreground">Please contact support for other payment methods.</p>
                  </div>
               )}
 
 
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || !paymentMethod}>
-                {form.formState.isSubmitting ? 'Processing...' : `Pay $${(form.getValues("amount") || 0).toFixed(2)}`}
+                {form.formState.isSubmitting ? 'Processing...' : `Pay ${(form.getValues("amount") || 0).toLocaleString()} RWF`}
               </Button>
             </form>
           </Form>

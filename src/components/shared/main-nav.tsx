@@ -18,7 +18,9 @@ import {
   ClipboardList,
   Users,
   Settings,
-  ShieldCheck,
+  BookOpen, // For Educational Articles
+  HeartPulse, // For Wellness Tips
+  LifeBuoy, // For Health Resources section
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
@@ -37,65 +39,111 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   subItems?: NavItem[];
+  requiresAuth?: boolean; // Added to control visibility based on auth for non-admin items
 }
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/medicines', label: 'Order Medicines', icon: Pill },
-  { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardList },
-  { href: '/symptom-analyzer', label: 'Symptom Analyzer', icon: ActivitySquare },
-  { href: '/faq', label: 'Medical FAQ', icon: MessageSquareQuote },
-  { href: '/test-yourself', label: 'Test Yourself', icon: FlaskConical },
-  { href: '/online-consultation', label: 'Online Consultation', icon: Video },
-  { href: '/payment', label: 'Make Payment', icon: CreditCard },
+  { href: '/', label: 'Dashboard', icon: Home, requiresAuth: true },
+  { href: '/medicines', label: 'Order Medicines', icon: Pill, requiresAuth: true },
+  { href: '/medical-tests', label: 'Medical Tests', icon: ClipboardList, requiresAuth: true },
   { 
-    href: '#admin-section', // Changed to # to prevent navigation if only used as a trigger
+    href: '#health-resources', 
+    label: 'Health Resources', 
+    icon: LifeBuoy, 
+    requiresAuth: true,
+    subItems: [
+      { href: '/health-resources/articles', label: 'Educational Articles', icon: BookOpen, requiresAuth: true },
+      { href: '/health-resources/wellness-tips', label: 'Wellness Tips', icon: HeartPulse, requiresAuth: true },
+    ]
+  },
+  { href: '/symptom-analyzer', label: 'Symptom Analyzer', icon: ActivitySquare, requiresAuth: true },
+  { href: '/faq', label: 'Medical FAQ', icon: MessageSquareQuote, requiresAuth: true },
+  { href: '/test-yourself', label: 'Test Yourself', icon: FlaskConical, requiresAuth: true },
+  { href: '/online-consultation', label: 'Online Consultation', icon: Video, requiresAuth: true },
+  { href: '/payment', label: 'Make Payment', icon: CreditCard, requiresAuth: true },
+  { 
+    href: '#admin-section', 
     label: 'Admin Section', 
     icon: LayoutDashboard, 
     adminOnly: true,
     subItems: [
-      { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
-      { href: '/admin/users', label: 'Manage Users', icon: Users },
-      { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill },
-      { href: '/admin/services', label: 'Manage Services', icon: Settings },
-      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope },
-      { href: '/admin/settings', label: 'System Settings', icon: Settings },
+      { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
+      { href: '/admin/users', label: 'Manage Users', icon: Users, adminOnly: true },
+      { href: '/admin/inventory', label: 'Manage Inventory', icon: Pill, adminOnly: true },
+      { href: '/admin/services', label: 'Manage Services', icon: Settings, adminOnly: true }, // Changed icon
+      { href: '/admin/analytics', label: 'Analytics', icon: Stethoscope, adminOnly: true },
+      { href: '/admin/settings', label: 'System Settings', icon: Settings, adminOnly: true },
     ]
   },
 ];
 
 const useAuth = () => {
   const [userType, setUserType] = useState<'patient' | 'admin' | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    const mockAuth = localStorage.getItem('mockAuth');
-    if (mockAuth === 'admin') {
-      setUserType('admin');
-    } else if (mockAuth === 'patient') {
-      setUserType('patient');
-    }
+    setIsClient(true);
   }, []);
-  return { userType };
+
+  useEffect(() => {
+    if (isClient) {
+      const mockAuth = localStorage.getItem('mockAuth');
+      if (mockAuth === 'admin') {
+        setUserType('admin');
+        setIsAuthenticated(true);
+      } else if (mockAuth === 'patient') {
+        setUserType('patient');
+        setIsAuthenticated(true);
+      } else {
+        setUserType(null);
+        setIsAuthenticated(false);
+      }
+    }
+  }, [isClient]);
+  return { userType, isAuthenticated, isClient };
 };
 
 
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
-  const { userType } = useAuth();
+  const { userType, isAuthenticated, isClient } = useAuth();
   const [openSubMenus, setOpenSubMenus] = React.useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Pre-open admin submenu if current path is an admin path
-    const isAdminPath = navItems.find(item => item.label === 'Admin Section' && item.subItems?.some(sub => pathname.startsWith(sub.href)));
-    if (isAdminPath) {
-      setOpenSubMenus(prev => ({ ...prev, 'Admin Section': true }));
-    }
+    const currentOpenSubMenus: Record<string, boolean> = {};
+    navItems.forEach(item => {
+      if (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.href))) {
+        currentOpenSubMenus[item.label] = true;
+      }
+    });
+    setOpenSubMenus(currentOpenSubMenus);
   }, [pathname]);
 
   const toggleSubMenu = (label: string) => {
     setOpenSubMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
+  
+  if (!isClient) {
+    // Render skeleton or nothing during SSR and initial client render
+    return (
+      <div className={cn("flex flex-col space-y-1 p-2", className)}>
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="h-8 w-full bg-sidebar-accent/30 rounded-md animate-pulse"></div>
+        ))}
+      </div>
+    );
+  }
 
-  const filteredNavItems = navItems.filter(item => !item.adminOnly || (item.adminOnly && userType === 'admin'));
+  const filteredNavItems = navItems.filter(item => {
+    if (item.adminOnly) {
+      return userType === 'admin';
+    }
+    if (item.requiresAuth) {
+      return isAuthenticated;
+    }
+    return true; // Items that don't require auth and are not adminOnly
+  });
 
   return (
     <nav
@@ -130,7 +178,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                   tooltip={item.label}
                   onClick={() => toggleSubMenu(item.label)}
                   className={cn(
-                    "justify-between w-full transition-colors duration-150 ease-in-out", // Ensure justify-between for arrow
+                    "justify-between w-full transition-colors duration-150 ease-in-out", 
                      item.subItems.some(sub => pathname.startsWith(sub.href)) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
@@ -142,7 +190,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
                 </SidebarMenuButton>
                 {openSubMenus[item.label] && (
                   <SidebarMenuSub className="mt-1">
-                    {item.subItems.map((subItem) => (
+                    {item.subItems.filter(subItem => !subItem.adminOnly || userType === 'admin').map((subItem) => ( // Filter sub-items as well
                        <SidebarMenuSubItem key={subItem.href}>
                          <Link href={subItem.href}>
                            <SidebarMenuSubButton

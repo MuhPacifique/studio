@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -13,53 +14,67 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, UserCircle, UserPlus, LayoutDashboard, Settings } from 'lucide-react'; // Added Settings for Profile
+import { useRouter } from 'next/navigation';
 
-// Mock authentication state
+
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState<'patient' | 'admin' | null>(null); // 'patient' or 'admin'
+  const [userType, setUserType] = useState<'patient' | 'admin' | null>(null); 
   const [userName, setUserName] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false); // To handle SSR/hydration issues
 
   useEffect(() => {
-    // In a real app, you would check localStorage or a cookie for an auth token
-    // For this mock, we'll simulate a logged-in user sometimes
-    const mockAuth = localStorage.getItem('mockAuth');
-    if (mockAuth === 'patient') {
-      setIsAuthenticated(true);
-      setUserType('patient');
-      setUserName('Patty Patient');
-    } else if (mockAuth === 'admin') {
-      setIsAuthenticated(true);
-      setUserType('admin');
-      setUserName('Admin User');
-    }
+    setIsClient(true); // Component has mounted
   }, []);
+
+  useEffect(() => {
+    if (isClient) { // Only access localStorage on the client
+      const mockAuth = localStorage.getItem('mockAuth');
+      if (mockAuth === 'patient') {
+        setIsAuthenticated(true);
+        setUserType('patient');
+        setUserName('Patty Patient'); // Mock name
+      } else if (mockAuth === 'admin') {
+        setIsAuthenticated(true);
+        setUserType('admin');
+        setUserName('Admin User'); // Mock name
+      } else {
+        setIsAuthenticated(false);
+        setUserType(null);
+        setUserName(null);
+      }
+    }
+  }, [isClient]);
 
 
   const login = (type: 'patient' | 'admin', name: string) => {
-    localStorage.setItem('mockAuth', type);
-    setIsAuthenticated(true);
-    setUserType(type);
-    setUserName(name);
+    if (isClient) {
+      localStorage.setItem('mockAuth', type);
+      setIsAuthenticated(true);
+      setUserType(type);
+      setUserName(name);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('mockAuth');
-    setIsAuthenticated(false);
-    setUserType(null);
-    setUserName(null);
-    // Typically redirect to login or home page
-    window.location.href = '/'; 
+    if (isClient) {
+      localStorage.removeItem('mockAuth');
+      setIsAuthenticated(false);
+      setUserType(null);
+      setUserName(null);
+      window.location.href = '/login'; // Redirect to login after logout
+    }
   };
 
-  return { isAuthenticated, userType, userName, login, logout };
+  return { isAuthenticated, userType, userName, login, logout, isClient };
 };
 
 
 export function UserNav() {
-  const { isAuthenticated, userType, userName, logout } = useAuth();
+  const { isAuthenticated, userType, userName, logout, isClient } = useAuth();
   const [initials, setInitials] = useState("U");
+  const router = useRouter();
 
   useEffect(() => {
     if (userName) {
@@ -71,6 +86,15 @@ export function UserNav() {
       setInitials("U");
     }
   }, [userName]);
+
+  if (!isClient) {
+    // Render a placeholder or nothing during SSR and initial client render
+    return (
+        <div className="flex items-center space-x-2">
+            <Button variant="ghost" className="h-10 w-10 rounded-full animate-pulse bg-muted"></Button>
+        </div>
+    );
+  }
 
 
   if (!isAuthenticated) {
@@ -94,7 +118,7 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10 border-2 border-primary">
+          <Avatar className="h-10 w-10 border-2 border-primary hover:opacity-80 transition-opacity">
             <AvatarImage src={`https://placehold.co/100x100.png`} alt={userName || "User"} data-ai-hint="user avatar" />
             <AvatarFallback className="text-primary font-semibold">{initials}</AvatarFallback>
           </Avatar>
@@ -112,10 +136,9 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-             {/* In a real app, this would go to a user-specific profile page */}
-            <Link href="/"> 
+            <Link href="/profile"> 
               <UserCircle className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>My Profile</span>
             </Link>
           </DropdownMenuItem>
           {userType === 'admin' && (
@@ -128,8 +151,8 @@ export function UserNav() {
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
-          <LogOut className="mr-2 h-4 w-4" />
+        <DropdownMenuItem onClick={logout} className="cursor-pointer hover:bg-destructive/10 hover:text-destructive group">
+          <LogOut className="mr-2 h-4 w-4 group-hover:text-destructive" />
           <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
+import { Search, ShoppingCart, PlusCircle, MinusCircle, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface Medicine {
   id: string;
@@ -51,9 +52,34 @@ const mockOrders: Order[] = [
 ];
 
 export default function MedicinesPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const authStatus = localStorage.getItem('mockAuth');
+      if (!authStatus) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please log in to order medicines.",
+        });
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
+    }
+  }, [isClient, router, toast]);
+
 
   const filteredMedicines = useMemo(() => {
     return mockMedicines.filter(med =>
@@ -92,7 +118,7 @@ export default function MedicinesPage() {
       prevCart.map(item => {
         if (item.id === medicineId) {
           const newQuantity = item.quantity + change;
-          if (newQuantity <= 0) return null; // Will be filtered out
+          if (newQuantity <= 0) return null; 
           if (newQuantity > item.stock) {
             toast({ variant: "destructive", title: `Cannot add more ${item.name}`, description: `Maximum stock (${item.stock}) reached.` });
             return { ...item, quantity: item.stock };
@@ -118,15 +144,26 @@ export default function MedicinesPage() {
       case 'Delivered':
         return 'bg-accent text-accent-foreground';
       case 'Processing':
-        return 'bg-yellow-500 text-black'; // Kept yellow for processing as it's distinct
+        return 'bg-yellow-500 text-black';
       case 'Shipped':
-        return 'bg-blue-500 text-white'; // Kept blue for shipped
+        return 'bg-blue-500 text-white';
       case 'Pending':
         return 'bg-muted text-muted-foreground';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
   };
+
+  if (!isClient || !isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col justify-center items-center h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading medicines...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -190,7 +227,7 @@ export default function MedicinesPage() {
         </div>
 
         <div>
-          <Card className="shadow-lg sticky top-24"> {/* Added sticky positioning */}
+          <Card className="shadow-lg sticky top-24">
             <CardHeader>
               <CardTitle className="flex items-center font-headline">
                 <ShoppingCart className="mr-2 h-6 w-6 text-primary" /> Your Cart
