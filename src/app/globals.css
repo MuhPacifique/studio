@@ -10,79 +10,91 @@ body {
 @layer base {
   :root {
     --background: 0 0% 100%; /* White */
-    --foreground: 0 0% 10%; /* Dark Gray (Almost Black) */
+    --foreground: 0 0% 0%; /* Black */
     --card: 0 0% 100%; /* White */
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 140 70% 40%; /* Green */
-    --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 0 0% 95%; /* Light Gray */
-    --secondary-foreground: 0 0% 20%; /* Dark Gray */
-    --muted: 0 0% 90%; /* Lighter Gray */
-    --muted-foreground: 0 0% 40%; /* Medium Gray */
-    --accent: 140 60% 50%; /* Lighter Green */
-    --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 0% 10%; /* Dark Gray (Almost Black) for destructive actions */
-    --destructive-foreground: 0 0% 100%; /* White */
-    --border: 0 0% 85%; /* Light Gray Border */
-    --input: 0 0% 90%; /* Light Gray Input */
-    --ring: 140 70% 40%; /* Green */
+    --card-foreground: 0 0% 0%; /* Black */
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 0 0% 0%; /* Black */
     
-    --chart-1: 140 70% 40%; /* Green */
-    --chart-2: 140 60% 50%; /* Lighter Green */
-    --chart-3: 140 50% 60%; /* Even Lighter Green */
-    --chart-4: 0 0% 50%; /* Medium Gray */
-    --chart-5: 0 0% 70%; /* Light Gray */
+    --primary: 120 60% 30%; /* Dark Green */
+    --primary-foreground: 0 0% 100%; /* White */
+    
+    --secondary: 0 0% 96%; /* Very Light Gray (Off-White) */
+    --secondary-foreground: 0 0% 10%; /* Near Black */
+    
+    --muted: 0 0% 90%; /* Light Gray */
+    --muted-foreground: 0 0% 25%; /* Darker Gray */
+    
+    --accent: 120 60% 40%; /* Vibrant Green */
+    --accent-foreground: 0 0% 100%; /* White */
+    
+    --destructive: 0 0% 10%; /* Near Black */
+    --destructive-foreground: 0 0% 100%; /* White */
+    
+    --border: 0 0% 85%; /* Light Gray Border */
+    --input: 0 0% 95%; /* Very Light Gray Input BG */
+    --ring: 120 60% 45%; /* Primary Green for Focus Rings */
+    
+    --chart-1: 120 60% 30%; /* Dark Green */
+    --chart-2: 120 60% 45%; /* Vibrant Green */
+    --chart-3: 120 60% 60%; /* Lighter Green */
+    --chart-4: 0 0% 20%;   /* Dark Gray */
+    --chart-5: 0 0% 40%;   /* Medium Gray */
     --radius: 0.5rem;
 
     /* Sidebar light theme */
-    --sidebar-background: 140 70% 35%; /* Darker Green */
+    --sidebar-background: 120 70% 20%; /* Very Dark Green */
     --sidebar-foreground: 0 0% 100%; /* White */
     --sidebar-primary: 0 0% 100%; /* White (active item background) */
-    --sidebar-primary-foreground: 140 70% 35%; /* Darker Green (active item text) */
-    --sidebar-accent: 140 70% 30%; /* Even Darker Green (hover) */
+    --sidebar-primary-foreground: 120 70% 20%; /* Very Dark Green (active item text) */
+    --sidebar-accent: 120 70% 25%; /* Slightly Lighter Dark Green (hover) */
     --sidebar-accent-foreground: 0 0% 100%; /* White */
-    --sidebar-border: 140 70% 25%; /* Darkest Green */
+    --sidebar-border: 120 70% 15%; /* Darkest Green */
     --sidebar-ring: 0 0% 100%; /* White */
   }
 
   .dark {
-    --background: 0 0% 8%; /* Very Dark Gray (Almost Black) */
-    --foreground: 0 0% 95%; /* Light Gray (Almost White) */
-    --card: 0 0% 12%; /* Dark Gray */
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 140 70% 50%; /* Brighter Green */
-    --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 0 0% 15%; /* Darker Gray */
-    --secondary-foreground: 0 0% 85%; /* Lighter Gray */
-    --muted: 0 0% 20%; /* Dark Gray */
-    --muted-foreground: 0 0% 60%; /* Medium Gray */
-    --accent: 140 60% 60%; /* Lighter Brighter Green */
-    --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 0% 90%; /* Light Gray (Almost White) for destructive actions */
-    --destructive-foreground: 0 0% 10%; /* Dark Gray (Almost Black) */
-    --border: 0 0% 25%; /* Medium Dark Gray Border */
-    --input: 0 0% 20%; /* Dark Gray Input */
-    --ring: 140 70% 50%; /* Brighter Green */
+    --background: 0 0% 0%; /* Black */
+    --foreground: 0 0% 100%; /* White */
+    --card: 0 0% 5%; /* Very Dark Gray (Near Black) */
+    --card-foreground: 0 0% 100%; /* White */
+    --popover: 0 0% 5%; /* Very Dark Gray */
+    --popover-foreground: 0 0% 100%; /* White */
 
-    --chart-1: 140 70% 50%; /* Brighter Green */
-    --chart-2: 140 60% 60%; /* Lighter Brighter Green */
-    --chart-3: 140 50% 70%; /* Even Lighter Brighter Green */
-    --chart-4: 0 0% 50%; /* Medium Gray */
-    --chart-5: 0 0% 30%; /* Dark Gray */
+    --primary: 120 70% 45%; /* Bright Green */
+    --primary-foreground: 0 0% 0%; /* Black (for contrast on bright green) */
+
+    --secondary: 0 0% 10%; /* Dark Gray */
+    --secondary-foreground: 0 0% 90%; /* Light Gray */
+
+    --muted: 0 0% 15%; /* Darker Gray */
+    --muted-foreground: 0 0% 70%; /* Medium Gray */
+
+    --accent: 120 70% 55%; /* Lighter Vibrant Green */
+    --accent-foreground: 0 0% 0%; /* Black */
+
+    --destructive: 0 0% 90%; /* Light Gray */
+    --destructive-foreground: 0 0% 0%; /* Black */
+
+    --border: 0 0% 20%; /* Dark Gray Border */
+    --input: 0 0% 8%; /* Very Dark Gray Input BG */
+    --ring: 120 70% 50%; /* Bright Green for Focus Rings */
+
+    --chart-1: 120 70% 45%; /* Bright Green */
+    --chart-2: 120 70% 55%; /* Lighter Bright Green */
+    --chart-3: 120 70% 65%; /* Even Lighter Bright Green */
+    --chart-4: 0 0% 80%;   /* Light Gray */
+    --chart-5: 0 0% 60%;   /* Medium Gray */
     
     /* Sidebar dark theme */
-    --sidebar-background: 0 0% 5%; /* Near Black */
-    --sidebar-foreground: 0 0% 90%; /* Light Gray (Almost White) */
-    --sidebar-primary: 140 70% 50%; /* Brighter Green (active item background) */
-    --sidebar-primary-foreground: 0 0% 100%; /* White (active item text) */
-    --sidebar-accent: 0 0% 15%; /* Dark Gray (hover) */
-    --sidebar-accent-foreground: 140 70% 60%; /* Lighter Brighter Green (hover text) */
-    --sidebar-border: 0 0% 10%; /* Darker Gray */
-    --sidebar-ring: 140 70% 50%; /* Brighter Green */
+    --sidebar-background: 0 0% 3%; /* Near Black */
+    --sidebar-foreground: 0 0% 95%; /* Off-White */
+    --sidebar-primary: 120 70% 45%; /* Bright Green (active item background) */
+    --sidebar-primary-foreground: 0 0% 0%; /* Black (active item text) */
+    --sidebar-accent: 0 0% 10%; /* Dark Gray (hover) */
+    --sidebar-accent-foreground: 120 70% 55%; /* Bright Green (hover text) */
+    --sidebar-border: 0 0% 8%; /* Darker Gray */
+    --sidebar-ring: 120 70% 50%; /* Bright Green */
   }
 }
 

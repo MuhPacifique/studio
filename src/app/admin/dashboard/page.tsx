@@ -14,9 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 const adminFeatures = [
   { title: "Manage Users", description: "View and manage patient and staff accounts.", href: "/admin/users", icon: Users, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" },
   { title: "Medicine Inventory", description: "Update and manage medicine stock and details.", href: "/admin/inventory", icon: Pill, color: "text-accent", bgColor: "bg-accent/10 hover:bg-accent/20" },
-  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-purple-500", bgColor: "bg-purple-500/10 hover:bg-purple-500/20" }, 
-  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-orange-500", bgColor: "bg-orange-500/10 hover:bg-orange-500/20" }, 
-  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-pink-500", bgColor: "bg-pink-500/10 hover:bg-pink-500/20" }, 
+  { title: "Service Listings", description: "Manage available medical tests and consultation services.", href: "/admin/services", icon: ListOrdered, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" }, 
+  { title: "View Analytics", description: "Access reports and statistics on platform usage.", href: "/admin/analytics", icon: BarChart3, color: "text-accent", bgColor: "bg-accent/10 hover:bg-accent/20" }, 
+  { title: "System Settings", description: "Configure application settings and parameters.", href: "/admin/settings", icon: Settings, color: "text-primary", bgColor: "bg-primary/10 hover:bg-primary/20" }, 
 ];
 
 
@@ -70,12 +70,12 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-       <Card className="mt-8 shadow-lg border-destructive/50 bg-destructive/5">
+       <Card className="mt-8 shadow-lg border-destructive/50 bg-destructive/5 dark:border-destructive dark:bg-destructive/10">
         <CardHeader>
             <CardTitle className="font-headline text-destructive flex items-center"><ShieldAlert className="mr-2 h-5 w-5"/>Admin Responsibilities</CardTitle>
         </CardHeader>
         <CardContent>
-            <p className="text-sm text-destructive/80">
+            <p className="text-sm text-destructive/80 dark:text-destructive-foreground/80">
                 As an administrator, you have access to sensitive data and critical system functions. Please ensure all actions are performed responsibly and in accordance with privacy policies and operational guidelines. Regularly review audit logs and system health.
             </p>
         </CardContent>

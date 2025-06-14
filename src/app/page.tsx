@@ -17,7 +17,7 @@ const features = [
     description: "Browse our catalog and order your medicines online.",
     href: "/medicines",
     icon: Pill,
-    color: "text-primary",
+    color: "text-primary", // Uses theme primary
     bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
@@ -25,7 +25,7 @@ const features = [
     description: "Access information about available medical tests.",
     href: "/medical-tests",
     icon: Stethoscope, 
-    color: "text-accent",
+    color: "text-accent", // Uses theme accent
     bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
@@ -33,32 +33,32 @@ const features = [
     description: "Get insights based on your symptoms. (AI Powered)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-purple-500", 
-    bgColor: "bg-purple-500/10 hover:bg-purple-500/20",
+    color: "text-primary", 
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
     title: "Medical FAQ",
     description: "Find answers to common medical questions. (AI Powered)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-orange-500", 
-    bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
+    color: "text-accent", 
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
   {
     title: "Test Yourself",
     description: "Input symptoms for potential disease info. (AI Powered)",
     href: "/test-yourself",
     icon: FlaskConical,
-    color: "text-pink-500", 
-    bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
+    color: "text-primary", 
+    bgColor: "bg-primary/10 hover:bg-primary/20",
   },
   {
     title: "Online Consultation",
     description: "Consult with doctors online via video call.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-indigo-500", 
-    bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
+    color: "text-accent", 
+    bgColor: "bg-accent/10 hover:bg-accent/20",
   },
 ];
 
@@ -117,7 +117,7 @@ export default function HomePage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <Link href={feature.href} key={feature.title} className="block group">
+             <Link href={feature.href} key={feature.title} className="block group">
                 <Card className={`shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 ${feature.bgColor}`}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className={`text-lg font-medium font-headline ${feature.color}`}>{feature.title}</CardTitle>

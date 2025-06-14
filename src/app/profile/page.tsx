@@ -13,14 +13,44 @@ import { Separator } from '@/components/ui/separator';
 import { Edit3, Save, Shield, Bell, FileText, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const profileSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters."),
+  email: z.string().email("Invalid email address."),
+  phone: z.string().optional(),
+  dob: z.string().optional(), // Can be refined with date validation
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [userName, setUserName] = useState("User Name"); // Placeholder
-  const [userEmail, setUserEmail] = useState("user@example.com"); // Placeholder
-  const [initials, setInitials] = useState("UN");
+  const [initials, setInitials] = useState("U");
+  
+  // Mock user data - in a real app, this would come from an API or auth context
+  const [currentUser, setCurrentUser] = useState<ProfileFormValues>({
+    fullName: "User Name",
+    email: "user@example.com",
+    phone: "",
+    dob: "",
+    address: "",
+    city: "",
+    country: "Rwanda",
+  });
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: currentUser,
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -29,8 +59,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (isClient) {
       const authStatus = localStorage.getItem('mockAuth');
-      const storedUserName = localStorage.getItem('mockUserName') || "Patty Patient"; // Example if you store name
-      const storedUserEmail = localStorage.getItem('mockUserEmail') || "patient@example.com"; // Example
+      const storedUserName = localStorage.getItem('mockUserName') || "Patty Patient";
+      const storedUserEmail = localStorage.getItem('mockUserEmail') || "patient@example.com";
 
       if (!authStatus) {
         toast({
@@ -40,16 +70,48 @@ export default function ProfilePage() {
         });
         router.replace('/login');
       } else {
-        setUserName(authStatus === 'admin' ? "Admin User" : storedUserName);
-        setUserEmail(authStatus === 'admin' ? "admin@mediservehub.com" : storedUserEmail);
-        
-        const nameParts = (authStatus === 'admin' ? "Admin User" : storedUserName).split(' ');
+        const userData = {
+          fullName: authStatus === 'admin' ? "Admin User" : storedUserName,
+          email: authStatus === 'admin' ? "admin@mediservehub.com" : storedUserEmail,
+          phone: localStorage.getItem('mockUserPhone') || "",
+          dob: localStorage.getItem('mockUserDOB') || "",
+          address: localStorage.getItem('mockUserAddress') || "",
+          city: localStorage.getItem('mockUserCity') || "",
+          country: localStorage.getItem('mockUserCountry') || "Rwanda",
+        };
+        setCurrentUser(userData);
+        form.reset(userData); // Reset form with fetched/mocked data
+
+        const nameParts = userData.fullName.split(' ');
         const firstInitial = nameParts[0]?.[0] || '';
         const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] || '' : '';
         setInitials((firstInitial + lastInitial).toUpperCase() || "U");
       }
     }
-  }, [isClient, router, toast]);
+  }, [isClient, router, toast, form]);
+
+  const onSubmit = (data: ProfileFormValues) => {
+    // Mock saving data
+    setCurrentUser(data); 
+    // Mock persisting to localStorage if desired for some fields
+    localStorage.setItem('mockUserName', data.fullName);
+    localStorage.setItem('mockUserEmail', data.email); // Though email might not be editable
+    localStorage.setItem('mockUserPhone', data.phone || "");
+    localStorage.setItem('mockUserDOB', data.dob || "");
+    localStorage.setItem('mockUserAddress', data.address || "");
+    localStorage.setItem('mockUserCity', data.city || "");
+    localStorage.setItem('mockUserCountry', data.country || "Rwanda");
+
+    const nameParts = data.fullName.split(' ');
+    const firstInitial = nameParts[0]?.[0] || '';
+    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] || '' : '';
+    setInitials((firstInitial + lastInitial).toUpperCase() || "U");
+
+    toast({
+      title: "Profile Updated (Mock)",
+      description: "Your profile information has been saved.",
+    });
+  };
 
   if (!isClient || !localStorage.getItem('mockAuth')) {
     return (
@@ -64,74 +126,107 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <PageHeader title="My Profile" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Profile"}]}/>
-      
+      <PageHeader title="My Profile" breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Profile" }]} />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Profile Information Card */}
         <Card className="md:col-span-2 shadow-xl">
           <CardHeader>
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20 border-2 border-primary">
-                <AvatarImage src="https://placehold.co/100x100.png" alt={userName} data-ai-hint="profile picture" />
+                <AvatarImage src="https://placehold.co/100x100.png" alt={form.watch("fullName")} data-ai-hint="profile picture" />
                 <AvatarFallback className="text-2xl text-primary font-semibold">{initials}</AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle className="text-2xl font-headline">{userName}</CardTitle>
-                <CardDescription>{userEmail}</CardDescription>
+                <CardTitle className="text-2xl font-headline">{form.watch("fullName")}</CardTitle>
+                <CardDescription>{form.watch("email")}</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2 text-primary">Personal Information</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" defaultValue={userName} />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" defaultValue={userEmail} readOnly />
-                  </div>
-                </div>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div>
-                  <Label htmlFor="phone">Phone Number (Optional)</Label>
-                  <Input id="phone" type="tel" placeholder="e.g., +250 7XX XXX XXX" />
-                </div>
-                <div>
-                  <Label htmlFor="dob">Date of Birth (Optional)</Label>
-                  <Input id="dob" type="date" />
-                </div>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <h3 className="text-lg font-semibold mb-2 text-primary">Address Information (Optional)</h3>
-              <div className="space-y-4">
-                <div>
-                    <Label htmlFor="address">Street Address</Label>
-                    <Input id="address" placeholder="Kigali Heights, KG 7 Ave" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="city">City</Label>
-                        <Input id="city" placeholder="Kigali" />
+                  <h3 className="text-lg font-semibold mb-4 text-primary">Personal Information</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="fullName" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name="email" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl><Input type="email" {...field} readOnly={localStorage.getItem('mockAuth') !== 'admin'} /></FormControl> 
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <div>
-                        <Label htmlFor="country">Country</Label>
-                        <Input id="country" defaultValue="Rwanda" />
-                    </div>
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number (Optional)</FormLabel>
+                          <FormControl><Input type="tel" placeholder="e.g., +250 7XX XXX XXX" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField control={form.control} name="dob" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth (Optional)</FormLabel>
+                          <FormControl><Input type="date" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
-             <div className="flex justify-end">
-              <Button><Save className="mr-2 h-4 w-4"/>Save Changes (Mock)</Button>
-            </div>
+                <Separator />
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-primary">Address Information (Optional)</h3>
+                  <div className="space-y-4">
+                    <FormField control={form.control} name="address" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Street Address</FormLabel>
+                          <FormControl><Input placeholder="Kigali Heights, KG 7 Ave" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="city" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl><Input placeholder="Kigali" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name="country" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-4">
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
 
-        {/* Account Settings & Actions Card */}
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle className="font-headline">Account Settings</CardTitle>
@@ -146,7 +241,7 @@ export default function ProfilePage() {
             <Button variant="outline" className="w-full justify-start text-left">
               <FileText className="mr-2 h-4 w-4" /> My Medical Records (Mock)
             </Button>
-             <Separator />
+            <Separator />
             <Button variant="destructive" className="w-full justify-start text-left">
               <Edit3 className="mr-2 h-4 w-4" /> Deactivate Account (Mock)
             </Button>
