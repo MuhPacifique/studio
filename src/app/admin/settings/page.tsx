@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Bell, CreditCard as PaymentIcon, ShieldCheck, Palette, Server, Save, DatabaseZap, FileJson, Users, BarChartHorizontalBig, KeyRound, DollarSign, UsersRound, Briefcase, BarChartBig, GitBranch } from 'lucide-react';
+import { Bell, CreditCard as PaymentIcon, ShieldCheck, Palette, Server, Save, DatabaseZap, FileJson, Users, BarChartHorizontalBig, KeyRound, DollarSign, UsersRound, Briefcase, BarChartBig, GitBranch, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,10 +19,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>('system');
 
   useEffect(() => {
     const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
     if (lang) setCurrentLanguage(lang);
+    const theme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
+    if (theme) setCurrentTheme(theme);
   }, []);
 
   const t = (enText: string, knText: string) => currentLanguage === 'kn' ? knText : enText;
@@ -32,7 +35,33 @@ export default function AdminSettingsPage() {
       title: t(`${section} Settings Saved`, `Igenamiterere rya ${section} Ryabitswe`),
       description: t(`Your changes to ${section.toLowerCase()} settings have been applied. (Mock)`, `Impinduka zawe ku igenamiterere rya ${section.toLowerCase()} zakoreshejwe. (By'agateganyo)`),
     });
+    if (section === "General") {
+        localStorage.setItem('theme', currentTheme);
+        if (currentTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else if (currentTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.remove('dark'); // remove dark first
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+        }
+        const defaultLangSelect = document.getElementById('defaultLanguage') as HTMLSelectElement | null;
+        if(defaultLangSelect?.value) {
+            localStorage.setItem('mockUserLang', defaultLangSelect.value);
+            setCurrentLanguage(defaultLangSelect.value as 'en' | 'kn');
+            document.documentElement.lang = defaultLangSelect.value;
+             window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserLang', newValue: defaultLangSelect.value }));
+        }
+         window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: currentTheme }));
+    }
   };
+
+  const handleThemeChange = (themeValue: 'light' | 'dark' | 'system') => {
+    setCurrentTheme(themeValue);
+  };
+
 
   return (
     <AppLayout>
@@ -50,7 +79,7 @@ export default function AdminSettingsPage() {
         <AccordionItem value="general" className="border rounded-lg shadow-lg bg-card hover-lift">
           <AccordionTrigger className="px-6 py-4 hover:no-underline group">
             <div className="flex items-center">
-              <Palette className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" />
+              <SettingsIcon className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" />
               <span className="font-headline text-lg">{t("General & Appearance", "Rusange & Imigaragarire")}</span>
             </div>
           </AccordionTrigger>
@@ -66,13 +95,26 @@ export default function AdminSettingsPage() {
                 <p className="text-xs text-muted-foreground mt-1">{t("Recommended format: PNG, SVG. Max size: 1MB.", "Uburyo busabwa: PNG, SVG. Ingano ntarengwa: 1MB.")}</p>
               </div>
                <div>
-                <Label htmlFor="defaultLanguage">{t("Default Language", "Ururimi Rusanzwe")}</Label>
-                 <Select defaultValue="kn">
-                  <SelectTrigger className="w-full mt-1"><SelectValue placeholder={t("Select default language", "Hitamo ururimi rusanzwe")} /></SelectTrigger>
+                <Label htmlFor="defaultLanguage">{t("Default System Language", "Ururimi Rusanzwe rwa Sisitemu")}</Label>
+                 <Select defaultValue={currentLanguage} onValueChange={(value) => { /* Handled by save */ }}>
+                  <SelectTrigger id="defaultLanguage" className="w-full mt-1"><SelectValue placeholder={t("Select default language", "Hitamo ururimi rusanzwe")} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en">{t("English", "Icyongereza")}</SelectItem>
-                    <SelectItem value="fr">{t("French", "Igifaransa")}</SelectItem>
+                    <SelectItem value="fr">{t("French (Not fully supported)", "Igifaransa (Ntibyuzuye)")}</SelectItem>
                     <SelectItem value="kn">{t("Kinyarwanda", "Kinyarwanda")}</SelectItem>
+                  </SelectContent>
+                 </Select>
+              </div>
+              <div>
+                <Label htmlFor="themePreference">{t("Theme Preference", "Insanganyamatsiko Uhitamo")}</Label>
+                 <Select value={currentTheme} onValueChange={handleThemeChange}>
+                  <SelectTrigger id="themePreference" className="w-full mt-1">
+                    <SelectValue placeholder={t("Select theme", "Hitamo insanganyamatsiko")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light"><div className="flex items-center"><Sun className="mr-2 h-4 w-4"/>{t("Light", "Urumuri")}</div></SelectItem>
+                    <SelectItem value="dark"><div className="flex items-center"><Moon className="mr-2 h-4 w-4"/>{t("Dark", "Umwijima")}</div></SelectItem>
+                    <SelectItem value="system"><div className="flex items-center"><SettingsIcon className="mr-2 h-4 w-4"/>{t("System Default", "Ibya Sisitemu")}</div></SelectItem>
                   </SelectContent>
                  </Select>
               </div>

@@ -9,10 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock, Camera, PowerOff } from 'lucide-react';
+import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock, Camera, PowerOff, Sun, Moon, Settings as SettingsIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -158,13 +158,35 @@ export default function ProfilePage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast, currentLanguage]); 
+  }, [isClient, router, toast]); 
 
   useEffect(() => {
     form.reset({}, { keepValues: true, keepDirtyValues: true, keepErrors: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLanguage]); // Re-validate form on language change
+  }, [currentLanguage]); 
 
+  const handleLanguageChange = (langValue: 'en' | 'kn' | 'fr' | undefined) => {
+    if (langValue) {
+      const newLang = langValue as 'en' | 'kn';
+      localStorage.setItem('mockUserLang', newLang);
+      setCurrentLanguage(newLang);
+      document.documentElement.lang = newLang;
+      window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserLang', newValue: newLang }));
+      form.setValue("preferredLanguage", newLang, { shouldDirty: true, shouldValidate: true });
+    }
+  };
+
+  const handleThemeChange = (themeValue: 'light' | 'dark' | 'system' | undefined) => {
+    if (themeValue) {
+      localStorage.setItem('theme', themeValue);
+      document.documentElement.classList.remove('light', 'dark');
+      if (themeValue === 'dark') document.documentElement.classList.add('dark');
+      else if (themeValue === 'light') document.documentElement.classList.add('light');
+      else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: themeValue }));
+      form.setValue("theme", themeValue, { shouldDirty: true, shouldValidate: true });
+    }
+  };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -198,20 +220,16 @@ export default function ProfilePage() {
     localStorage.setItem('mockUserCountry', updatedData.country || "Rwanda");
     localStorage.setItem('mockUserBio', updatedData.bio || "");
     localStorage.setItem('mockUserProfileImage', updatedProfileImageUrl); 
+    
     if (updatedData.preferredLanguage) {
-        localStorage.setItem('mockUserLang', updatedData.preferredLanguage);
-        setCurrentLanguage(updatedData.preferredLanguage as 'en' | 'kn');
+      handleLanguageChange(updatedData.preferredLanguage as 'en' | 'kn' | 'fr' | undefined);
+    }
+    if (updatedData.theme) {
+      handleThemeChange(updatedData.theme as 'light' | 'dark' | 'system' | undefined);
     }
 
     localStorage.setItem('mockUserMarketing', String(updatedData.enableMarketingEmails || false));
     localStorage.setItem('mockUserAppNotifs', String(updatedData.enableAppNotifications !== false));
-    if (updatedData.theme) {
-      localStorage.setItem('theme', updatedData.theme); 
-      document.documentElement.classList.remove('light', 'dark');
-      if (updatedData.theme === 'dark') document.documentElement.classList.add('dark');
-      else if (updatedData.theme === 'light') document.documentElement.classList.add('light');
-      else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
-    }
     localStorage.setItem('mockUserEmergencyName', updatedData.emergencyContactName || "");
     localStorage.setItem('mockUserEmergencyPhone', updatedData.emergencyContactPhone || "");
     localStorage.setItem('mockUser2FA', String(updatedData.enableTwoFactor || false));
@@ -223,9 +241,6 @@ export default function ProfilePage() {
 
     window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserProfileImage', newValue: updatedProfileImageUrl }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserName', newValue: updatedData.fullName }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: updatedData.theme }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mockUserLang', newValue: updatedData.preferredLanguage }));
-
 
     toast({
       title: t("Profile Updated (Mock)", "Umwirondoro Wahinduwe (By'agateganyo)"),
@@ -259,7 +274,7 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <PageHeader title={t("My Profile", "Umwirondoro Wanjye")} breadcrumbs={[{ label: t("Dashboard", "Imbonerahamwe"), href: "/" }, { label: t("Profile", "Umwirondoro") }]} />
-
+      <FormProvider {...form}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 shadow-xl hover-lift dark:shadow-primary/10">
           <CardHeader>
@@ -272,6 +287,7 @@ export default function ProfilePage() {
                 <Button 
                     variant="outline" 
                     size="icon" 
+                    type="button"
                     className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200 ease-in-out hover:scale-110"
                     onClick={() => fileInputRef.current?.click()}
                     aria-label={t("Change profile picture", "Hindura ifoto y'umwirondoro")}
@@ -290,7 +306,7 @@ export default function ProfilePage() {
                   name="profileImageUrl"
                   render={({ field }) => (
                     <FormItem className="w-full hidden"> 
-                      <Label htmlFor="profileImageUrl-input" className="sr-only">{t("Profile Image URL", "URL y'Ifoto y'Umwirondoro")}</Label>
+                      <FormLabel htmlFor="profileImageUrl-input" className="sr-only">{t("Profile Image URL", "URL y'Ifoto y'Umwirondoro")}</FormLabel>
                       <Input id="profileImageUrl-input" {...field} />
                       <FormMessage />
                     </FormItem>
@@ -342,11 +358,11 @@ export default function ProfilePage() {
                     <AccordionContent className="pt-4 space-y-6">
                        <FormField control={form.control} name="preferredLanguage" render={({ field }) => ( <FormItem> <FormLabel>{t("Preferred Language", "Ururimi Uhitamo")}</FormLabel> 
                          <FormControl>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => handleLanguageChange(value as 'en' | 'kn' | 'fr' | undefined)} defaultValue={field.value}>
                                 <SelectTrigger><SelectValue placeholder={t("Select language", "Hitamo ururimi")} /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="en">English (Icyongereza)</SelectItem>
-                                    <SelectItem value="fr">French (Igifaransa)</SelectItem>
+                                    <SelectItem value="fr">{t("French (Not fully supported)", "Igifaransa (Ntibyuzuye)")}</SelectItem>
                                     <SelectItem value="kn">Kinyarwanda</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -354,12 +370,12 @@ export default function ProfilePage() {
                        <FormDescription>{t("We'll try to use this language where possible.", "Tuzagerageza gukoresha uru rurimi aho bishoboka.")}</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="theme" render={({ field }) => ( <FormItem> <FormLabel>{t("Theme", "Insanganyamatsiko")}</FormLabel> 
                          <FormControl>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => handleThemeChange(value as 'light' | 'dark' | 'system' | undefined)} defaultValue={field.value}>
                                 <SelectTrigger><SelectValue placeholder={t("Select theme", "Hitamo insanganyamatsiko")} /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="light">{t("Light", "Urumuri")}</SelectItem>
-                                    <SelectItem value="dark">{t("Dark", "Umwijima")}</SelectItem>
-                                    <SelectItem value="system">{t("System Default", "Ibya Sisitemu")}</SelectItem>
+                                    <SelectItem value="light"><div className="flex items-center"><Sun className="mr-2 h-4 w-4"/>{t("Light", "Urumuri")}</div></SelectItem>
+                                    <SelectItem value="dark"><div className="flex items-center"><Moon className="mr-2 h-4 w-4"/>{t("Dark", "Umwijima")}</div></SelectItem>
+                                    <SelectItem value="system"><div className="flex items-center"><SettingsIcon className="mr-2 h-4 w-4"/>{t("System Default", "Ibya Sisitemu")}</div></SelectItem>
                                 </SelectContent>
                             </Select>
                          </FormControl> 
@@ -445,6 +461,7 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+      </FormProvider>
     </AppLayout>
   );
 }
