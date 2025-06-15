@@ -43,8 +43,7 @@ export default function LoginPage() {
     if (role) {
       setRoleFromQuery(role);
     } else {
-      // If no role in query, redirect to welcome, as role selection is now transient
-      router.replace('/welcome');
+      router.replace('/welcome'); // Redirect if no role provided
     }
   }, [searchParams, router]);
 
@@ -59,16 +58,19 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    // This is a mock login. No data is persisted.
     form.formState.isSubmitting = true;
+    // Simulate API call
+    // Conceptual: const response = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({...data, role: roleFromQuery }), headers: {'Content-Type': 'application/json'} });
+    // Conceptual: const result = await response.json();
     await new Promise(resolve => setTimeout(resolve, 1000));
     form.formState.isSubmitting = false;
     
     let loginSuccess = false;
     let userName = t("Umukoresha", "Umukoresha"); 
-    let redirectPath = '/'; // Default redirect path after successful "login"
+    let redirectPath = '/'; 
 
-    // Mock credentials check - THIS DOES NOT USE REAL AUTHENTICATION
+    // MOCK CREDENTIALS FOR PROTOTYPE
+    // Replace with conceptual API call result handling
     if (roleFromQuery === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = t("Dr. Alex Smith", "Dr. Alex Smith"); 
@@ -76,27 +78,28 @@ export default function LoginPage() {
     } else if (roleFromQuery === 'patient' && data.email === "patient@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = t("Patty Patient", "Patty Patient");
-        // For patient, redirectPath remains '/' which will be handled by AppLayout
+        redirectPath = '/'; // AppLayout will show patient dashboard content
     } else if (roleFromQuery === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
         loginSuccess = true;
         userName = t("Sam Seeker", "Sam Seeker");
+        redirectPath = '/'; // AppLayout will show seeker dashboard content
     }
 
     if (loginSuccess) {
       toast({
         title: t("Kwinjira Byagenze Neza", "Kwinjira Byagenze Neza"),
-        description: `${t("Murakaza neza", "Murakaza neza")}, ${userName}! (Igerageza)`,
+        description: `${t("Murakaza neza", "Murakaza neza")}, ${userName}! (Igerageza - Nta kwemeza nyakuri kwabaye)`,
       });
-      // For prototype, simulate "logging in" by redirecting.
-      // AppLayout's mock auth state isn't directly changed here,
-      // as a real app would get session info from backend response.
-      // To test authenticated views, manually set `isAuthenticated` to true in AppLayout.
+      // In a real app, the API response would include a token.
+      // This token would be stored (e.g., in context, secure cookie) and AppLayout's
+      // isAuthenticated state would be updated, triggering appropriate UI changes/redirects.
+      // For this prototype, we directly navigate.
       router.push(redirectPath); 
     } else {
       toast({
         variant: "destructive",
         title: t("Kwinjira Byanze", "Kwinjira Byanze"),
-        description: t("Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa.", "Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa."),
+        description: t("Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa. Gerageza 'patient@example.com' & 'password' ku murwayi.", "Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa. Gerageza 'patient@example.com' & 'password' ku murwayi."),
       });
       form.setError("email", { type: "manual", message: " " }); 
       form.setError("password", { type: "manual", message: t("Amakuru watanze ntabwo ariyo.", "Amakuru watanze ntabwo ariyo.") });
@@ -116,7 +119,8 @@ export default function LoginPage() {
   if (!roleFromQuery) {
     return (
          <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
-            <p>{t("Gutegura...", "Gutegura...")}</p> 
+            <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+            <p className="text-muted-foreground mt-2">{t("Gutegura...", "Gutegura...")}</p> 
          </div>
     );
   }
@@ -200,4 +204,3 @@ export default function LoginPage() {
     </div>
   );
 }
-```

@@ -31,7 +31,6 @@ interface Medicine {
   aiHint: string;
 }
 
-// Mock data - will not persist after page reload.
 const mockMedicinesData: Medicine[] = [
   { id: 'med1', name: 'Paracetamol 500mg', nameKn: 'Parasetamoli 500mg', description: 'Relieves pain and fever.', descriptionKn: 'Igabanya ububabare n\'umuriro.', price: 599, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 150, aiHint: 'pills medication' },
   { id: 'med2', name: 'Amoxicillin 250mg', nameKn: 'Amogisiline 250mg', description: 'Antibiotic for bacterial infections.', descriptionKn: 'Antibiyotike y\'indwara ziterwa na bagiteri.', price: 1250, imageUrl: 'https://placehold.co/300x200.png', category: 'Antibiotics', categoryKn: 'Antibiyotike', stock: 80, aiHint: 'capsules pharmacy' },
@@ -49,11 +48,10 @@ interface OrderClient {
   date: string;
   items: CartItemClient[];
   total: number;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered'; 
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'; 
 }
 
-// Mock data - will not persist after page reload.
-const mockOrdersClient: OrderClient[] = [ 
+const mockOrdersData: OrderClient[] = [ 
   { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicinesData[0], quantity: 2 }, { ...mockMedicinesData[2], quantity: 1 }], total: (599*2) + 875, status: 'Delivered' },
   { id: 'order2', date: '2024-07-28', items: [{ ...mockMedicinesData[1], quantity: 1 }], total: 1250, status: 'Processing' },
 ];
@@ -65,24 +63,41 @@ export default function MedicinesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
+  // Conceptual auth state; AppLayout manages actual auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<CartItemClient[]>([]); // Cart is ephemeral
-  const [medicines, setMedicines] = useState<Medicine[]>([]); // Medicines list is ephemeral
-  const [orders, setOrders] = useState<OrderClient[]>([]); // Orders list is ephemeral
+  const [cart, setCart] = useState<CartItemClient[]>([]); 
+  const [medicines, setMedicines] = useState<Medicine[]>([]); 
+  const [orders, setOrders] = useState<OrderClient[]>([]); 
 
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching initial data. No localStorage means data resets on reload.
-    setMedicines(mockMedicinesData); 
-    setOrders(mockOrdersClient);     
-    setIsLoadingPage(false);
+    // Simulate fetching initial data from conceptual APIs
+    const fetchData = async () => {
+      setIsLoadingPage(true);
+      // Conceptual: const medResponse = await fetch('/api/medicines?limit=50');
+      // Conceptual: const medData = await medResponse.json();
+      // Conceptual: setMedicines(medData.medicines || []);
+      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
+      setMedicines(mockMedicinesData); 
+      
+      // Conceptual: const cartResponse = await fetch('/api/cart');
+      // Conceptual: const cartData = await cartResponse.json();
+      // Conceptual: setCart(cartData.items || []);
+      setCart([]); // Start with an empty cart for simulation
+      
+      // Conceptual: const ordersResponse = await fetch('/api/orders/my');
+      // Conceptual: const ordersData = await ordersResponse.json();
+      // Conceptual: setOrders(ordersData.orders || []);
+      setOrders(mockOrdersData);
+      
+      setIsLoadingPage(false);
+    };
+    fetchData();
   }, []);
 
 
@@ -95,53 +110,65 @@ export default function MedicinesPage() {
     );
   }, [searchTerm, selectedCategory, medicines]);
 
-  const addToCart = (medicine: Medicine) => {
-    if (!isAuthenticated) { // This check is largely conceptual now
+  const addToCart = async (medicine: Medicine) => {
+    if (!isAuthenticated) { 
         toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango wongere mu gitebo.", "Nyamuneka injira kugirango wongere mu gitebo.") });
-        // router.push('/welcome'); // AppLayout handles this
         return;
     }
-    // UI update is ephemeral, backend would handle cart state
+    
     const existingItem = cart.find(item => item.id === medicine.id);
-    if (existingItem) {
-      if (existingItem.quantity < medicine.stock) {
-        setCart(prevCart => prevCart.map(item => item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item));
-        toast({ title: t(`${medicine.nameKn} yongewe mu gitebo.`, `${medicine.nameKn} yongewe mu gitebo.`) });
-      } else {
-        toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${medicine.nameKn}`, `Ntushobora kongeraho ${medicine.nameKn}`), description: t(`Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`, `Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`) });
-      }
-    } else {
-      if (medicine.stock > 0) {
-        setCart(prevCart => [...prevCart, { ...medicine, quantity: 1 }]);
-        toast({ title: t(`${medicine.nameKn} yongewe mu gitebo.`, `${medicine.nameKn} yongewe mu gitebo.`) });
-      } else {
-         toast({ variant: "destructive", title: t(`${medicine.nameKn} yashize mu bubiko.`, `${medicine.nameKn} yashize mu bubiko.`) });
-      }
+    const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+
+    if (currentQuantityInCart >= medicine.stock && medicine.stock > 0) {
+      toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${medicine.nameKn}`, `Ntushobora kongeraho ${medicine.nameKn}`), description: t(`Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`, `Umubare ntarengwa (${medicine.stock}) wagezweho mu gitebo.`) });
+      return;
     }
+    if (medicine.stock === 0) {
+      toast({ variant: "destructive", title: t(`${medicine.nameKn} yashize mu bubiko.`, `${medicine.nameKn} yashize mu bubiko.`) });
+      return;
+    }
+
+    // Conceptual: const response = await fetch('/api/cart/items', { method: 'POST', body: JSON.stringify({ medicine_id: medicine.id, quantity: 1 }) });
+    // Conceptual: if (response.ok) { /* Update cart from response or refetch */ }
+    
+    // Simulate optimistic UI update
+    if (existingItem) {
+      setCart(prevCart => prevCart.map(item => item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item));
+    } else {
+      setCart(prevCart => [...prevCart, { ...medicine, quantity: 1 }]);
+    }
+    toast({ title: t(`${medicine.nameKn} yongewe mu gitebo. (Igerageza)`, `${medicine.nameKn} yongewe mu gitebo. (Igerageza)`) });
   };
 
-  const updateQuantity = (medicineId: string, change: number) => {
-    // UI update is ephemeral
-    setCart(prevCart =>
-      prevCart.map(item => {
-        if (item.id === medicineId) {
-          const newQuantity = item.quantity + change;
-          if (newQuantity <= 0) return null; 
-          if (newQuantity > item.stock) {
-            toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${item.nameKn}`, `Ntushobora kongeraho ${item.nameKn}`), description: t(`Umubare ntarengwa (${item.stock}) wagezweho.`, `Umubare ntarengwa (${item.stock}) wagezweho.`) });
-            return { ...item, quantity: item.stock };
-          }
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean) as CartItemClient[]
-    );
+  const updateQuantity = async (medicineId: string, change: number) => {
+    const itemInCart = cart.find(item => item.id === medicineId);
+    if (!itemInCart) return;
+
+    const newQuantity = itemInCart.quantity + change;
+
+    if (newQuantity <= 0) {
+      removeFromCart(medicineId); // Handles API call simulation
+      return;
+    }
+    if (newQuantity > itemInCart.stock) {
+      toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${itemInCart.nameKn}`, `Ntushobora kongeraho ${itemInCart.nameKn}`), description: t(`Umubare ntarengwa (${itemInCart.stock}) wagezweho.`, `Umubare ntarengwa (${itemInCart.stock}) wagezweho.`) });
+      // Simulate setting to max stock if over
+      // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart.id}`, { method: 'PUT', body: JSON.stringify({ quantity: itemInCart.stock }) });
+      setCart(prevCart => prevCart.map(item => item.id === medicineId ? { ...item, quantity: item.stock } : item));
+      return;
+    }
+    
+    // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart.id}`, { method: 'PUT', body: JSON.stringify({ quantity: newQuantity }) });
+    // Conceptual: if (response.ok) { /* Update from response or refetch */ }
+    setCart(prevCart => prevCart.map(item => item.id === medicineId ? { ...item, quantity: newQuantity } : item));
   };
 
-  const removeFromCart = (medicineId: string) => {
-    // UI update is ephemeral
+  const removeFromCart = async (medicineId: string) => {
+    const itemInCart = cart.find(item => item.id === medicineId);
+    // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart?.id_in_cart_table_from_backend}`, { method: 'DELETE' });
+    // Conceptual: if (response.ok) { /* Update from response or refetch */ }
     setCart(prevCart => prevCart.filter(item => item.id !== medicineId));
-    toast({ title: t("Ikintu cyakuwe mu gitebo.", "Ikintu cyakuwe mu gitebo.") });
+    toast({ title: t("Ikintu cyakuwe mu gitebo. (Igerageza)", "Ikintu cyakuwe mu gitebo. (Igerageza)") });
   };
 
   const cartTotal = useMemo(() => {
@@ -150,18 +177,23 @@ export default function MedicinesPage() {
 
   const getStatusBadgeClass = (status: OrderClient['status']) => {
     switch (status) {
-      case 'Delivered':
-        return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600';
-      case 'Processing':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-700/30 dark:text-yellow-300 dark:border-yellow-600';
-      case 'Shipped':
-        return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-700/30 dark:text-blue-300 dark:border-blue-600';
-      case 'Pending':
-        return 'bg-muted text-muted-foreground border-border';
-      default:
-        return 'bg-secondary text-secondary-foreground border-border';
+      case 'Delivered': return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600';
+      case 'Processing': return 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-700/30 dark:text-yellow-300 dark:border-yellow-600';
+      case 'Shipped': return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-700/30 dark:text-blue-300 dark:border-blue-600';
+      case 'Cancelled': return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-700/30 dark:text-red-300 dark:border-red-600';
+      case 'Pending': return 'bg-muted text-muted-foreground border-border';
+      default: return 'bg-secondary text-secondary-foreground border-border';
     }
   };
+  
+  const getStatusText = (status: OrderClient['status']) => {
+    if (status === 'Delivered') return t('Byagejejweho', 'Byagejejweho');
+    if (status === 'Processing') return t('Birimo Gutunganywa', 'Birimo Gutunganywa');
+    if (status === 'Shipped') return t('Byoherejwe', 'Byoherejwe');
+    if (status === 'Cancelled') return t('Byahagaritswe', 'Byahagaritswe');
+    if (status === 'Pending') return t('Bigitegerejwe', 'Bigitegerejwe');
+    return status;
+  }
 
   if (!isClient || isLoadingPage) {
     return (
@@ -175,18 +207,9 @@ export default function MedicinesPage() {
     );
   }
   
-  if (!isAuthenticated) {
-     // This case should be handled by AppLayout redirection primarily.
-     return (
-         <AppLayout>
-            <PageHeader title={t("Gutumiza Imiti", "Gutumiza Imiti")} />
-            <Card className="mt-10 text-center p-10">
-                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
-                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango ubashe gutumiza imiti.", "Nyamuneka injira kugirango ubashe gutumiza imiti.")}</CardDescription>
-                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
-            </Card>
-         </AppLayout>
-     )
+  if (!isAuthenticated && isClient) {
+     router.replace('/welcome');
+     return null; 
   }
 
 
@@ -277,12 +300,12 @@ export default function MedicinesPage() {
             </CardHeader>
             <CardContent>
               {cart.length === 0 ? (
-                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ntazabikwa.", "Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ntazabikwa.")}</p>
+                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa. Amakuru y'igitebo abikwa by'agateganyo.", "Igitebo cyawe kirimo ubusa. Amakuru y'igitebo abikwa by'agateganyo.")}</p>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {cart.map(item => (
                     <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg shadow-sm bg-background/50 dark:bg-muted/20 hover:shadow-md transition-shadow">
-                      <div className="flex-grow">
+                      <div className="flex-grow mr-2">
                         <p className="font-medium text-sm">{item.nameKn}</p>
                         <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} RWF x {item.quantity}</p>
                       </div>
@@ -336,7 +359,7 @@ export default function MedicinesPage() {
                           variant="outline"
                           className={getStatusBadgeClass(order.status)}
                         >
-                          {t(order.status, order.status === "Delivered" ? "Byagejejweho" : order.status === "Processing" ? "Birimo Gutunganywa" : order.status)}
+                          {getStatusText(order.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs">{order.items.map(item => `${item.nameKn} (x${item.quantity})`).join(', ')}</TableCell>
@@ -347,9 +370,10 @@ export default function MedicinesPage() {
             </CardContent>
           </Card>
         ) : (
-          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari. Amakuru y'ibyo watumije asaba guhuzwa na seriveri.", "Nta byo watumije mbere bihari. Amakuru y'ibyo watumije asaba guhuzwa na seriveri.")}</p>
+          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari. Amakuru y'ibyo watumije abikwa by'agateganyo.", "Nta byo watumije mbere bihari. Amakuru y'ibyo watumije abikwa by'agateganyo.")}</p>
         )}
       </div>
     </AppLayout>
   );
 }
+

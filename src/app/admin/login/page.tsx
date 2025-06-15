@@ -46,6 +46,10 @@ export default function AdminLoginPage() {
     // This is a mock login. No data is persisted.
     // A real backend would verify credentials and return a session token.
     form.formState.isSubmitting = true;
+    // Simulate API call
+    // const response = await fetch('/api/auth/admin/login', { method: 'POST', body: JSON.stringify(data), headers: {'Content-Type': 'application/json'} });
+    // const result = await response.json();
+    // if (response.ok) { /* Handle success */ } else { /* Handle error */ }
     await new Promise(resolve => setTimeout(resolve, 1000));
     form.formState.isSubmitting = false;
     
@@ -55,10 +59,9 @@ export default function AdminLoginPage() {
         title: t("Kwinjira kw'Umunyamabanga Byagenze Neza", "Kwinjira kw'Umunyamabanga Byagenze Neza"),
         description: t("Murakaza neza, Munyamabanga! (Igerageza - Nta kwemeza nyakuri kwabaye)", "Murakaza neza, Munyamabanga! (Igerageza - Nta kwemeza nyakuri kwabaye)"),
       });
-      // In a real app, AppLayout's isAuthenticated state would be updated via context/global state
-      // after successful API login. For this prototype, we directly navigate.
-      // AppLayout's current mock state won't change, so admin pages might still be blocked
-      // unless AppLayout's mock `isAuthenticated` is manually set to true for testing.
+      // For prototype: Directly navigate. In real app, AppLayout's auth state
+      // would be updated via context/global state after successful API login,
+      // triggering redirects or component visibility changes.
       router.push('/admin/dashboard'); 
     } else {
       toast({
@@ -129,3 +132,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+

@@ -16,45 +16,26 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
 
 export default function TestYourselfPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  // Conceptual auth state; AppLayout manages actual auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
 
   const [symptoms, setSymptoms] = useState('');
   const [result, setResult] = useState<TestYourselfOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
   
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
-    else localStorage.setItem('mockUserLang', 'kn'); // Default to Kinyarwanda if not set
+    // Simulate initial setup if needed
+    setIsLoadingPage(false);
   }, []);
-
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe"),
-          description: t("Please log in to use the Test Yourself feature.", "Nyamuneka injira kugirango ukoreshe Isuzume Ubwawe."),
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast, currentLanguage]);
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -72,7 +53,9 @@ export default function TestYourselfPage() {
     setResult(null);
 
     try {
-      const aiResponse = await testYourself({ symptoms });
+      // Conceptual: const response = await fetch('/api/ai/test-yourself', { method: 'POST', body: JSON.stringify({symptoms})});
+      // Conceptual: const aiResponse = await response.json();
+      const aiResponse = await testYourself({ symptoms }); // Direct call for prototype
       setResult(aiResponse);
     } catch (error) {
       console.error("Test Yourself Error:", error);
@@ -86,15 +69,27 @@ export default function TestYourselfPage() {
     }
   };
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+         <PageHeader 
+            title={t("Test Yourself", "Isúzumé Ubwawe")} 
+            breadcrumbs={[
+                {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
+                {label: t("Test Yourself", "Isúzumé Ubwawe")}
+            ]}
+          />
+        <div className="flex flex-col justify-center items-center h-auto py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
           <p className="text-muted-foreground">{t("Loading Test Yourself...", "Gutegura Isuzume Ubwawe...")}</p>
         </div>
       </AppLayout>
     );
+  }
+  
+  if (!isAuthenticated && isClient) {
+     router.replace('/welcome');
+     return null;
   }
 
   return (
@@ -129,7 +124,7 @@ export default function TestYourselfPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <Textarea
                 placeholder={t("e.g., I've been feeling tired, have a persistent headache, and occasional dizziness...", 
-                               "urugero: N чувствоvye umunaniro, mfite umutwe udakira, kandi rimwe na rimwe nzirungaguzwa...")}
+                               "urugero: Numvise umunaniro, mfite umutwe udakira, kandi rimwe na rimwe nzirungaguzwa...")}
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 rows={8}
@@ -181,7 +176,7 @@ export default function TestYourselfPage() {
                       result.potentialConditions.filter(c => c.name).map((condition, index) => (
                         <Card key={index} className="p-3 bg-background/50 dark:bg-muted/20">
                           <h4 className="font-semibold text-primary">{condition.name}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{condition.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{condition.description}</p>
                           {condition.commonSymptoms && condition.commonSymptoms.length > 0 && (
                             <div className="mt-2">
                               <p className="text-xs font-medium text-foreground">{t("Common Symptoms:", "Ibimenyetso Bikunze Kugaragara:")}</p>

@@ -70,11 +70,10 @@ const paymentSchema = z.object({
 type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 export default function PaymentPage() {
-  const router = useRouter(); // Kept for potential future use
+  const router = useRouter(); 
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
+  // This is a conceptual placeholder for auth state. AppLayout manages actual auth flow.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   
@@ -99,13 +98,18 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // No auth check here, AppLayout handles it.
+    // Simulate fetching initial data or user state if needed (e.g., default amount from cart)
+    // For this prototype, direct initialization is fine.
     setIsLoadingPage(false);
   }, []);
 
 
   const onSubmit = async (data: PaymentFormValues) => {
-    // Simulate backend payment processing. No data is persisted.
+    // Simulate backend payment processing
+    // Conceptual: const response = await fetch('/api/payments/initiate', { method: 'POST', body: JSON.stringify(data) });
+    // Conceptual: const result = await response.json();
+    // Conceptual: if (response.ok && result.clientSecret) { /* Stripe redirect or confirm */ } 
+    // Conceptual: else if (response.ok && result.momoPushSent) { /* Show MoMo instructions */ }
     form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1500));
     form.formState.isSubmitting = false;
@@ -115,13 +119,14 @@ export default function PaymentPage() {
       description: t(`Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe. Amakuru ntazabikwa muri iyi prototype.`, `Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe. Amakuru ntazabikwa muri iyi prototype.`),
     });
     form.reset({
-        amount: 5000, 
+        amount: data.amount, // Keep amount for potential re-try or new payment
         paymentMethod: data.paymentMethod, 
         reason: "", 
         cardHolderName: "", cardNumber: "", expiryDate: "", cvv: "",
         mobileNumber: "", mobileProvider: undefined,
         bankName: undefined, userReference: "",
     });
+    // router.push('/orders/my-orders'); // Or a success page
   };
 
   if (!isClient || isLoadingPage) {
@@ -137,7 +142,7 @@ export default function PaymentPage() {
   }
 
   if (!isAuthenticated) {
-    // This case should be handled by AppLayout redirection primarily.
+    // This case is primarily handled by AppLayout's redirection.
     return (
       <AppLayout>
         <PageHeader title={t("Kwishyura Kuri Interineti", "Kwishyura Kuri Interineti")} />
@@ -201,7 +206,7 @@ export default function PaymentPage() {
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
-                            form.reset({
+                            form.reset({ // Reset conditional fields when method changes
                                 ...form.getValues(), 
                                 paymentMethod: value as PaymentFormValues["paymentMethod"],
                                 cardNumber: "", expiryDate: "", cvv: "", cardHolderName: "",
@@ -361,4 +366,3 @@ export default function PaymentPage() {
     </AppLayout>
   );
 }
-```

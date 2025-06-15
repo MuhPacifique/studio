@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface PrescribedMedicineItemClient { 
   id: string;
   name: string;
+  nameKn: string;
   dosage: string;
   frequency: string;
   duration: string;
@@ -24,13 +25,47 @@ interface PrescriptionClient {
   id: string;
   patientId: string; 
   doctorName: string;
+  doctorNameKn: string;
   datePrescribed: string; 
   medicines: PrescribedMedicineItemClient[];
   notes?: string;
+  notesKn?: string;
   status: 'Active' | 'Completed' | 'Expired';
 }
 
 const t = (enText: string, knText: string) => knText; 
+
+// Mock data - this would be fetched from /api/prescriptions/my in a real app
+const mockPrescriptionsData: PrescriptionClient[] = [
+    { 
+      id: 'rx1', 
+      patientId: 'mockUserId123', 
+      doctorName: 'Dr. Alex Smith', 
+      doctorNameKn: 'Dr. Alex Smith', 
+      datePrescribed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      medicines: [
+          {id: 'med1', name: 'Paracetamol 500mg', nameKn: 'Parasetamoli 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'},
+          {id: 'med2', name: 'Amoxicillin 250mg', nameKn: 'Amogisiline 250mg', dosage: '1 capsule', frequency: 'every 8 hours', duration: '7 days'}
+      ], 
+      notes: 'Take Paracetamol only if fever is above 38°C. Complete the full course of Amoxicillin.', 
+      notesKn: 'Fata Parasetamoli gusa niba umuriro urenze 38°C. Rangiza imiti yose ya Amogisiline.',
+      status: 'Active' 
+    },
+    { 
+      id: 'rx2', 
+      patientId: 'mockUserId123', 
+      doctorName: 'Dr. Emily Carter', 
+      doctorNameKn: 'Dr. Emily Carter', 
+      datePrescribed: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
+      medicines: [
+          {id: 'med3', name: 'Loratadine 10mg', nameKn: 'Loratadine 10mg', dosage: '1 tablet', frequency: 'once daily', duration: '14 days'}
+      ], 
+      notes: 'For seasonal allergies.', 
+      notesKn: 'Ku bwivumbure bw\'ibihe.',
+      status: 'Completed' 
+    }
+];
+
 
 const PrescriptionSkeleton = () => (
   <Card className="shadow-lg">
@@ -67,20 +102,24 @@ export default function MyPrescriptionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
+  // Conceptual auth state; AppLayout manages actual auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [prescriptions, setPrescriptions] = useState<PrescriptionClient[]>([]); 
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate data fetching. No localStorage means data resets on reload.
-    // In a real app, data comes from backend.
-    setPrescriptions([ /* Mock data for initial UI structure if needed
-        { id: 'rx1', patientId: 'mockUserId123', doctorName: 'Dr. Alex Smith', datePrescribed: new Date().toISOString(), medicines: [{id: 'med1', name: 'Paracetamol 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'}], notes: 'Take after meals.', status: 'Active' }
-    */ ]);
-    setIsLoadingData(false);
+    // Simulate fetching prescriptions from an API
+    const fetchPrescriptions = async () => {
+        setIsLoadingData(true);
+        // Conceptual: const response = await fetch('/api/prescriptions/my');
+        // Conceptual: const data = await response.json();
+        // Conceptual: setPrescriptions(data.prescriptions || []);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+        setPrescriptions(mockPrescriptionsData);
+        setIsLoadingData(false);
+    };
+    fetchPrescriptions();
   }, []);
   
   const getStatusBadgeVariant = (status: PrescriptionClient['status']): "default" | "secondary" | "outline" | "destructive" => {
@@ -103,11 +142,11 @@ export default function MyPrescriptionsPage() {
     return (
       <AppLayout>
          <PageHeader 
-            title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} 
+            title={t("My Prescriptions", "Imiti Nandikiwe")} 
             breadcrumbs={[
-            {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
-            {label: t("Ubuzima Bwanjye", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
-            {label: t("Imiti Nandikiwe", "Imiti Nandikiwe")}
+            {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
+            {label: t("My Health", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
+            {label: t("My Prescriptions", "Imiti Nandikiwe")}
             ]}
         />
         <div className="space-y-6">
@@ -118,29 +157,20 @@ export default function MyPrescriptionsPage() {
     );
   }
 
-  if (!isAuthenticated) {
-     // This case should be handled by AppLayout redirection primarily.
-     return (
-         <AppLayout>
-            <PageHeader title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} />
-            <Card className="mt-10 text-center p-10">
-                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
-                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango urebe imiti wandikiwe.", "Nyamuneka injira kugirango urebe imiti wandikiwe.")}</CardDescription>
-                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
-            </Card>
-         </AppLayout>
-     )
+  if (!isAuthenticated && isClient) {
+     router.replace('/welcome');
+     return null; 
   }
   
 
   return (
     <AppLayout>
       <PageHeader 
-        title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} 
+        title={t("My Prescriptions", "Imiti Nandikiwe")} 
         breadcrumbs={[
-          {label: t("Imbonerahamwe", "Imbonerahamwe"), href: "/"}, 
-          {label: t("Ubuzima Bwanjye", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
-          {label: t("Imiti Nandikiwe", "Imiti Nandikiwe")}
+          {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
+          {label: t("My Health", "Ubuzima Bwanjye"), href: "/my-health/prescriptions"},
+          {label: t("My Prescriptions", "Imiti Nandikiwe")}
         ]}
       />
       
@@ -150,41 +180,41 @@ export default function MyPrescriptionsPage() {
             <Card key={rx.id} className="shadow-lg hover-lift">
               <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
-                  <CardTitle className="font-headline text-xl mb-1 sm:mb-0">{t("Urupapuro rw'imiti rwa", "Urupapuro rw'imiti rwa")} {rx.doctorName}</CardTitle>
+                  <CardTitle className="font-headline text-xl mb-1 sm:mb-0">{t("Prescription from", "Urupapuro rw'imiti rwa")} {rx.doctorNameKn}</CardTitle>
                   <Badge variant={getStatusBadgeVariant(rx.status)} className="w-fit">{getStatusText(rx.status)}</Badge>
                 </div>
                 <CardDescription className="flex items-center text-sm">
                   <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                  {t("Rwanditswe ku itariki:", "Rwanditswe ku itariki:")} {format(new Date(rx.datePrescribed), "PPP")}
+                  {t("Prescribed on:", "Rwanditswe ku itariki:")} {format(new Date(rx.datePrescribed), "PPP")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center"><Pill className="mr-2 h-5 w-5 text-primary"/>{t("Imiti:", "Imiti:")}</h4>
+                  <h4 className="font-semibold mb-2 flex items-center"><Pill className="mr-2 h-5 w-5 text-primary"/>{t("Medicines:", "Imiti:")}</h4>
                   <ul className="space-y-2 pl-2">
                     {rx.medicines.map(med => (
                       <li key={med.id} className="text-sm p-2 border-l-2 border-primary/30 bg-muted/30 dark:bg-muted/10 rounded-r-md">
-                        <p><span className="font-medium">{med.name}</span></p>
+                        <p><span className="font-medium">{med.nameKn}</span></p>
                         <p className="text-xs text-muted-foreground">
-                          {t("Ingano:", "Ingano:")} {med.dosage} | {t("Inshuro:", "Inshuro:")} {med.frequency} | {t("Igihe:", "Igihe:")} {med.duration}
+                          {t("Dosage:", "Ingano:")} {med.dosage} | {t("Frequency:", "Inshuro:")} {med.frequency} | {t("Duration:", "Igihe:")} {med.duration}
                         </p>
                       </li>
                     ))}
                   </ul>
                 </div>
-                {rx.notes && (
+                {rx.notesKn && (
                   <div>
-                    <h4 className="font-semibold mb-1 flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>{t("Inyandiko za Muganga:", "Inyandiko za Muganga:")}</h4>
-                    <p className="text-sm text-muted-foreground bg-primary/5 dark:bg-primary/10 p-3 rounded-md border border-primary/20">{rx.notes}</p>
+                    <h4 className="font-semibold mb-1 flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>{t("Doctor's Notes:", "Inyandiko za Muganga:")}</h4>
+                    <p className="text-sm text-muted-foreground bg-primary/5 dark:bg-primary/10 p-3 rounded-md border border-primary/20 whitespace-pre-wrap">{rx.notesKn}</p>
                   </div>
                 )}
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 border-t pt-4">
                 <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Mock - backend needed)", "Kurura PDF (By'agateganyo - seriveri irakenewe)")})}>
-                  <Download className="mr-2 h-4 w-4"/> {t("Kurura PDF (Igerageza)", "Kurura PDF (Igerageza)")}
+                  <Download className="mr-2 h-4 w-4"/> {t("Download PDF (Mock)", "Kurura PDF (Igerageza)")}
                 </Button>
                 <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Mock - backend needed)", "Chapisha Urupapuro (By'agateganyo - seriveri irakenewe)")})}>
-                  <Printer className="mr-2 h-4 w-4"/> {t("Chapisha Urupapuro (Igerageza)", "Chapisha Urupapuro (Igerageza)")}
+                  <Printer className="mr-2 h-4 w-4"/> {t("Print Prescription (Mock)", "Chapisha Urupapuro (Igerageza)")}
                 </Button>
               </CardFooter>
             </Card>
@@ -193,11 +223,11 @@ export default function MyPrescriptionsPage() {
       ) : (
         <Card className="shadow-lg hover-lift text-center p-10">
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4"/>
-            <CardTitle className="font-headline">{t("Nta Rupapuro rw'Imiti Rubonetse", "Nta Rupapuro rw'Imiti Rubonetse")}</CardTitle>
+            <CardTitle className="font-headline">{t("No Prescriptions Found", "Nta Rupapuro rw'Imiti Rubonetse")}</CardTitle>
             <CardContent>
-                <p className="text-muted-foreground mt-2">{t("Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Amakuru y'imiti yandikiwe asaba guhuzwa na seriveri.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Amakuru y'imiti yandikiwe asaba guhuzwa na seriveri.")}</p>
+                <p className="text-muted-foreground mt-2">{t("You currently do not have any prescriptions on file. Prescription data is simulated and ephemeral in this prototype.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Amakuru y'imiti yandikiwe ni ay'ikitegererezo kandi abikwa by'agateganyo muri iyi prototype.")}</p>
                 <Button onClick={() => router.push('/appointments/book')} className="mt-6 transition-transform hover:scale-105 active:scale-95">
-                    {t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")}
+                    {t("Book an Appointment", "Fata Igihe kwa Muganga")}
                 </Button>
             </CardContent>
         </Card>
@@ -205,4 +235,3 @@ export default function MyPrescriptionsPage() {
     </AppLayout>
   );
 }
-```
