@@ -13,16 +13,19 @@ export default function RootLayout({
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Set isClient to true after mount
+    setIsClient(true); 
 
+    // Set default language to Kinyarwanda on initial load
     document.documentElement.lang = 'kn';
 
+    // Apply theme based on OS preference if no theme is already set
     const hasThemeClass = document.documentElement.classList.contains('light') || document.documentElement.classList.contains('dark');
     
-    if (!hasThemeClass) {
+    if (!hasThemeClass) { // Only apply OS theme if no theme class is present
       if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
       } else {
+        // Default to light theme if OS preference is not dark or not detectable, and no theme is set
         document.documentElement.classList.add('light'); 
       }
     }

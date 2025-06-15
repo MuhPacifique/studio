@@ -44,25 +44,27 @@ export default function AdminLoginPage() {
 
   const onSubmit = async (data: AdminLoginFormValues) => {
     // This is a mock login. No data is persisted.
+    // A real backend would verify credentials and return a session token.
     form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1000));
     form.formState.isSubmitting = false;
     
-    if (data.username === "reponsekdz06@gmail.com" && data.password === "20072025") {
+    // MOCK CREDENTIALS FOR PROTOTYPE
+    if (data.username === "admin@mediserve.com" && data.password === "AdminPassword123!") {
       toast({
         title: t("Kwinjira kw'Umunyamabanga Byagenze Neza", "Kwinjira kw'Umunyamabanga Byagenze Neza"),
-        description: t("Murakaza neza, Munyamabanga! (Igerageza)", "Murakaza neza, Munyamabanga! (Igerageza)"),
+        description: t("Murakaza neza, Munyamabanga! (Igerageza - Nta kwemeza nyakuri kwabaye)", "Murakaza neza, Munyamabanga! (Igerageza - Nta kwemeza nyakuri kwabaye)"),
       });
-      // For prototype, simulate "logging in" by redirecting.
-      // AppLayout's mock auth state isn't directly changed here.
-      // To test authenticated admin views, manually set `isAuthenticated` to true in AppLayout
-      // and adapt role checks or simulate an admin role.
+      // In a real app, AppLayout's isAuthenticated state would be updated via context/global state
+      // after successful API login. For this prototype, we directly navigate.
+      // AppLayout's current mock state won't change, so admin pages might still be blocked
+      // unless AppLayout's mock `isAuthenticated` is manually set to true for testing.
       router.push('/admin/dashboard'); 
     } else {
       toast({
         variant: "destructive",
         title: t("Kwinjira kw'Umunyamabanga Byanze", "Kwinjira kw'Umunyamabanga Byanze"),
-        description: t("Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo.", "Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo."),
+        description: t("Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo. Koresha 'admin@mediserve.com' / 'AdminPassword123!' ku bw'igerageza.", "Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo. Koresha 'admin@mediserve.com' / 'AdminPassword123!' ku bw'igerageza."),
       });
       form.setError("username", { type: "manual", message: " " });
       form.setError("password", { type: "manual", message: t("Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo.", "Izina ry'ukoresha cyangwa ijambobanga ntabwo ari byo.") });
@@ -78,7 +80,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{t("Kwinjira kw'Umunyamabanga", "Kwinjira kw'Umunyamabanga")}</CardTitle>
-          <CardDescription>{t("Injira mu gice cy'ubuyobozi cya MediServe Hub.", "Injira mu gice cy'ubuyobozi cya MediServe Hub.")}</CardDescription>
+          <CardDescription>{t("Injira mu gice cy'ubuyobozi cya MediServe Hub. Igenzura ni iry'ikitegererezo gusa.", "Injira mu gice cy'ubuyobozi cya MediServe Hub. Igenzura ni iry'ikitegererezo gusa.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -90,7 +92,7 @@ export default function AdminLoginPage() {
                   <FormItem>
                     <FormLabel>{t("Izina ry'ukoresha (Email)", "Izina ry'ukoresha (Email)")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="your.admin.email@example.com" {...field} />
+                      <Input placeholder="admin@mediserve.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +105,7 @@ export default function AdminLoginPage() {
                   <FormItem>
                     <FormLabel>{t("Ijambobanga", "Ijambobanga")}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="AdminPassword123!" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,4 +129,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-```

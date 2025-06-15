@@ -78,8 +78,9 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Default user data if no backend is connected. This will not persist.
-  const [currentUser, setCurrentUser] = useState<ProfileFormValues>({
+  // Default user data. In a real app, this would be fetched from the backend after authentication.
+  // This data is now ephemeral and resets on page load.
+  const defaultUserData: ProfileFormValues = {
     fullName: t("Ntwari Jean", "Ntwari Jean"),
     email: "ntwari.jean@example.rw", // This should be non-editable or fetched from an auth context
     phone: "0788123456",
@@ -88,7 +89,7 @@ export default function ProfilePage() {
     city: "Kigali",
     country: "Rwanda",
     bio: t("Passionate about health and wellness.", "Nkunda cyane ubuzima bwiza n'imibereho myiza."),
-    profileImageUrl: "",
+    profileImageUrl: "", // Placeholder, user can upload
     preferredLanguage: "kn",
     enableMarketingEmails: false,
     enableAppNotifications: true,
@@ -96,25 +97,27 @@ export default function ProfilePage() {
     emergencyContactName: "Mukamana Alice",
     emergencyContactPhone: "0788654321",
     enableTwoFactor: false,
-  });
+  };
+  
+  const [currentUser, setCurrentUser] = useState<ProfileFormValues>(defaultUserData);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: currentUser, 
+    defaultValues: defaultUserData, 
   });
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching user profile data. No localStorage means data resets on reload.
-    form.reset(currentUser);
-    if(currentUser.profileImageUrl) setImagePreview(currentUser.profileImageUrl);
-    updateInitials(currentUser.fullName);
+    // Data is now initialized from defaultUserData, not localStorage
+    form.reset(defaultUserData);
+    if(defaultUserData.profileImageUrl) setImagePreview(defaultUserData.profileImageUrl);
+    updateInitials(defaultUserData.fullName);
     
     // Set theme and language from current state, as localStorage is gone
-    document.documentElement.lang = currentUser.preferredLanguage || 'kn';
+    document.documentElement.lang = defaultUserData.preferredLanguage || 'kn';
     document.documentElement.classList.remove('light', 'dark');
-    if (currentUser.theme === 'dark') document.documentElement.classList.add('dark');
-    else if (currentUser.theme === 'light') document.documentElement.classList.remove('dark');
+    if (defaultUserData.theme === 'dark') document.documentElement.classList.add('dark');
+    else if (defaultUserData.theme === 'light') document.documentElement.classList.remove('dark');
     else if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
         
@@ -133,7 +136,7 @@ export default function ProfilePage() {
     if (langValue && (langValue === 'en' || langValue === 'kn' || langValue === 'fr')) {
       form.setValue("preferredLanguage", langValue, { shouldDirty: true, shouldValidate: true });
       document.documentElement.lang = langValue; 
-      toast({ description: t(`Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa)`, `Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa)`) });
+      toast({ description: t(`Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa muri iyi prototype)`, `Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa muri iyi prototype)`) });
     }
   };
 
@@ -145,7 +148,7 @@ export default function ProfilePage() {
       else if (themeValue === 'light') document.documentElement.classList.remove('dark'); 
       else if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
-      toast({ description: t(`Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa)`, `Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa)`) });
+      toast({ description: t(`Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa muri iyi prototype)`, `Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa muri iyi prototype)`) });
     }
   };
 
@@ -167,20 +170,21 @@ export default function ProfilePage() {
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
+    // In a real app, this would send data to the backend.
+    // For this prototype, the data change is ephemeral.
     const updatedProfileImageUrl = imagePreview || data.profileImageUrl || "";
     const dataToSave: ProfileFormValues = { ...data, profileImageUrl: updatedProfileImageUrl };
     
     form.formState.isSubmitting = true; 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
     form.formState.isSubmitting = false;
 
-    // Update local state (not persisted)
-    setCurrentUser(dataToSave); 
+    setCurrentUser(dataToSave); // Update local state (ephemeral)
     updateInitials(dataToSave.fullName);
 
     toast({
       title: t("Umwirondoro Wahinduwe (Igerageza)", "Umwirondoro Wahinduwe (Igerageza)"),
-      description: t("Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype.", "Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype."),
+      description: t("Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype nyuma yo guhindura paji.", "Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype nyuma yo guhindura paji."),
     });
     form.reset(dataToSave); 
     form.setValue('currentPassword',''); 
@@ -191,7 +195,7 @@ export default function ProfilePage() {
   const handleMockAction = (actionName: string, actionNameKn: string) => {
     toast({
       title: t(`${actionName} (Igerageza)`, `${actionNameKn} (Igerageza)`),
-      description: t(`Iki gice (${actionNameKn}) ntikirakora neza. Gisaba guhuzwa na seriveri.`, `Iki gice (${actionNameKn}) ntikirakora neza. Gisaba guhuzwa na seriveri.`),
+      description: t(`Iki gice (${actionNameKn}) ntikirakora neza. Gisaba guhuzwa na seriveri kugirango kibike amakuru.`, `Iki gice (${actionNameKn}) ntikirakora neza. Gisaba guhuzwa na seriveri kugirango kibike amakuru.`),
     });
   };
 
@@ -206,6 +210,9 @@ export default function ProfilePage() {
       </AppLayout>
     );
   }
+  
+  // AppLayout handles redirect if not authenticated.
+  // Assuming if user is here, they are "authenticated" for prototype purposes.
 
   return (
     <AppLayout>
@@ -266,7 +273,7 @@ export default function ProfilePage() {
                     <AccordionContent className="pt-4 space-y-6">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem> <FormLabel>{t("Amazina Yuzuye", "Amazina Yuzuye")}</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="email" render={({ field }) => ( <FormItem> <FormLabel>{t("Aderesi Email", "Aderesi Email")}</FormLabel> <FormControl><Input type="email" {...field} disabled /></FormControl> <FormDescription>{t("Email ntishobora guhindurwa.", "Email ntishobora guhindurwa.")}</FormDescription><FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="email" render={({ field }) => ( <FormItem> <FormLabel>{t("Aderesi Email", "Aderesi Email")}</FormLabel> <FormControl><Input type="email" {...field} disabled /></FormControl> <FormDescription>{t("Email ntishobora guhindurwa (byagenzurwa na seriveri).", "Email ntishobora guhindurwa (byagenzurwa na seriveri).")}</FormDescription><FormMessage /> </FormItem> )} />
                       </div>
                       <FormField control={form.control} name="bio" render={({ field }) => ( <FormItem> <FormLabel>{t("Amagambo make akuranga", "Amagambo make akuranga")}</FormLabel> <FormControl><Textarea placeholder={t("Tubwire bike kuri wowe...", "Tubwire bike kuri wowe...")} {...field} rows={3} /></FormControl> <FormMessage /> </FormItem> )}/>
                       <FormField control={form.control} name="dob" render={({ field }) => ( <FormItem> <FormLabel>{t("Itariki y'Amavuko", "Itariki y'Amavuko")}</FormLabel> <FormControl><Input type="date" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
@@ -303,7 +310,7 @@ export default function ProfilePage() {
                                 </SelectContent>
                             </Select>
                          </FormControl> 
-                       <FormDescription>{t("Tuzagerageza gukoresha uru rurimi aho bishoboka. (Ntibizabikwa)", "Tuzagerageza gukoresha uru rurimi aho bishoboka. (Ntibizabikwa)")}</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormDescription>{t("Ibi byifuzo ntibizabikwa muri iyi prototype kuko localStorage yakuweho.", "Ibi byifuzo ntibizabikwa muri iyi prototype kuko localStorage yakuweho.")}</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="theme" render={({ field }) => ( <FormItem> <FormLabel>{t("Insanganyamatsiko", "Insanganyamatsiko")}</FormLabel> 
                          <FormControl>
                             <Select onValueChange={handleThemeChange} value={field.value}>
@@ -315,7 +322,7 @@ export default function ProfilePage() {
                                 </SelectContent>
                             </Select>
                          </FormControl> 
-                       <FormDescription>{t("Hitamo insanganyamatsiko y'ikoranabuhanga ukunda. (Ntibizabikwa)", "Hitamo insanganyamatsiko y'ikoranabuhanga ukunda. (Ntibizabikwa)")}</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormDescription>{t("Ibi byifuzo ntibizabikwa muri iyi prototype kuko localStorage yakuweho.", "Ibi byifuzo ntibizabikwa muri iyi prototype kuko localStorage yakuweho.")}</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="enableMarketingEmails" render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm hover:bg-muted/50 dark:hover:bg-muted/20">
                             <div className="space-y-0.5"> <FormLabel>{t("Email z'Ubucuruzi", "Email z'Ubucuruzi")}</FormLabel> <FormDescription>{t("Yakira amakuru ku bishya n'amatangazo.", "Yakira amakuru ku bishya n'amatangazo.")}</FormDescription> </div>
@@ -346,12 +353,12 @@ export default function ProfilePage() {
                        <LockKeyhole className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /> {t("Igenamiterere ry'Umutekano", "Igenamiterere ry'Umutekano")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-6">
-                      <FormField control={form.control} name="currentPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Ijambobanga rya None", "Ijambobanga rya None")}</FormLabel> <FormControl><Input type="password" placeholder={t("Shyiramo ijambobanga rya none", "Shyiramo ijambobanga rya none")} {...field} /></FormControl> <FormDescription>{t("Rirakenewe kugirango ushyireho ijambobanga rishya.", "Rirakenewe kugirango ushyireho ijambobanga rishya.")}</FormDescription> <FormMessage /> </FormItem> )} />
-                      <FormField control={form.control} name="newPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Ijambobanga Rishya", "Ijambobanga Rishya")}</FormLabel> <FormControl><Input type="password" placeholder={t("Shyiramo ijambobanga rishya", "Shyiramo ijambobanga rishya")} {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                      <FormField control={form.control} name="confirmNewPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Emeza Ijambobanga Rishya", "Emeza Ijambobanga Rishya")}</FormLabel> <FormControl><Input type="password" placeholder={t("Emeza ijambobanga rishya", "Emeza ijambobanga rishya")} {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="currentPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Ijambobanga rya None", "Ijambobanga rya None")}</FormLabel> <FormControl><Input type="password" placeholder={t("Shyiramo ijambobanga rya none (ry'igerageza)", "Shyiramo ijambobanga rya none (ry'igerageza)")} {...field} /></FormControl> <FormDescription>{t("Rirakenewe kugirango ushyireho ijambobanga rishya. Ibi ntibizakora nta seriveri.", "Rirakenewe kugirango ushyireho ijambobanga rishya. Ibi ntibizakora nta seriveri.")}</FormDescription> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="newPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Ijambobanga Rishya", "Ijambobanga Rishya")}</FormLabel> <FormControl><Input type="password" placeholder={t("Shyiramo ijambobanga rishya (ry'igerageza)", "Shyiramo ijambobanga rishya (ry'igerageza)")} {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                      <FormField control={form.control} name="confirmNewPassword" render={({ field }) => ( <FormItem> <FormLabel>{t("Emeza Ijambobanga Rishya", "Emeza Ijambobanga Rishya")}</FormLabel> <FormControl><Input type="password" placeholder={t("Emeza ijambobanga rishya (ry'igerageza)", "Emeza ijambobanga rishya (ry'igerageza)")} {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                       <FormField control={form.control} name="enableTwoFactor" render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm hover:bg-muted/50 dark:hover:bg-muted/20">
-                            <div className="space-y-0.5"> <FormLabel>{t("Kwemeza mu Byiciro Bibiri", "Kwemeza mu Byiciro Bibiri")}</FormLabel> <FormDescription>{t("Ongera umutekano wa konti yawe (Igerageza).", "Ongera umutekano wa konti yawe (Igerageza).")}</FormDescription> </div>
+                            <div className="space-y-0.5"> <FormLabel>{t("Kwemeza mu Byiciro Bibiri", "Kwemeza mu Byiciro Bibiri")}</FormLabel> <FormDescription>{t("Ongera umutekano wa konti yawe (Igerageza - bisaba seriveri).", "Ongera umutekano wa konti yawe (Igerageza - bisaba seriveri).")}</FormDescription> </div>
                             <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                           </FormItem>
                         )} />
@@ -363,7 +370,7 @@ export default function ProfilePage() {
                 <div className="flex justify-end pt-6">
                   <Button type="submit" disabled={form.formState.isSubmitting} className="transition-transform hover:scale-105 active:scale-95 py-3 px-6 text-base">
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                    {form.formState.isSubmitting ? t("Kubika...", "Kubika...") : t("Bika Impinduka Zose", "Bika Impinduka Zose")}
+                    {form.formState.isSubmitting ? t("Kubika...", "Kubika...") : t("Bika Impinduka Zose (Igerageza)", "Bika Impinduka Zose (Igerageza)")}
                   </Button>
                 </div>
               </form>
@@ -380,7 +387,7 @@ export default function ProfilePage() {
               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("My Medical Records", "Amadosiye Yanjye y'Ubuvuzi")}> <FileText className="mr-2 h-4 w-4" /> {t("Amadosiye Yanjye y'Ubuvuzi (Igerageza)", "Amadosiye Yanjye y'Ubuvuzi (Igerageza)")} </Button>
               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("My Order History", "Amateka y'Ibyo Natumije")}> <FileClock className="mr-2 h-4 w-4" /> {t("Amateka y'Ibyo Natumije (Igerageza)", "Amateka y'Ibyo Natumije (Igerageza)")} </Button>
               <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("Login History", "Amateka y'Uko Ninjiye")}> <History className="mr-2 h-4 w-4" /> {t("Amateka y'Uko Ninjiye (Igerageza)", "Amateka y'Uko Ninjiye (Igerageza)")} </Button>
-              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("Communication History", "Amateka y'Itumanaho")}> <MessageCircle className="mr-2 h-4 w-4" /> {t("Amateka y'Itumanaho", "Amateka y'Itumanaho")} </Button>
+              <Button variant="outline" className="w-full justify-start text-left transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 hover-lift" onClick={() => handleMockAction("Communication History", "Amateka y'Itumanaho")}> <MessageCircle className="mr-2 h-4 w-4" /> {t("Amateka y'Itumanaho (Igerageza)", "Amateka y'Itumanaho (Igerageza)")} </Button>
             </CardContent>
           </Card>
            <Card className="shadow-xl hover-lift border-destructive/30 dark:border-destructive/50 dark:shadow-destructive/10">
@@ -392,7 +399,7 @@ export default function ProfilePage() {
               <Button variant="destructive" className="w-full justify-start text-left transition-opacity hover:opacity-90 hover-lift" onClick={() => handleMockAction("Deactivate Account", "Hagarika Konti")}>
                 <PowerOff className="mr-2 h-4 w-4" /> {t("Hagarika Konti (Igerageza)", "Hagarika Konti (Igerageza)")}
               </Button>
-               <p className="text-xs text-muted-foreground mt-2">{t("Guhagarika konti yawe ntibisubirwaho. Nyamuneka wizere.", "Guhagarika konti yawe ntibisubirwaho. Nyamuneka wizere.")}</p>
+               <p className="text-xs text-muted-foreground mt-2">{t("Guhagarika konti yawe ntibisubirwaho. Nyamuneka wizere. Ibi ntibikora nta seriveri.", "Guhagarika konti yawe ntibisubirwaho. Nyamuneka wizere. Ibi ntibikora nta seriveri.")}</p>
             </CardContent>
           </Card>
         </div>
@@ -401,4 +408,3 @@ export default function ProfilePage() {
     </AppLayout>
   );
 }
-```

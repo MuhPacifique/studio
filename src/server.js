@@ -1,208 +1,300 @@
-// MediServe Hub - Placeholder Backend Server (Conceptual & Enhanced)
-// This file outlines a more detailed conceptual structure for the backend.
-// It does NOT represent a fully functional server but serves as a guide.
-// A real backend would use a framework like Express.js (or Next.js API Routes/Route Handlers),
-// connect to a database (e.g., PostgreSQL using schema.sql),
-// implement robust authentication, error handling, real-time communication, and all necessary API endpoints.
+// MediServe Hub - Conceptual Backend Server (Express.js & WebSocket Example)
+// Version: 2.0
+// This file outlines a conceptual structure for the backend.
+// It does NOT represent a fully functional server but serves as a detailed guide.
+// A real backend would use a framework like Express.js, connect to a database (e.g., PostgreSQL using schema.sql),
+// implement robust authentication, error handling, real-time communication (WebSockets, WebRTC signaling), and all necessary API endpoints.
 
-console.log("MediServe Hub - Enhanced Conceptual Backend Server Guide");
+console.log("MediServe Hub - Conceptual Backend Server Guide v2.0");
 
 /*
---- Conceptual Backend Structure (e.g., using Express.js + WebSocket for real-time) ---
+--- Core Technologies (Conceptual Stack) ---
+- Node.js: JavaScript runtime environment.
+- Express.js: Web framework for Node.js (for REST APIs).
+- PostgreSQL: Relational database (schema defined in `schema.sql`).
+- `pg` (node-postgres): PostgreSQL client for Node.js.
+- `bcryptjs`: For hashing passwords.
+- `jsonwebtoken` (JWT): For authentication tokens.
+- `ws`: WebSocket library for Node.js (for real-time chat and signaling).
+- `cors`, `helmet`, `morgan`: Essential Express middleware.
+- Possibly an ORM like Prisma or TypeORM for database interaction.
+- Possibly a validation library like Joi or Zod for request payloads.
+- Possibly a signaling server for WebRTC if not building from scratch with `ws`.
 
+--- Server Initialization (Conceptual) ---
 const express = require('express');
-const http = require('http'); // For WebSocket server
-const WebSocket = require('ws'); // For WebSocket communication
+const http = require('http');
+const WebSocket = require('ws');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const jwt =require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { Pool } = require('pg'); // Or your chosen DB client/ORM (e.g., Prisma, TypeORM)
+const { Pool } = require('pg'); // Or your chosen DB client/ORM
 // const { nanoid } = require('nanoid'); // For generating unique IDs if not using DB's UUID
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server for Express and WebSocket
-const wss = new WebSocket.Server({ server }); // Attach WebSocket server
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server }); // Attach WebSocket server to HTTP server
 
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-replace-this'; // IMPORTANT: Use a strong, environment-specific secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-strong-and-unique-jwt-secret-key'; // Store in .env
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/mediserve_db'; // Store in .env
 
 // --- Database Connection (Conceptual) ---
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL, // e.g., postgresql://user:password@host:port/database
-//   // ssl: { rejectUnauthorized: false } // If using SSL with DBaaS
-// });
-// console.log("Conceptual: Attempting to connect to database...");
-// pool.query('SELECT NOW()', (err, res) => {
-//   if (err) {
-//     console.error('Conceptual: Database connection error', err.stack);
-//   } else {
-//     console.log('Conceptual: Database connected successfully at', res.rows[0].now);
-//   }
-// });
+// const pool = new Pool({ connectionString: DATABASE_URL });
+// pool.connect()
+//   .then(() => console.log('Conceptual: Database connected successfully.'))
+//   .catch(err => console.error('Conceptual: Database connection error:', err.stack));
 
 // --- Middleware ---
-app.use(cors({ origin: 'http://localhost:9002' })); // Adjust for your frontend URL
-app.use(helmet());
-app.use(express.json({ limit: '5mb' })); // For parsing JSON, increase limit for image data URIs
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
-app.use(morgan('dev'));
+app.use(cors({ origin: 'http://localhost:9002' })); // Frontend URL, adjust for production
+app.use(helmet()); // Security headers
+app.use(express.json({ limit: '10mb' })); // For parsing JSON request bodies, increased for potential image data
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan('dev')); // HTTP request logger
 
 // --- Authentication Middleware (Conceptual) ---
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-  if (token == null) return res.sendStatus(401); // Unauthorized
+  const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
+  if (token == null) return res.sendStatus(401); // No token, unauthorized
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, userPayload) => {
     if (err) {
       console.error("JWT Verification Error:", err.message);
-      return res.sendStatus(403); // Forbidden
+      return res.sendStatus(403); // Token invalid or expired, forbidden
     }
-    req.user = user; // Add user payload (id, role) to request object
+    req.user = userPayload; // userPayload contains { id: userId, role: userRole }
     next();
   });
 };
 
-const authorizeRole = (rolesArray) => {
+// --- Authorization Middleware (Conceptual) ---
+const authorizeRole = (allowedRolesArray) => {
   return (req, res, next) => {
-    if (!req.user || !rolesArray.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions.' });
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({ error: 'Access denied. User role not found.' });
+    }
+    if (!allowedRolesArray.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied. Insufficient permissions for this role.' });
     }
     next();
   };
 };
 
-// --- WebSocket Connection Handling (Conceptual for Chat & Signaling) ---
-// Store connected clients (highly simplified, in prod use Redis or similar for scalability)
-// const clients = new Map(); // Map<userId, WebSocketConnection>
-// const chatRooms = new Map(); // Map<roomId, Set<WebSocketConnection>>
+// --- WebSocket Server Logic (Conceptual) ---
+// This is a simplified model. Production systems might use Redis for scaling client/room management.
+const connectedClients = new Map(); // Map<userId, WebSocketConnection>
+const chatRooms = new Map(); // Map<roomId, Set<WebSocketConnection>> - roomId could be consultation_id, group_id
 
-// wss.on('connection', (ws, req) => {
-//   // Conceptual: Authenticate WebSocket connection (e.g., via token in query param or initial message)
-//   // const token = new URL(req.url, `http://${req.headers.host}`).searchParams.get('token');
-//   // let userId;
-//   // try {
-//   //   const decoded = jwt.verify(token, JWT_SECRET);
-//   //   userId = decoded.id;
-//   //   clients.set(userId, ws);
-//   //   console.log(`Conceptual WS: Client ${userId} connected.`);
-//   // } catch (err) {
-//   //   console.error("Conceptual WS: Auth failed.", err.message);
-//   //   ws.close(1008, "Authentication failed");
-//   //   return;
-//   // }
+wss.on('connection', (ws, req) => {
+  // Conceptual: Authenticate WebSocket connection (e.g., token in query param during handshake)
+  // const token = new URL(req.url, `http://${req.headers.host}`).searchParams.get('token');
+  // let userId, userRole;
+  // try {
+  //   const decoded = jwt.verify(token, JWT_SECRET);
+  //   userId = decoded.id;
+  //   userRole = decoded.role;
+  //   ws.userId = userId; // Attach userId to WebSocket connection object
+  //   ws.userRole = userRole;
+  //   connectedClients.set(userId, ws);
+  //   console.log(`Conceptual WS: Client ${userId} (Role: ${userRole}) connected.`);
+  //   ws.send(JSON.stringify({ type: 'WS_CONNECTION_SUCCESS', payload: { message: 'WebSocket connected successfully.' } }));
+  // } catch (err) {
+  //   console.error("Conceptual WS: Auth failed for WebSocket connection.", err.message);
+  //   ws.close(1008, "Authentication failed");
+  //   return;
+  // }
 
-//   ws.on('message', async (message) => {
-//     try {
-//       const parsedMessage = JSON.parse(message);
-//       console.log(`Conceptual WS: Received message from ${userId}:`, parsedMessage);
+  ws.on('message', async (message) => {
+    // try {
+    //   const parsedMessage = JSON.parse(message.toString());
+    //   console.log(`Conceptual WS: Received from ${userId}:`, parsedMessage);
 
-//       switch (parsedMessage.type) {
-//         case 'JOIN_CHAT_ROOM':
-//           // const { roomId } = parsedMessage.payload;
-//           // if (!chatRooms.has(roomId)) chatRooms.set(roomId, new Set());
-//           // chatRooms.get(roomId).add(ws);
-//           // DB: Record user joined room if needed
-//           // ws.send(JSON.stringify({ type: 'CHAT_ROOM_JOINED', payload: { roomId } }));
-//           break;
+    //   switch (parsedMessage.type) {
+    //     // --- Chat Functionality ---
+    //     case 'JOIN_CHAT_ROOM': {
+    //       // const { roomId } = parsedMessage.payload;
+    //       // // DB: Verify user has permission to join this room (e.g., is part of consultation or group)
+    //       // const canJoin = await dbCheckUserCanJoinRoom(userId, roomId);
+    //       // if (!canJoin) {
+    //       //   ws.send(JSON.stringify({ type: 'ERROR', payload: 'Not authorized to join this room.' }));
+    //       //   break;
+    //       // }
+    //       // if (!chatRooms.has(roomId)) chatRooms.set(roomId, new Set());
+    //       // chatRooms.get(roomId).add(ws);
+    //       // ws.roomId = roomId; // Store current room on ws object
+    //       // ws.send(JSON.stringify({ type: 'CHAT_ROOM_JOINED', payload: { roomId, message: `Joined room ${roomId}` } }));
+    //       // console.log(`Conceptual WS: User ${userId} joined chat room ${roomId}`);
+    //       break;
+    //     }
+    //     case 'LEAVE_CHAT_ROOM': {
+    //       // const { roomId } = parsedMessage.payload;
+    //       // if (chatRooms.has(roomId) && chatRooms.get(roomId).has(ws)) {
+    //       //   chatRooms.get(roomId).delete(ws);
+    //       //   if (chatRooms.get(roomId).size === 0) chatRooms.delete(roomId);
+    //       //   ws.send(JSON.stringify({ type: 'CHAT_ROOM_LEFT', payload: { roomId } }));
+    //       //   console.log(`Conceptual WS: User ${userId} left chat room ${roomId}`);
+    //       // }
+    //       break;
+    //     }
+    //     case 'SEND_CHAT_MESSAGE': {
+    //       // const { roomId, content, contentType = 'text' } = parsedMessage.payload;
+    //       // if (!roomId || !chatRooms.has(roomId) || !chatRooms.get(roomId).has(ws)) {
+    //       //   ws.send(JSON.stringify({ type: 'ERROR', payload: 'Not in a valid room to send message.' }));
+    //       //   break;
+    //       // }
+    //       // const messageData = {
+    //       //   id: nanoid(), // Or DB generated
+    //       //   room_id: roomId,
+    //       //   sender_id: userId,
+    //       //   sender_name: (await pool.query('SELECT full_name FROM user_profiles WHERE user_id = $1', [userId])).rows[0]?.full_name || 'User',
+    //       //   content_type: contentType,
+    //       //   message_text: content,
+    //       //   sent_at: new Date().toISOString()
+    //       // };
+    //       // // DB: INSERT INTO chat_messages (...) VALUES (...)
+    //       // await pool.query('INSERT INTO chat_messages (room_id, sender_id, content_type, message_text) VALUES ($1, $2, $3, $4)',
+    //       //   [roomId, userId, contentType, content]);
+    //       // chatRooms.get(roomId).forEach(client => {
+    //       //   if (client.readyState === WebSocket.OPEN) {
+    //       //     client.send(JSON.stringify({ type: 'NEW_CHAT_MESSAGE', payload: messageData }));
+    //       //   }
+    //       // });
+    //       break;
+    //     }
 
-//         case 'SEND_CHAT_MESSAGE':
-//           // const { roomId: targetRoomId, content, contentType } = parsedMessage.payload;
-//           // DB: Save message to chat_messages table (sender_id: userId, room_id: targetRoomId, message_text: content, content_type: contentType)
-//           // const savedMessage = { id: nanoid(), room_id: targetRoomId, sender_id: userId, message_text: content, content_type: contentType, created_at: new Date() };
-//           // // Broadcast to all clients in the room
-//           // if (chatRooms.has(targetRoomId)) {
-//           //   chatRooms.get(targetRoomId).forEach(client => {
-//           //     if (client.readyState === WebSocket.OPEN) {
-//           //       client.send(JSON.stringify({ type: 'NEW_CHAT_MESSAGE', payload: savedMessage }));
-//           //     }
-//           //   });
-//           // }
-//           break;
+    //     // --- WebRTC Signaling for Video/Audio Calls ---
+    //     // A 'call_room_id' would typically be a consultation_session_id or a unique ID for the call.
+    //     case 'WEBRTC_JOIN_CALL_ROOM': { // User initiates or joins a call
+    //       // const { callRoomId, appointmentId } = parsedMessage.payload;
+    //       // ws.callRoomId = callRoomId;
+    //       // // Logic: if this is the first user (e.g., doctor initiating), create/mark session in DB.
+    //       // // If second user (patient joining), notify the first user.
+    //       // // Manage participants in this callRoomId (similar to chatRooms but could be simpler for 1-to-1)
+    //       // console.log(`Conceptual WS: User ${userId} wants to join call room ${callRoomId} for appointment ${appointmentId}`);
+    //       // const otherParticipantId = await getOtherParticipantInCall(callRoomId, userId); // DB lookup
+    //       // const otherWs = connectedClients.get(otherParticipantId);
+    //       // if (otherWs && otherWs.readyState === WebSocket.OPEN) {
+    //       //    otherWs.send(JSON.stringify({ type: 'WEBRTC_USER_JOINED', payload: { userId, callRoomId } }));
+    //       //    ws.send(JSON.stringify({ type: 'WEBRTC_READY_FOR_SIGNALING', payload: { callRoomId, otherUserId: otherParticipantId } }));
+    //       // } else {
+    //       //    ws.send(JSON.stringify({ type: 'WEBRTC_WAITING_FOR_OTHER_USER', payload: { callRoomId } }));
+    //       // }
+    //       break;
+    //     }
+    //     case 'WEBRTC_OFFER':
+    //     case 'WEBRTC_ANSWER':
+    //     case 'WEBRTC_ICE_CANDIDATE': {
+    //       // const { targetUserId, callRoomId, signalData } = parsedMessage.payload;
+    //       // const targetClient = connectedClients.get(targetUserId);
+    //       // if (targetClient && targetClient.readyState === WebSocket.OPEN && targetClient.callRoomId === callRoomId) {
+    //       //   targetClient.send(JSON.stringify({
+    //       //     type: parsedMessage.type, // Relay the original type
+    //       //     payload: { senderId: userId, signalData }
+    //       //   }));
+    //       //   console.log(`Conceptual WS: Relayed ${parsedMessage.type} from ${userId} to ${targetUserId} in room ${callRoomId}`);
+    //       // } else {
+    //       //   console.log(`Conceptual WS: Target ${targetUserId} not found/ready for WebRTC signal in room ${callRoomId}.`);
+    //       //   ws.send(JSON.stringify({ type: 'ERROR', payload: `User ${targetUserId} not available for signaling.` }));
+    //       // }
+    //       break;
+    //     }
+    //     case 'WEBRTC_END_CALL': {
+    //       // const { callRoomId, targetUserId } = parsedMessage.payload;
+    //       // // DB: Update consultation_sessions status to 'ended'.
+    //       // const targetClient = connectedClients.get(targetUserId);
+    //       // if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+    //       //    targetClient.send(JSON.stringify({ type: 'WEBRTC_CALL_ENDED', payload: { callRoomId, endedBy: userId } }));
+    //       // }
+    //       // ws.send(JSON.stringify({ type: 'WEBRTC_CALL_ENDED_CONFIRMED', payload: {callRoomId }}));
+    //       // delete ws.callRoomId;
+    //       // // Clean up call room if necessary
+    //       // console.log(`Conceptual WS: User ${userId} ended call in room ${callRoomId}`);
+    //       break;
+    //     }
+    //     default:
+    //       // ws.send(JSON.stringify({ type: 'ERROR', payload: 'Unknown message type' }));
+    //       break;
+    //   }
+    // } catch (e) {
+    //   console.error('Conceptual WS: Failed to process message or invalid JSON', e, message.toString());
+    //   ws.send(JSON.stringify({ type: 'ERROR', payload: 'Invalid message format' }));
+    // }
+  });
 
-//         case 'WEBRTC_SIGNAL': // For video/audio call signaling
-//           // const { targetUserId, signalData } = parsedMessage.payload;
-//           // const targetClient = clients.get(targetUserId);
-//           // if (targetClient && targetClient.readyState === WebSocket.OPEN) {
-//           //   targetClient.send(JSON.stringify({ type: 'WEBRTC_SIGNAL', payload: { senderId: userId, signalData } }));
-//           //   // DB: Could log signaling attempts or session status in consultation_sessions table
-//           // } else {
-//           //   console.log(`Conceptual WS: Target user ${targetUserId} not found or not connected for WebRTC signal.`);
-//           // }
-//           break;
+  ws.on('close', () => {
+    // console.log(`Conceptual WS: Client ${userId} (Role: ${userRole}) disconnected.`);
+    // connectedClients.delete(userId);
+    // // Clean up from chat rooms and call rooms
+    // if (ws.roomId && chatRooms.has(ws.roomId)) {
+    //   chatRooms.get(ws.roomId).delete(ws);
+    //   if (chatRooms.get(ws.roomId).size === 0) chatRooms.delete(ws.roomId);
+    // }
+    // if (ws.callRoomId) {
+    //   // Notify other participant in call room if any
+    //   // Clean up call room data
+    // }
+  });
 
-//         // Handle other message types: 'LEAVE_CHAT_ROOM', 'TYPING_INDICATOR', etc.
-//       }
-//     } catch (e) {
-//       console.error('Conceptual WS: Failed to process message or invalid JSON', e);
-//       ws.send(JSON.stringify({ type: 'ERROR', payload: 'Invalid message format' }));
-//     }
-//   });
+  ws.on('error', (error) => {
+    // console.error(`Conceptual WS: Error for client ${userId}:`, error);
+  });
+});
 
-//   ws.on('close', () => {
-//     console.log(`Conceptual WS: Client ${userId} disconnected.`);
-//     // clients.delete(userId);
-//     // // Remove from all chat rooms
-//     // chatRooms.forEach((roomClients, roomId) => {
-//     //   if (roomClients.has(ws)) {
-//     //     roomClients.delete(ws);
-//     //     if (roomClients.size === 0) {
-//     //       chatRooms.delete(roomId);
-//     //     }
-//     //     // Optionally notify other room members
-//     //   }
-//     // });
-//   });
-
-//   ws.on('error', (error) => {
-//     console.error(`Conceptual WS: Error for client ${userId}:`, error);
-//   });
-// });
-
-
-// --- API Routes ---
+// --- API Endpoints (Conceptual) ---
 
 // == User Authentication & Management ==
 // POST /api/auth/register
-//   Req: { fullName, email, password, phone, roleName ('patient', 'doctor', 'seeker') }
-//   Res (201): { message, token, user: { id, fullName, email, roleName } }
-//   Logic: Validate, check existing, hash pass, INSERT users & user_profiles, get role_id, generate JWT.
 app.post('/api/auth/register', async (req, res) => {
   // const { fullName, email, password, phone, roleName } = req.body;
-  // // Validation (e.g., using a library like Joi or Zod on backend)
-  // if (!fullName || !email || !password || !roleName) return res.status(400).json({ error: 'Missing required fields.' });
+  // // Input validation (e.g., using Zod or Joi)
+  // if (!fullName || !email || !password || !roleName ) return res.status(400).json({ error: 'Missing required fields for registration.' });
+  // if (roleName === 'admin') return res.status(403).json({ error: 'Admin registration is not allowed through this endpoint.' });
+
   // try {
-  //   // const roleResult = await pool.query('SELECT id FROM roles WHERE name = $1', [roleName]);
-  //   // if (roleResult.rows.length === 0) return res.status(400).json({ error: 'Invalid role specified.' });
-  //   // const roleId = roleResult.rows[0].id;
-  //   // const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-  //   // if (existingUser.rows.length > 0) return res.status(409).json({ error: 'Email already in use.' });
-  //   // const salt = await bcrypt.genSalt(10);
-  //   // const passwordHash = await bcrypt.hash(password, salt);
-  //   // const client = await pool.connect();
-  //   // try {
-  //   //   await client.query('BEGIN');
-  //   //   const userInsertResult = await client.query(
-  //   //     'INSERT INTO users (email, password_hash, role_id, is_active, is_verified) VALUES ($1, $2, $3, TRUE, FALSE) RETURNING id',
-  //   //     [email, passwordHash, roleId]
-  //   //   );
-  //   //   const userId = userInsertResult.rows[0].id;
-  //   //   await client.query(
-  //   //     'INSERT INTO user_profiles (user_id, full_name, phone_number) VALUES ($1, $2, $3)',
-  //   //     [userId, fullName, phone]
-  //   //   );
-  //   //   await client.query('COMMIT');
-  //   //   const token = jwt.sign({ id: userId, role: roleName }, JWT_SECRET, { expiresIn: '24h' });
-  //   //   res.status(201).json({ message: 'User registered successfully.', token, user: { id: userId, fullName, email, roleName } });
-  //   // } catch (dbError) {
-  //   //   await client.query('ROLLBACK');
-  //   //   console.error('DB Error during registration:', dbError);
-  //   //   res.status(500).json({ error: 'Database error during registration.' });
-  //   // } finally {
-  //   //   client.release();
-  //   // }
+  //   const roleResult = await pool.query('SELECT id FROM roles WHERE name = $1', [roleName]);
+  //   if (roleResult.rows.length === 0) return res.status(400).json({ error: 'Invalid role specified.' });
+  //   const roleId = roleResult.rows[0].id;
+
+  //   const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+  //   if (existingUser.rows.length > 0) return res.status(409).json({ error: 'Email already registered.' });
+
+  //   const salt = await bcrypt.genSalt(10);
+  //   const hashedPassword = await bcrypt.hash(password, salt);
+
+  //   const client = await pool.connect();
+  //   try {
+  //     await client.query('BEGIN');
+  //     const userInsertResult = await client.query(
+  //       'INSERT INTO users (email, password_hash, role_id) VALUES ($1, $2, $3) RETURNING id',
+  //       [email, hashedPassword, roleId]
+  //     );
+  //     const userId = userInsertResult.rows[0].id;
+  //     await client.query(
+  //       'INSERT INTO user_profiles (user_id, full_name, phone_number) VALUES ($1, $2, $3)',
+  //       [userId, fullName, phone || null]
+  //     );
+  //     // For doctors, create an entry in doctor_profiles
+  //     // if (roleName === 'doctor') {
+  //     //   await client.query('INSERT INTO doctor_profiles (user_id) VALUES ($1)', [userId]); // Add more fields later
+  //     // }
+  //     await client.query('COMMIT');
+
+  //     const token = jwt.sign({ id: userId, role: roleName, email: email }, JWT_SECRET, { expiresIn: '24h' });
+  //     res.status(201).json({
+  //       message: 'User registered successfully. Please check your email for verification (conceptual).',
+  //       token,
+  //       user: { id: userId, fullName, email, roleName }
+  //     });
+  //   } catch (dbError) {
+  //     await client.query('ROLLBACK');
+  //     console.error('DB Error during registration:', dbError);
+  //     res.status(500).json({ error: 'Database error during registration.' });
+  //   } finally {
+  //     client.release();
+  //   }
   // } catch (err) {
   //   console.error('Registration error:', err);
   //   res.status(500).json({ error: 'Server error during registration.' });
@@ -211,28 +303,34 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-//   Req: { email, password }
-//   Res (200): { message, token, user: { id, fullName, email, roleName, profileImageUrl, preferredLanguage, themePreference } }
-//   Logic: Find user, verify pass, generate JWT.
 app.post('/api/auth/login', async (req, res) => {
-  // const { email, password } = req.body;
+  // const { email, password, role } = req.body; // role from client can help narrow down if needed, but email should be unique
   // if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+
   // try {
-  //   // const userResult = await pool.query(
-  //   //   'SELECT u.id, u.email, u.password_hash, r.name as role_name, p.full_name, p.profile_image_url, p.preferred_language, p.theme_preference FROM users u JOIN roles r ON u.role_id = r.id JOIN user_profiles p ON u.id = p.user_id WHERE u.email = $1 AND u.is_active = TRUE',
-  //   //   [email]
-  //   // );
-  //   // if (userResult.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials or user not active.' });
-  //   // const user = userResult.rows[0];
-  //   // const isMatch = await bcrypt.compare(password, user.password_hash);
-  //   // if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
-  //   // const token = jwt.sign({ id: user.id, role: user.role_name }, JWT_SECRET, { expiresIn: '24h' });
-  //   // await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
-  //   // res.json({
-  //   //   message: 'Login successful.',
-  //   //   token,
-  //   //   user: { id: user.id, fullName: user.full_name, email: user.email, roleName: user.role_name, profileImageUrl: user.profile_image_url, preferredLanguage: user.preferred_language, themePreference: user.theme_preference },
-  //   // });
+  //   const userResult = await pool.query(
+  //     'SELECT u.id, u.email, u.password_hash, r.name as role_name, p.full_name, p.profile_image_url, p.preferred_language, p.theme_preference FROM users u JOIN roles r ON u.role_id = r.id JOIN user_profiles p ON u.id = p.user_id WHERE u.email = $1 AND u.is_active = TRUE',
+  //     [email]
+  //   );
+
+  //   if (userResult.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials or user not active.' });
+  //   const user = userResult.rows[0];
+
+  //   // If role was passed and doesn't match, it's an issue (e.g. trying to log into patient portal as doctor)
+  //   // if (role && role !== user.role_name) {
+  //   //   return res.status(401).json({ error: `Not authorized for ${role} portal with these credentials.` });
+  //   // }
+
+  //   const isMatch = await bcrypt.compare(password, user.password_hash);
+  //   if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
+
+  //   const token = jwt.sign({ id: user.id, role: user.role_name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+  //   await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+  //   res.json({
+  //     message: 'Login successful.',
+  //     token,
+  //     user: { id: user.id, fullName: user.full_name, email: user.email, roleName: user.role_name, profileImageUrl: user.profile_image_url, preferredLanguage: user.preferred_language, themePreference: user.theme_preference },
+  //   });
   // } catch (err) {
   //   console.error('Login error:', err);
   //   res.status(500).json({ error: 'Server error during login.' });
@@ -240,46 +338,45 @@ app.post('/api/auth/login', async (req, res) => {
   res.status(501).json({ message: 'Conceptual: Login endpoint hit. Not implemented yet.' });
 });
 
-// POST /api/auth/admin/login - Similar to user login, but checks for admin role explicitly.
+// POST /api/auth/admin/login
 app.post('/api/auth/admin/login', async (req, res) => {
-  // ... logic similar to /api/auth/login, but ensures user.role_name === 'admin'
-  res.status(501).json({ message: 'Conceptual: Admin login hit. Not implemented yet.' });
+  // Similar to user login, but specifically for the admin role.
+  // const { email, password } = req.body;
+  // if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+  // try {
+  //   const userResult = await pool.query( /* ... query ... */ );
+  //   if (userResult.rows.length === 0 || userResult.rows[0].role_name !== 'admin') {
+  //     return res.status(401).json({ error: 'Invalid admin credentials or user not an admin.' });
+  //   }
+  //   // ... rest of login logic ...
+  // } catch (err) { /* ... */ }
+  res.status(501).json({ message: 'Conceptual: Admin Login endpoint hit. Not implemented yet.' });
 });
 
-
 // GET /api/users/me (Requires Auth)
-//   Res: { user: { id, fullName, email, phone, roleName, dob, address, city, country, bio, profileImageUrl, preferredLanguage, themePreference, emergencyContactName, emergencyContactPhone, ... } }
 app.get('/api/users/me', authenticateToken, async (req, res) => {
   // const userId = req.user.id;
   // try {
-  //   // const profileResult = await pool.query(
-  //   //   'SELECT u.email, u.role_id, r.name as role_name, p.* FROM users u JOIN user_profiles p ON u.id = p.user_id JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
-  //   //   [userId]
-  //   // );
-  //   // if (profileResult.rows.length === 0) return res.status(404).json({ error: 'User profile not found.' });
-  //   // const userProfile = profileResult.rows[0];
-  //   // // Map DB columns to desired response structure
-  //   // const responseUser = {
-  //   //   id: userId,
-  //   //   fullName: userProfile.full_name,
-  //   //   email: userProfile.email,
-  //   //   phone: userProfile.phone_number,
-  //   //   roleName: userProfile.role_name,
-  //   //   dob: userProfile.date_of_birth,
-  //   //   address: userProfile.address,
-  //   //   city: userProfile.city,
-  //   //   country: userProfile.country,
-  //   //   bio: userProfile.bio,
-  //   //   profileImageUrl: userProfile.profile_image_url,
-  //   //   preferredLanguage: userProfile.preferred_language,
-  //   //   themePreference: userProfile.theme_preference,
-  //   //   emergencyContactName: userProfile.emergency_contact_name,
-  //   //   emergencyContactPhone: userProfile.emergency_contact_phone,
-  //   //   enableMarketingEmails: userProfile.enable_marketing_emails,
-  //   //   enableAppNotifications: userProfile.enable_app_notifications,
-  //   //   // Add other fields from user_profiles as needed
-  //   // };
-  //   // res.json({ user: responseUser });
+  //   // Fetch detailed user profile from users, user_profiles, and doctor_profiles if applicable
+  //   const query = `
+  //     SELECT
+  //       u.id, u.email, u.is_verified, u.created_at as user_created_at,
+  //       r.name as role_name,
+  //       p.full_name, p.phone_number, p.date_of_birth, p.gender, p.address, p.city, p.country,
+  //       p.profile_image_url, p.bio, p.preferred_language, p.theme_preference,
+  //       p.emergency_contact_name, p.emergency_contact_phone, p.enable_marketing_emails, p.enable_app_notifications,
+  //       dp.specialty_id, ds.name_en as specialty_name_en, ds.name_kn as specialty_name_kn,
+  //       dp.medical_license_number, dp.years_of_experience, dp.qualifications, dp.consultation_fee
+  //     FROM users u
+  //     JOIN roles r ON u.role_id = r.id
+  //     JOIN user_profiles p ON u.id = p.user_id
+  //     LEFT JOIN doctor_profiles dp ON u.id = dp.user_id AND r.name = 'doctor'
+  //     LEFT JOIN doctor_specialties ds ON dp.specialty_id = ds.id
+  //     WHERE u.id = $1;
+  //   `;
+  //   const profileResult = await pool.query(query, [userId]);
+  //   if (profileResult.rows.length === 0) return res.status(404).json({ error: 'User profile not found.' });
+  //   res.json({ user: profileResult.rows[0] });
   // } catch (err) {
   //   console.error('Get my profile error:', err);
   //   res.status(500).json({ error: 'Server error fetching profile.' });
@@ -288,240 +385,159 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/users/me (Requires Auth)
-//   Req: { fullName, phone, dob, address, city, country, bio, profileImageUrl, preferredLanguage, themePreference, emergencyContactName, emergencyContactPhone, newPassword, currentPassword, etc. }
 app.put('/api/users/me', authenticateToken, async (req, res) => {
   // const userId = req.user.id;
-  // const { fullName, phone, dob, address, city, country, bio, profileImageUrl, preferredLanguage, themePreference, emergencyContactName, emergencyContactPhone, newPassword, currentPassword, enableMarketingEmails, enableAppNotifications } = req.body;
-  // try {
-  //   // // Update user_profiles table
-  //   // await pool.query(
-  //   //  'UPDATE user_profiles SET full_name = $1, phone_number = $2, date_of_birth = $3, address = $4, city = $5, country = $6, bio = $7, profile_image_url = $8, preferred_language = $9, theme_preference = $10, emergency_contact_name = $11, emergency_contact_phone = $12, enable_marketing_emails = $13, enable_app_notifications = $14, updated_at = CURRENT_TIMESTAMP WHERE user_id = $15',
-  //   //  [fullName, phone, dob || null, address, city, country, bio, profileImageUrl, preferredLanguage, themePreference, emergencyContactName, emergencyContactPhone, enableMarketingEmails, enableAppNotifications, userId]
-  //   // );
-  //   // Handle password change if newPassword and currentPassword are provided
-  //   // if (newPassword && currentPassword) {
-  //   //   // const userResult = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
-  //   //   // if (userResult.rows.length === 0) return res.status(404).json({ error: 'User not found for password change.' });
-  //   //   // const isMatch = await bcrypt.compare(currentPassword, userResult.rows[0].password_hash);
-  //   //   // if (!isMatch) return res.status(401).json({ error: 'Incorrect current password.' });
-  //   //   // const salt = await bcrypt.genSalt(10);
-  //   //   // const newPasswordHash = await bcrypt.hash(newPassword, salt);
-  //   //   // await pool.query('UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newPasswordHash, userId]);
-  //   // }
-  //   // const updatedProfile = await pool.query('SELECT p.*, u.email, r.name as role_name FROM user_profiles p JOIN users u ON p.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE p.user_id = $1', [userId]);
-  //   // res.json({ message: 'Profile updated successfully.', user: updatedProfile.rows[0] });
-  // } catch (err) {
-  //   console.error('Update profile error:', err);
-  //   res.status(500).json({ error: 'Server error updating profile.' });
-  // }
+  // const {
+  //   fullName, phone, dob, gender, address, city, country, bio, profileImageUrl,
+  //   preferredLanguage, themePreference, emergencyContactName, emergencyContactPhone,
+  //   enableMarketingEmails, enableAppNotifications,
+  //   currentPassword, newPassword, // For password change
+  //   // Doctor specific fields if user is a doctor
+  //   specialtyId, medicalLicenseNumber, yearsOfExperience, qualifications, consultationFee, isAvailableForConsultation
+  // } = req.body;
+
+  // // Update user_profiles table...
+  // // If newPassword and currentPassword, verify currentPassword and update password_hash in users table...
+  // // If user is doctor, update doctor_profiles table...
+  // // Return updated profile
   res.status(501).json({ message: 'Conceptual: PUT /api/users/me hit. Not implemented yet.' });
 });
 
 
-// == Medicines & Inventory ==
-// GET /api/medicines?search=term&category_kn=Igabanya%20Ububabare
-app.get('/api/medicines', async (req, res) => {
-  // const { search, category_kn } = req.query;
-  // // Build SQL query dynamically
-  // res.status(501).json({ message: 'Conceptual: GET /api/medicines hit. Not implemented yet.' });
+// == Admin User Management (Admin only) ==
+// GET /api/admin/users
+app.get('/api/admin/users', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  // const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
+  // // Build dynamic SQL query with pagination, search, and filters for users, user_profiles, roles
+  // // Return { users: [...], totalCount,totalPages, currentPage }
+  res.status(501).json({ message: 'Conceptual: GET /api/admin/users hit. Not implemented yet.' });
 });
 
+// GET /api/admin/users/:userId
+app.get('/api/admin/users/:userId', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  // const { userId } = req.params;
+  // // Fetch specific user details for admin view
+  res.status(501).json({ message: 'Conceptual: GET /api/admin/users/:userId hit. Not implemented yet.' });
+});
+
+// PUT /api/admin/users/:userId (Admin can update user's role, active status, profile, etc.)
+app.put('/api/admin/users/:userId', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  // const { userId } = req.params;
+  // const { roleId, isActive, /* other fields from user_profiles or doctor_profiles */ } = req.body;
+  // // Update users table (role_id, is_active)
+  // // Update user_profiles table
+  // // Update doctor_profiles table if applicable
+  res.status(501).json({ message: 'Conceptual: PUT /api/admin/users/:userId hit. Not implemented yet.' });
+});
+
+// DELETE /api/admin/users/:userId (Soft delete or hard delete based on policy)
+app.delete('/api/admin/users/:userId', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  // const { userId } = req.params;
+  // // Option 1: Soft delete (e.g., UPDATE users SET is_active = FALSE WHERE id = $1)
+  // // Option 2: Hard delete (DELETE FROM users WHERE id = $1) - careful with cascades
+  res.status(501).json({ message: 'Conceptual: DELETE /api/admin/users/:userId hit. Not implemented yet.' });
+});
+
+
+// == Medicines, Inventory, Services (Admin CRUD) ==
+// GET /api/medicines (Public, with search/filter)
 // POST /api/admin/medicines (Admin only)
-//   Req: { name_en, name_kn, description_en, description_kn, category_id, unit_price, image_url, requires_prescription, stock_level, expiry_date, supplier_info }
-app.post('/api/admin/medicines', authenticateToken, authorizeRole(['admin']), async (req, res) => {
-  // // DB: START TRANSACTION;
-  // // DB: INSERT INTO medicines (...) RETURNING id;
-  // // DB: INSERT INTO inventory (medicine_id, stock_level, expiry_date, supplier_info) VALUES (...);
-  // // DB: COMMIT;
-  res.status(501).json({ message: 'Conceptual: Admin create medicine hit. Not implemented yet.' });
-});
-// PUT /api/admin/medicines/:id (Admin only)
-// DELETE /api/admin/medicines/:id (Admin only)
+// PUT /api/admin/medicines/:medicineId (Admin only)
+// DELETE /api/admin/medicines/:medicineId (Admin only)
 
-// == Medical Services (Tests, Consultations) ==
-// GET /api/medical-services
-app.get('/api/medical-services', async (req, res) => {
-  // // DB: SELECT * FROM medical_services WHERE is_active = TRUE;
-  res.status(501).json({ message: 'Conceptual: GET /api/medical-services hit. Not implemented yet.' });
-});
+// GET /api/admin/inventory (Admin only)
+// POST /api/admin/inventory (Admin only)
+// PUT /api/admin/inventory/:inventoryId (Admin only)
+// DELETE /api/admin/inventory/:inventoryId (Admin only)
+
+// GET /api/medical-services (Public, with search/filter)
 // POST /api/admin/medical-services (Admin only)
-// PUT /api/admin/medical-services/:id (Admin only)
-// DELETE /api/admin/medical-services/:id (Admin only)
+// PUT /api/admin/medical-services/:serviceId (Admin only)
+// DELETE /api/admin/medical-services/:serviceId (Admin only)
 
 
 // == Appointments ==
-// POST /api/appointments/book (Requires Auth: patient, seeker)
-//   Req: { doctorId (user_id of doctor), date (YYYY-MM-DD), time (HH:MM), reason, type ('Online'/'In-Person'), serviceId? }
-app.post('/api/appointments/book', authenticateToken, authorizeRole(['patient', 'seeker']), async (req, res) => {
-  // const patientId = req.user.id;
-  // // DB: Check doctor availability (e.g. no conflicting appointments)
-  // // DB: INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, type, status, service_id) VALUES (...);
-  res.status(501).json({ message: 'Conceptual: Book appointment hit. Not implemented yet.' });
-});
-
-// GET /api/appointments/my (Requires Auth)
-//   Logic: If user is patient/seeker, get their appointments. If doctor, get appointments assigned to them.
-app.get('/api/appointments/my', authenticateToken, async (req, res) => {
-  // const userId = req.user.id;
-  // const userRole = req.user.role; // 'patient', 'doctor', etc.
-  // // DB: Fetch appointments based on role
-  res.status(501).json({ message: 'Conceptual: Get my appointments hit. Not implemented yet.' });
-});
-
-// PUT /api/appointments/:appointmentId/status (Requires Auth: patient, doctor, admin)
-//   Req: { status: 'Confirmed' | 'Cancelled' | 'Completed' }
-//   Logic: Check permissions (patient can cancel pending, doctor can confirm/complete/cancel, admin can do all)
-app.put('/api/appointments/:appointmentId/status', authenticateToken, async (req, res) => {
-  // // DB: UPDATE appointments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2;
-  res.status(501).json({ message: 'Conceptual: Update appointment status hit. Not implemented yet.' });
-});
+// POST /api/appointments (Auth: patient, seeker)
+//   Req: { doctorId, serviceId, date, time, reason, type }
+//   Logic: Check doctor availability, check for conflicts, create appointment.
+//   DB: INSERT INTO appointments.
+//   Notification: Send to doctor and patient.
+// GET /api/appointments/my (Auth: patient, seeker, doctor)
+//   Logic: Fetch based on user role.
+// PUT /api/appointments/:appointmentId/status (Auth: patient, doctor, admin)
+//   Req: { status: 'Confirmed' | 'Cancelled' | 'Completed' | 'Rescheduled' }
+//   Logic: Permissions check (e.g., patient can cancel pending, doctor can confirm).
 
 
 // == Prescriptions ==
-// POST /api/prescriptions (Requires Auth: doctor)
+// POST /api/prescriptions (Auth: doctor)
 //   Req: { patientId, appointmentId?, medicines: [{ medicineId, dosage, frequency, duration, instructions }], notes }
-app.post('/api/prescriptions', authenticateToken, authorizeRole(['doctor']), async (req, res) => {
-  // const doctorId = req.user.id;
-  // // DB: START TRANSACTION;
-  // // DB: INSERT INTO prescriptions (patient_id, doctor_id, appointment_id, date_prescribed, notes) VALUES (...) RETURNING id;
-  // // For each medicine: INSERT INTO prescription_items (prescription_id, medicine_id, dosage, frequency, duration, instructions) VALUES (...);
-  // // DB: COMMIT;
-  res.status(501).json({ message: 'Conceptual: Create prescription hit. Not implemented yet.' });
-});
-
-// GET /api/prescriptions/my (Requires Auth: patient)
-app.get('/api/prescriptions/my', authenticateToken, authorizeRole(['patient']), async (req, res) => {
-  // const patientId = req.user.id;
-  // // DB: SELECT p.*, d_prof.full_name as doctor_name, ... JOIN prescription_items ... JOIN medicines ... WHERE p.patient_id = $1;
-  res.status(501).json({ message: 'Conceptual: Get my prescriptions hit. Not implemented yet.' });
-});
+//   DB: INSERT INTO prescriptions and prescription_items.
+// GET /api/prescriptions/my (Auth: patient)
+// GET /api/prescriptions/doctor/:doctorId (Auth: doctor for their own, or admin)
 
 
-// == Community Support (Forums, Groups) ==
-// GET /api/forums/posts?category_kn=Pain%20Management&search=term
-// GET /api/forums/posts/:postId
-// POST /api/forums/posts (Auth required)
-// POST /api/forums/posts/:postId/comments (Auth required)
-// POST /api/forums/posts/:postId/like (Auth required)
-// GET /api/support-groups?category_kn=...&search=...
-// GET /api/support-groups/:groupId
-// POST /api/support-groups (Auth required, user becomes admin)
-// POST /api/support-groups/:groupId/join (Auth required) -> status 'pending_approval' if private
-// POST /api/support-groups/:groupId/posts (Auth required, member only)
-// POST /api/support-groups/:groupId/posts/:postId/like (Auth required, member only)
-// GET /api/support-groups/:groupId/members (Admin/Moderator of group)
-// PUT /api/support-groups/:groupId/members/:userId/status (Admin/Moderator, for approving/banning)
+// == Online Consultation & Chat History API ==
+// POST /api/consultations/:appointmentId/initiate (Auth: doctor)
+//   Logic: Create a consultation_sessions record for the appointment, mark as 'initiated'.
+//   Create a chat_rooms record for this session if not exists.
+//   Res: { consultationSessionId, chatRoomId }
+// GET /api/chat/rooms/:roomId/messages (Auth: participants of the room)
+//   Params: roomId (could be consultation_session_id or group_id)
+//   Query: limit, before (timestamp for pagination)
+//   DB: SELECT m.*, p.full_name as sender_name FROM chat_messages m JOIN user_profiles p ON m.sender_id = p.user_id WHERE m.room_id = $1 ORDER BY m.sent_at DESC ...
+//   Res: { messages: [...] }
+
+// == Community (Forums, Groups) ==
+// (Conceptual CRUD for forum_posts, forum_comments, support_groups, group_posts, memberships etc.)
+// Example: POST /api/forums/posts (Auth required)
+//   Req: { categoryId, title, content, tags? }
+//   DB: INSERT INTO forum_posts. Update category post count.
+//   Notification: To followers of the category if implemented.
+// Example: POST /api/support-groups/:groupId/join (Auth required)
+//   Logic: If public, add to group_memberships directly. If private, set status to 'pending_approval'.
+//   Notification: To group admin if private.
 
 
 // == E-commerce (Cart, Orders, Payments) ==
-// GET /api/cart (Requires Auth: patient, seeker)
-// POST /api/cart/items (Requires Auth: patient, seeker) - Req: { medicineId, quantity }
-// PUT /api/cart/items/:medicineId (Requires Auth: patient, seeker) - Req: { quantity }
-// DELETE /api/cart/items/:medicineId (Requires Auth: patient, seeker)
-// POST /api/orders (Requires Auth: patient, seeker) - Moves cart to an order, status 'Pending'
-// GET /api/orders/my (Requires Auth: patient, seeker)
-// POST /api/payments/initiate (Requires Auth: patient, seeker)
-//   Req: { orderId?, amount, paymentMethod, reason, paymentMethodDetails (e.g., card token, phone number) }
-//   Logic: Interact with payment gateway (Stripe, MoMo API), create payment record.
-// POST /api/payments/webhook (Public, but secured with webhook signature)
-//   Logic: Payment gateway sends updates here (e.g., payment success/failure). Update order and payment status.
+// POST /api/cart/items (Auth: patient, seeker) Req: { medicineId, quantity }
+// GET /api/cart (Auth: patient, seeker)
+// POST /api/orders (Auth: patient, seeker) - From cart
+// POST /api/payments/initiate (Auth: patient, seeker) Req: { orderId?, amount, paymentMethod, reason, ... }
 
 
-// == AI Endpoints (Called from Backend, Genkit flows remain in frontend for now or moved to backend) ==
-// If Genkit flows are moved to backend:
-// POST /api/ai/analyze-symptoms (Auth optional/required based on policy)
+// == AI Endpoints (Backend calls Genkit flows) ==
+// POST /api/ai/symptom-analyzer (Auth: any authenticated user)
 //   Req: { symptomsDescription, imageDataUri? }
-//   Logic: Call Genkit flow: analyzeSymptoms(req.body)
-// POST /api/ai/medical-faq
-// POST /api/ai/test-yourself
+//   Logic: const result = await genkitFlows.analyzeSymptoms(req.body); res.json(result);
+// POST /api/ai/medical-faq (Auth: any authenticated user)
+// POST /api/ai/test-yourself (Auth: any authenticated user)
 
 
-// == Online Consultation Signaling (Conceptual for WebRTC) ==
-// POST /api/consultations/initiate (Auth: doctor)
-//   Req: { appointmentId }
-//   Res: { consultationSessionId, signalingServerUrl (if separate) }
-//   Logic: Create consultation_sessions record.
-// app.post('/api/consultations/initiate', authenticateToken, authorizeRole(['doctor']), async (req, res) => {
-//   // const doctorId = req.user.id;
-//   // const { appointmentId } = req.body;
-//   // // DB: Create entry in consultation_sessions table, status 'initiated'.
-//   // const sessionId = nanoid(); // Or DB generated UUID
-//   // // DB: INSERT INTO consultation_sessions (id, appointment_id, doctor_id, patient_id, session_status) VALUES ...
-//   // res.json({ consultationSessionId: sessionId, message: 'Consultation initiated, waiting for patient.' });
-//   res.status(501).json({ message: 'Conceptual: Initiate consultation hit. Not implemented yet.' });
-// });
-
-// POST /api/consultations/:sessionId/join (Auth: patient)
-//   Logic: Patient attempts to join the session.
-// app.post('/api/consultations/:sessionId/join', authenticateToken, authorizeRole(['patient']), async (req, res) => {
-//   // const patientId = req.user.id;
-//   // const { sessionId } = req.params;
-//   // // DB: Verify session exists and patient matches. Update status to 'pending_sdp_exchange' or similar.
-//   // // Notify doctor via WebSocket that patient has joined and is ready for signaling.
-//   // res.json({ message: 'Joined consultation session, awaiting signaling.' });
-//   res.status(501).json({ message: 'Conceptual: Join consultation hit. Not implemented yet.' });
-// });
-
-// POST /api/consultations/:sessionId/signal (Auth: doctor, patient)
-//   Req: { type: 'offer' | 'answer' | 'candidate', data: sdpOrCandidate }
-//   Logic: Relay SDP offers/answers and ICE candidates between doctor and patient via WebSockets.
-//   This endpoint might be replaced entirely by direct WebSocket messaging after initial handshake.
-//   DB: Update sdp/ice_candidates in consultation_sessions table if needed for reconnects/logging.
-// app.post('/api/consultations/:sessionId/signal', authenticateToken, async (req, res) => {
-//   // const userId = req.user.id;
-//   // const { sessionId } = req.params;
-//   // const { type, data, targetUserId } = req.body; // targetUserId is the other participant
-//   // // Forward signal to targetUserId via WebSocket (clients.get(targetUserId).send(...))
-//   // // This endpoint itself might just acknowledge receipt if WS is primary signaling channel
-//   // console.log(`Conceptual: Signal received for session ${sessionId} from ${userId}: type ${type}`);
-//   // res.sendStatus(200);
-//   res.status(501).json({ message: 'Conceptual: Consultation signal relay hit. Not implemented yet.' });
-// });
-
-// PUT /api/consultations/:sessionId/end (Auth: doctor or patient)
-//   Logic: Mark session as 'ended'. Notify other participant via WebSocket.
-// app.put('/api/consultations/:sessionId/end', authenticateToken, async (req, res) => {
-//   // // DB: Update consultation_sessions status to 'ended'.
-//   // // Notify other participant via WebSocket.
-//   res.status(501).json({ message: 'Conceptual: End consultation hit. Not implemented yet.' });
-// });
-
-// --- Chat History API ---
-// GET /api/chat/rooms/:roomId/messages (Auth required)
-//  Params: roomId
-//  Query: limit, before (timestamp for pagination)
-//  Res: { messages: [ChatMessage] }
-// app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
-//   // const { roomId } = req.params;
-//   // const userId = req.user.id;
-//   // // DB: Check if user is part of this room (chat_room_participants)
-//   // // DB: SELECT * FROM chat_messages WHERE room_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3 (implement pagination)
-//   res.status(501).json({ message: 'Conceptual: Get chat messages hit. Not implemented yet.' });
-// });
-
-
-// --- Admin Specific Endpoints (More detail) ---
-// GET /api/admin/dashboard-summary (Admin only)
-//  Res: { totalUsers, totalOrders, totalRevenue, activeConsultations }
-// GET /api/admin/users (Admin only, with pagination, search, filter)
-// GET /api/admin/users/:userId (Admin only)
-// PUT /api/admin/users/:userId (Admin only)
-// DELETE /api/admin/users/:userId (Admin only)
+// == Admin Dashboard & Settings ==
+// GET /api/admin/dashboard-stats (Admin only)
 // GET /api/admin/settings (Admin only)
-// PUT /api/admin/settings (Admin only) - Req: { appName, defaultLanguage, maintenanceMode, paymentGatewayKeys, etc. }
+// PUT /api/admin/settings (Admin only)
+
 
 // --- Global Error Handler ---
 // app.use((err, req, res, next) => {
-//   console.error("Global Error Handler:", err);
-//   // Consider more specific error handling based on err.name or err.status
-//   res.status(err.status || 500).json({ error: err.message || 'Something broke!' });
+//   console.error("Global Error Handler:", err.stack);
+//   res.status(err.status || 500).json({
+//     error: {
+//       message: err.message || 'An unexpected error occurred.',
+//       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+//     },
+//   });
 // });
 
-// --- Server Initialization ---
-// server.listen(PORT, () => { // Use 'server.listen' instead of 'app.listen' for WebSockets
-//   console.log(`MediServe Hub backend server (conceptual) would run on http://localhost:${PORT}`);
-//   console.log(`MediServe Hub WebSocket server (conceptual) would be available on ws://localhost:${PORT}`);
+// --- Server Start ---
+// server.listen(PORT, () => {
+//   console.log(`MediServe Hub Conceptual Backend Server listening on http://localhost:${PORT}`);
+//   console.log(`MediServe Hub Conceptual WebSocket Server available on ws://localhost:${PORT}`);
 // });
-
 */
-```
+
+// This conceptual server.js now provides a more detailed blueprint for backend development,
+// including data processing for various features, authentication, and real-time communication paradigms.
+// Remember, this is NOT runnable code but a guide
