@@ -32,21 +32,31 @@ const commonFAQs: FAQItem[] = [
 ];
 
 export default function FaqPage() {
-  const router = useRouter(); // Kept for potential future use
+  const router = useRouter(); 
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // AppLayout handles primary auth. Assuming if user is here, they are "authenticated".
+  // Conceptual auth state; AppLayout manages actual auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [question, setQuestion] = useState('');
   const [aiAnswer, setAiAnswer] = useState<AnswerMedicalQuestionOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const [displayedFaqs, setDisplayedFaqs] = useState<FAQItem[]>(commonFAQs);
+  const [displayedFaqs, setDisplayedFaqs] = useState<FAQItem[]>([]); // Start empty, then load mock
 
   useEffect(() => {
     setIsClient(true);
-    setIsLoadingPage(false);
+    // Simulate fetching common FAQs (ephemeral)
+    const fetchFAQs = async () => {
+        setIsLoadingPage(true);
+        // Conceptual: const response = await fetch('/api/faqs/common');
+        // Conceptual: const data = await response.json();
+        // Conceptual: setDisplayedFaqs(data.faqs || []);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setDisplayedFaqs(commonFAQs);
+        setIsLoadingPage(false);
+    };
+    fetchFAQs();
   }, []);
 
 
@@ -65,10 +75,11 @@ export default function FaqPage() {
     setAiAnswer(null);
 
     try {
-      // Call Genkit flow. In a full-stack app, this call would ideally go to your backend,
+      // In a full-stack app, this call would ideally go to your backend,
       // which then calls the Genkit flow securely.
       const response = await answerMedicalQuestion({ question });
       setAiAnswer(response);
+      toast({ title: t("AI Answer Received", "Igisubizo cya AI Cyabonetse"), description: t("This is a prototype, AI responses are informational only.", "Ibi ni igerageza, ibisubizo bya AI ni iby'amakuru gusa.")});
     } catch (error) {
       console.error("Medical FAQ Error:", error);
       toast({
@@ -92,6 +103,9 @@ export default function FaqPage() {
       </AppLayout>
     );
   }
+  
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
 
   return (
     <AppLayout>
@@ -185,4 +199,3 @@ export default function FaqPage() {
     </AppLayout>
   );
 }
-

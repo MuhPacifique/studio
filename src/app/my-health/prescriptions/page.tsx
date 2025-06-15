@@ -35,14 +35,13 @@ interface PrescriptionClient {
 
 const t = (enText: string, knText: string) => knText; 
 
-// Mock data - this would be fetched from /api/prescriptions/my in a real app
 const mockPrescriptionsData: PrescriptionClient[] = [
     { 
       id: 'rx1', 
       patientId: 'mockUserId123', 
       doctorName: 'Dr. Alex Smith', 
       doctorNameKn: 'Dr. Alex Smith', 
-      datePrescribed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      datePrescribed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), 
       medicines: [
           {id: 'med1', name: 'Paracetamol 500mg', nameKn: 'Parasetamoli 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'},
           {id: 'med2', name: 'Amoxicillin 250mg', nameKn: 'Amogisiline 250mg', dosage: '1 capsule', frequency: 'every 8 hours', duration: '7 days'}
@@ -56,7 +55,7 @@ const mockPrescriptionsData: PrescriptionClient[] = [
       patientId: 'mockUserId123', 
       doctorName: 'Dr. Emily Carter', 
       doctorNameKn: 'Dr. Emily Carter', 
-      datePrescribed: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
+      datePrescribed: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), 
       medicines: [
           {id: 'med3', name: 'Loratadine 10mg', nameKn: 'Loratadine 10mg', dosage: '1 tablet', frequency: 'once daily', duration: '14 days'}
       ], 
@@ -109,13 +108,13 @@ export default function MyPrescriptionsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching prescriptions from an API
+    // Simulate fetching prescriptions (ephemeral)
     const fetchPrescriptions = async () => {
         setIsLoadingData(true);
         // Conceptual: const response = await fetch('/api/prescriptions/my');
         // Conceptual: const data = await response.json();
         // Conceptual: setPrescriptions(data.prescriptions || []);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 300)); 
         setPrescriptions(mockPrescriptionsData);
         setIsLoadingData(false);
     };
@@ -157,10 +156,7 @@ export default function MyPrescriptionsPage() {
     );
   }
 
-  if (!isAuthenticated && isClient) {
-     router.replace('/welcome');
-     return null; 
-  }
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
   
 
   return (
@@ -210,11 +206,11 @@ export default function MyPrescriptionsPage() {
                 )}
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 border-t pt-4">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Mock - backend needed)", "Kurura PDF (By'agateganyo - seriveri irakenewe)")})}>
-                  <Download className="mr-2 h-4 w-4"/> {t("Download PDF (Mock)", "Kurura PDF (Igerageza)")}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Simulation - backend needed)", "Kurura PDF (Igerageza - seriveri irakenewe)")})}>
+                  <Download className="mr-2 h-4 w-4"/> {t("Download PDF (Simulation)", "Kurura PDF (Igerageza)")}
                 </Button>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Mock - backend needed)", "Chapisha Urupapuro (By'agateganyo - seriveri irakenewe)")})}>
-                  <Printer className="mr-2 h-4 w-4"/> {t("Print Prescription (Mock)", "Chapisha Urupapuro (Igerageza)")}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Simulation - backend needed)", "Chapisha Urupapuro (Igerageza - seriveri irakenewe)")})}>
+                  <Printer className="mr-2 h-4 w-4"/> {t("Print Prescription (Simulation)", "Chapisha Urupapuro (Igerageza)")}
                 </Button>
               </CardFooter>
             </Card>

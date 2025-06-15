@@ -16,8 +16,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Translation helper
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const translate = (enText: string, knText: string) => knText;
 
 interface SupportGroup {
   id: string;
@@ -50,20 +49,19 @@ interface GroupPost {
     likes?: number;
 }
 
-// Default mock data, will not persist after page reload.
 const defaultSupportGroupsData: SupportGroup[] = [
   { id: 'sg1', name: 'Diabetes Management Group', nameKn: 'Itsinda ryo Gucunga Diyabete', description: 'A supportive community for individuals managing diabetes.', descriptionKn: 'Umuryango w\'ubufasha ku bantu bacunga diyabete.', longDescription: "This group provides a safe and supportive environment for individuals living with diabetes. We share tips on diet, exercise, medication management, and emotional well-being. Regular virtual meetups are organized.", longDescriptionKn: "Iri tsinda ritanga umwanya wizewe kandi w'ubufasha ku bantu babana na diyabete. Dusangira inama ku mirire, imyitozo ngororamubiri, gucunga imiti, n'imibereho myiza yo mu mutwe. Hategurwa guhura kuri interineti buri gihe.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'community health meeting', memberCount: 125, category: 'Chronic Illness', categoryKn: 'Indwara Idakira', isPrivate: false, adminName: "Sarah M.", adminAvatar: "https://placehold.co/40x40.png?text=SM", adminInitials: "SM"},
   { id: 'sg2', name: 'New Parents Support Circle', nameKn: 'Itsinda ry\'Ubufasha ku Babyeyi Bashya', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', descriptionKn: 'Hura n\'abandi babyeyi bashya kugirango muganire ku byishimo n\'imbogamizi z\'ububyeyi.', longDescription: "Welcome new parents! This circle is for sharing experiences, asking questions, and finding support during the incredible journey of early parenthood. From sleep tips to feeding advice, we're here for each other.", longDescriptionKn: "Murakaza neza babyeyi bashya! Iri tsinda ni iryo gusangira uburambe, kubaza ibibazo, no gushaka ubufasha mu rugendo rutangaje rw'ububyeyi bwa mbere. Kuva ku nama z'ibitotsi kugeza ku nama z'imirire, turi hano kubwanyu.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'parents children group', memberCount: 88, category: 'Parenthood', categoryKn: 'Ububyeyi', isPrivate: true, adminName: "David K.", adminAvatar: "https://placehold.co/40x40.png?text=DK", adminInitials: "DK" },
   { id: 'sg3', name: 'Mental Wellness Advocates', nameKn: 'Abaharanira Ubuzima Bwiza bwo mu Mutwe', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', descriptionKn: 'Ahantu hizewe ho kuganirira ku buzima bwo mu mutwe, gusangira uburyo bwo kwihangana, no gufashanya.', longDescription: "Our mission is to advocate for mental wellness and provide a judgment-free zone for discussion. Share your story, learn coping mechanisms, and connect with others who understand.", longDescriptionKn: "Intego yacu ni uguharanira ubuzima bwiza bwo mu mutwe no gutanga ahantu ho kuganirira hatabamo urubanza. Sangiza inkuru yawe, iga uburyo bwo kwihangana, kandi uhure n'abandi babyumva.", imageUrl: 'https://placehold.co/600x300.png', aiHint: 'mental wellness discussion', memberCount: 210, category: 'Mental Health', categoryKn: 'Ubuzima bwo mu Mutwe', isPrivate: false, adminName: "Laura P.", adminAvatar: "https://placehold.co/40x40.png?text=LP", adminInitials: "LP" },
 ];
 
-const defaultGroupPosts: { [groupId: string]: GroupPost[] } = {
+const defaultGroupPostsData: { [groupId: string]: GroupPost[] } = {
     sg1: [
-        {id: 'gp1', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', timestamp: '3 hours ago', text: "Just tried a new low-carb recipe for cauliflower pizza, it was delicious! Happy to share if anyone's interested.", imageUrl: 'https://placehold.co/300x200.png', imageAiHint: 'healthy food recipe', likes: 5},
-        {id: 'gp2', author: 'Admin (Sarah M.)', authorAvatar: 'https://placehold.co/40x40.png?text=SM', authorInitials: 'SM', timestamp: '1 day ago', text: "Friendly reminder: Our monthly virtual Q&A with Dr. Evans is scheduled for next Tuesday at 7 PM. Link will be posted soon!", likes: 12},
+        {id: 'gp1', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', timestamp: 'Amasaha 3 ashize', text: "Nagerageje uburyo bushya bwo guteka pizza ya cauliflower irimo ibirungo bike, yari iryoshye cyane! Nshimishijwe no kubisangiza niba hari ubishaka.", imageUrl: 'https://placehold.co/300x200.png', imageAiHint: 'healthy food recipe', likes: 5},
+        {id: 'gp2', author: 'Umunyamabanga (Sarah M.)', authorAvatar: 'https://placehold.co/40x40.png?text=SM', authorInitials: 'SM', timestamp: 'Umunsi 1 ushize', text: "Kwibutsa: Ibibazo n'ibisubizo byacu bya buri kwezi kuri interineti na Dr. Evans biteganyijwe ku wa kabiri utaha saa moya z'ijoro. Link izashyirwaho vuba!", likes: 12},
     ],
     sg3: [
-        {id: 'gp3', author: 'John B.', authorAvatar: 'https://placehold.co/40x40.png?text=JB', authorInitials: 'JB', timestamp: '5 hours ago', text: "Feeling a bit overwhelmed today. Any quick tips for managing sudden anxiety spikes during work?", likes: 8},
+        {id: 'gp3', author: 'John B.', authorAvatar: 'https://placehold.co/40x40.png?text=JB', authorInitials: 'JB', timestamp: 'Amasaha 5 ashize', text: "Uyu munsi numvaga meze nk'uremerewe gato. Hari inama zihuse zo guhangana n'ubwoba butunguranye mu kazi?", likes: 8},
     ],
     sg2: [],
 };
@@ -92,7 +90,7 @@ const GroupPostSkeleton = () => (
     </Card>
 );
 
-const GroupDetailSkeleton = ({ t }: { t: (en: string, kn: string) => string }) => (
+const GroupDetailSkeleton = ({ t_func }: { t_func: (en: string, kn: string) => string }) => (
     <>
     <div className="relative mb-8">
         <Skeleton className="w-full h-56 md:h-72 rounded-lg" />
@@ -105,10 +103,10 @@ const GroupDetailSkeleton = ({ t }: { t: (en: string, kn: string) => string }) =
      <PageHeader 
         title="" 
         breadcrumbs={[
-          {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
-          {label: t("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/support-groups"}, 
-          {label: t("Support Groups", "Amatsinda y'Ubufasha"), href: "/community-support/support-groups"},
-          {label: t("Loading...", "Gutegura...")}
+          {label: t_func("Dashboard", "Imbonerahamwe"), href: "/"}, 
+          {label: t_func("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/support-groups"}, 
+          {label: t_func("Support Groups", "Amatsinda y'Ubufasha"), href: "/community-support/support-groups"},
+          {label: t_func("Loading...", "Gutegura...")}
         ]}
       />
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-[-2rem]">
@@ -155,15 +153,13 @@ export default function SupportGroupDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const t = (enText: string, knText: string) => translate(enText, knText);
 
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [group, setGroup] = useState<SupportGroup | null>(null); // Group details are ephemeral
-  const [posts, setPosts] = useState<GroupPost[]>([]); // Group posts are ephemeral
+  const [group, setGroup] = useState<SupportGroup | null>(null); 
+  const [posts, setPosts] = useState<GroupPost[]>([]); 
   const [newPostText, setNewPostText] = useState('');
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
@@ -171,27 +167,30 @@ export default function SupportGroupDetailPage() {
 
   useEffect(() => {
     setIsClient(true);
-    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
-  }, []);
+    // Simulate fetching group details and posts (ephemeral)
+    const fetchGroupData = async () => {
+        setIsLoadingData(true);
+        // Conceptual: const groupRes = await fetch(`/api/support-groups/${groupId}`);
+        // Conceptual: const groupData = await groupRes.json();
+        // Conceptual: const postsRes = await fetch(`/api/support-groups/${groupId}/posts`);
+        // Conceptual: const postsData = await postsRes.json();
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const foundGroup = defaultSupportGroupsData.find(g => g.id === groupId);
 
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
-  useEffect(() => {
-    if (isClient) {
-      // Simulate fetching group details and posts. No localStorage means data resets on reload.
-      const foundGroup = defaultSupportGroupsData.find(g => g.id === groupId);
-
-      if (foundGroup) {
-        setGroup(foundGroup);
-        setPosts((defaultGroupPosts[groupId] || []).sort((a,b) => (a.timestamp === t('Just now', 'Nonaha') ? -1 : b.timestamp === t('Just now', 'Nonaha') ? 1 : 0) || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-      } else {
-        toast({ variant: "destructive", title: t("Group not found", "Itsinda ntiribonetse") });
-        router.push('/community-support/support-groups');
-      }
-      setIsLoadingData(false);
+        if (foundGroup) {
+            setGroup(foundGroup);
+            setPosts((defaultGroupPostsData[groupId] || []).sort((a,b) => (a.timestamp === t('Just now', 'Nonaha') ? -1 : b.timestamp === t('Just now', 'Nonaha') ? 1 : 0) || new Date(b.timestamp.replace('ishize','ago')).getTime() - new Date(a.timestamp.replace('ishize','ago')).getTime()));
+        } else {
+            toast({ variant: "destructive", title: t("Group not found", "Itsinda ntiribonetse") });
+            router.push('/community-support/support-groups');
+        }
+        setIsLoadingData(false);
+    };
+    if (groupId) {
+        fetchGroupData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast, groupId, currentLanguage]);
+  }, [isClient, groupId, router]);
 
   const handleAddPost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,20 +210,18 @@ export default function SupportGroupDetailPage() {
         likes: 0
     };
 
-    // UI update is ephemeral
-    const updatedPosts = [postToAdd, ...posts];
-    setPosts(updatedPosts);
+    // Simulate UI update and backend call
+    setPosts(prevPosts => [postToAdd, ...prevPosts]);
     
     setNewPostText('');
     setIsSubmittingPost(false);
-    toast({title: t("Post Added (Mock)", "Ubutumwa Bwongeweho (By'agateganyo)"), description: t("Your post has been added. It will not persist after page reload.", "Ubutumwa bwawe bwongeweho. Ntibuzabikwa nyuma yo guhindura paji.")});
+    toast({title: t("Post Added (Simulation)", "Ubutumwa Bwongeweho (Igerageza)"), description: t("Your post has been added. Data will not persist.", "Ubutumwa bwawe bwongeweho. Amakuru ntazabikwa.")});
   };
   
   const handleLikeGroupPost = (postId: string) => {
-    // UI update is ephemeral
-    const updatedPosts = posts.map(p => p.id === postId ? {...p, likes: (p.likes || 0) + 1} : p);
-    setPosts(updatedPosts);
-    toast({ title: t("Post Liked (Mock)", "Ubutumwa Bwakunzwe (By'agateganyo)") });
+    // Simulate UI update and backend call
+    setPosts(prevPosts => prevPosts.map(p => p.id === postId ? {...p, likes: (p.likes || 0) + 1} : p));
+    toast({ title: t("Post Liked (Simulation)", "Ubutumwa Bwakunzwe (Igerageza)"), description: t("Data will not persist.", "Amakuru ntazabikwa.") });
   }
 
   const handleCommentMock = () => {
@@ -243,17 +240,19 @@ export default function SupportGroupDetailPage() {
   if (!isClient || isLoadingData || !group) {
     return (
       <AppLayout>
-        <GroupDetailSkeleton t={t}/>
+        <GroupDetailSkeleton t_func={t}/>
       </AppLayout>
     );
   }
+
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
 
   return (
     <AppLayout>
       <div className="relative mb-8">
         <Image 
             src={group.imageUrl} 
-            alt={t(group.name, group.nameKn) + " " + t("banner", "ikirango")} 
+            alt={group.nameKn + " " + t("banner", "ikirango")} 
             width={1200} 
             height={300} 
             className="w-full h-56 md:h-72 object-cover rounded-lg shadow-lg"
@@ -261,9 +260,9 @@ export default function SupportGroupDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-lg"></div>
         <div className="absolute bottom-0 left-0 p-6 text-white">
-            <Badge variant="secondary" className="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/30">{t(group.category, group.categoryKn)}</Badge>
-            <h1 className="text-3xl md:text-4xl font-bold font-headline drop-shadow-md">{t(group.name, group.nameKn)}</h1>
-            <p className="text-sm md:text-md mt-1 drop-shadow-sm">{t(group.description, group.descriptionKn)}</p>
+            <Badge variant="secondary" className="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/30">{group.categoryKn}</Badge>
+            <h1 className="text-3xl md:text-4xl font-bold font-headline drop-shadow-md">{group.nameKn}</h1>
+            <p className="text-sm md:text-md mt-1 drop-shadow-sm">{group.descriptionKn}</p>
         </div>
       </div>
       
@@ -273,7 +272,7 @@ export default function SupportGroupDetailPage() {
           {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
           {label: t("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/support-groups"}, 
           {label: t("Support Groups", "Amatsinda y'Ubufasha"), href: "/community-support/support-groups"},
-          {label: t(group.name, group.nameKn).substring(0,30) + "..."}
+          {label: group.nameKn.substring(0,30) + "..."}
         ]}
       />
 
@@ -343,7 +342,7 @@ export default function SupportGroupDetailPage() {
                 <Card className="shadow-md">
                     <CardContent className="py-10 text-center">
                         <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">{t("No posts in this group yet. Start the conversation! Group posts require backend integration to persist.", "Nta butumwa buri muri iri tsinda. Tangira ikiganiro! Ubutumwa bwo mu itsinda busaba guhuzwa na seriveri kugirango bubikwe.")}</p>
+                        <p className="text-muted-foreground">{t("No posts in this group yet. Start the conversation! Group posts are ephemeral in this prototype.", "Nta butumwa buri muri iri tsinda. Tangira ikiganiro! Ubutumwa bwo mu itsinda ni ubw'igihe gito muri iyi prototype.")}</p>
                     </CardContent>
                 </Card>
             )}
@@ -355,7 +354,7 @@ export default function SupportGroupDetailPage() {
                     <CardTitle className="font-headline flex items-center text-primary"><Info className="mr-2 h-5 w-5"/>{t("About This Group", "Ibyerekeye Iri Tsinda")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{currentLanguage === 'kn' ? (group.longDescriptionKn || group.descriptionKn) : (group.longDescription || group.description)}</p>
+                    <p className="text-sm text-muted-foreground">{group.longDescriptionKn || group.descriptionKn}</p>
                     <Separator/>
                     <div className="text-sm">
                         <span className="font-medium text-foreground">{t("Administered by:", "Riyobowe na:")}</span>
@@ -399,4 +398,3 @@ export default function SupportGroupDetailPage() {
     </AppLayout>
   );
 }
-```

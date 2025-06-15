@@ -15,11 +15,15 @@ import { analyzeSymptoms, type SymptomAnalyzerInput, type SymptomAnalyzerOutput 
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 
+const t = (enText: string, knText: string) => knText;
+
 export default function SymptomAnalyzerPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Conceptual auth state; AppLayout manages actual auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [symptoms, setSymptoms] = useState('');
   const [result, setResult] = useState<SymptomAnalyzerOutput | null>(null);
@@ -30,23 +34,9 @@ export default function SymptomAnalyzerPage() {
 
   useEffect(() => {
     setIsClient(true);
+    setIsLoadingPage(false);
   }, []);
 
-  useEffect(() => {
-    if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "Please log in to use the Symptom Analyzer.",
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-      }
-    }
-  }, [isClient, router, toast]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,8 +44,8 @@ export default function SymptomAnalyzerPage() {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
         toast({
           variant: "destructive",
-          title: "Image Too Large",
-          description: "Please select an image smaller than 2MB.",
+          title: t("Ifoto ni Nini Cyane", "Ifoto ni Nini Cyane"),
+          description: t("Nyamuneka hitamo ifoto iri munsi ya 2MB.", "Nyamuneka hitamo ifoto iri munsi ya 2MB."),
         });
         return;
       }
@@ -72,7 +62,7 @@ export default function SymptomAnalyzerPage() {
     setImageFile(null);
     setImagePreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset file input
+      fileInputRef.current.value = ""; 
     }
   };
 
@@ -81,8 +71,8 @@ export default function SymptomAnalyzerPage() {
     if (!symptoms.trim()) {
       toast({
         variant: "destructive",
-        title: "Input Required",
-        description: "Please describe your symptoms.",
+        title: t("Input Required", "Amakuru Arasabwa"),
+        description: t("Please describe your symptoms.", "Nyamuneka sobanura ibimenyetso byawe."),
       });
       return;
     }
@@ -96,66 +86,70 @@ export default function SymptomAnalyzerPage() {
     }
 
     try {
+      // Call Genkit flow (direct call for prototype, backend call in production)
       const aiResponse = await analyzeSymptoms(input);
       setResult(aiResponse);
+      toast({title: t("Analysis Complete (Prototype)", "Isesengura Ryarangiye (Igerageza)"), description: t("AI results are for informational purposes.", "Ibisubizo bya AI ni iby'amakuru gusa.")})
     } catch (error) {
       console.error("Symptom Analyzer Error:", error);
       toast({
         variant: "destructive",
-        title: "Analysis Failed",
-        description: "Could not analyze symptoms at this time. Please try again later.",
+        title: t("Analysis Failed", "Isesengura Ryanze"),
+        description: t("Could not analyze symptoms at this time. Please try again later.", "Ntibishoboye gusesengura ibimenyetso muri iki gihe. Nyamuneka gerageza nyuma."),
       });
     } finally {
       setIsLoading(false);
     }
   };
   
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || isLoadingPage) {
     return (
       <AppLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
+        <PageHeader title={t("Symptom Analyzer", "Isesengura ry'Ibimenyetso")} />
+        <div className="flex flex-col justify-center items-center h-auto py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading Symptom Analyzer...</p>
+          <p className="text-muted-foreground">{t("Loading Symptom Analyzer...", "Gutegura Isesengura ry'Ibimenyetso...")}</p>
         </div>
       </AppLayout>
     );
   }
 
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
+
   return (
     <AppLayout>
-      <PageHeader title="Symptom Analyzer" breadcrumbs={[{label: "Dashboard", href: "/"}, {label: "Symptom Analyzer"}]} />
+      <PageHeader title={t("Symptom Analyzer", "Isesengura ry'Ibimenyetso")} breadcrumbs={[{label: t("Dashboard", "Imbonerahamwe"), href: "/"}, {label: t("Symptom Analyzer", "Isesengura ry'Ibimenyetso")}]} />
       
       <Alert variant="default" className="mb-6 bg-primary/10 border-primary/30 dark:bg-primary/20 dark:border-primary/40">
         <ShieldAlert className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-headline text-primary">Important Disclaimer</AlertTitle>
+        <AlertTitle className="font-headline text-primary">{t("Important Disclaimer", "Itangazo Ry'ingenzi")}</AlertTitle>
         <AlertDescription className="text-primary/80 dark:text-primary/90">
-          This tool is for informational purposes only and does not provide medical advice. 
-          It is not a substitute for professional medical diagnosis or treatment. 
-          Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+          {t("This tool is for informational purposes only and does not provide medical advice. It is not a substitute for professional medical diagnosis or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.", "Iki gikoresho ni icyo gutanga amakuru gusa kandi ntigitanga inama z'ubuvuzi. Ntabwo gisimbura isuzuma ry'abaganga b'umwuga cyangwa ubuvuzi. Buri gihe shaka inama z'umuganga wawe cyangwa undi mukozi w'ubuzima wujuje ibisabwa ku bibazo byose waba ufite bijyanye n'ubuzima.")}
         </AlertDescription>
       </Alert>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 shadow-xl hover-lift transition-all duration-300 ease-in-out">
           <CardHeader>
-            <CardTitle className="font-headline flex items-center"><ActivitySquare className="mr-2 h-6 w-6 text-primary" /> Describe Your Symptoms</CardTitle>
+            <CardTitle className="font-headline flex items-center"><ActivitySquare className="mr-2 h-6 w-6 text-primary" /> {t("Describe Your Symptoms", "Sobanura Ibimenyetso Byawe")}</CardTitle>
             <CardDescription>
-              Enter a detailed description of the symptoms you are experiencing. You can also upload an image (optional).
+              {t("Enter a detailed description of the symptoms you are experiencing. You can also upload an image (optional).", "Andika ibisobanuro birambuye by'ibimenyetso ufite. Ushobora no gushyiramo ifoto (si itegeko).")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <Textarea
-                placeholder="e.g., I have a persistent cough, mild fever for 3 days, and a runny nose... For skin issues, describe the appearance, location, and any changes."
+                placeholder={t("e.g., I have a persistent cough, mild fever for 3 days, and a runny nose... For skin issues, describe the appearance, location, and any changes.", "urugero: Mfite inkorora idakira, umuriro muke mu minsi 3, n'ibimyira... Ku bibazo by'uruhu, sobanura uko bigaragara, aho biri, n'impinduka zose.")}
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 rows={6}
                 className="resize-none"
-                aria-label="Symptom Description Input"
+                aria-label={t("Symptom Description Input", "Ahandikirwa Ibisobanuro by'Ibimenyetso")}
               />
 
               <div>
-                <label htmlFor="imageUpload" className="block text-sm font-medium text-foreground mb-1">Upload Image (Optional)</label>
+                <label htmlFor="imageUpload" className="block text-sm font-medium text-foreground mb-1">{t("Upload Image (Optional)", "Shyiramo Ifoto (Si Itegeko)")}</label>
                 <Input
                   id="imageUpload"
                   type="file"
@@ -164,19 +158,19 @@ export default function SymptomAnalyzerPage() {
                   ref={fileInputRef}
                   className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Max file size: 2MB. Useful for skin conditions, visible injuries, etc.</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("Max file size: 2MB. Useful for skin conditions, visible injuries, etc.", "Ingano ntarengwa y'ifoto: 2MB. Ifasha ku bibazo by'uruhu, ibikomere bigaragara, n'ibindi.")}</p>
               </div>
 
               {imagePreview && (
                 <div className="mt-4 relative group">
-                  <p className="text-sm font-medium mb-1">Image Preview:</p>
-                  <Image src={imagePreview} alt="Symptom Image Preview" width={200} height={200} className="rounded-md border object-contain max-h-48 w-auto shadow-md" data-ai-hint="injury symptom image"/>
+                  <p className="text-sm font-medium mb-1">{t("Image Preview:", "Ifoto y'Igeragezwa:")}</p>
+                  <Image src={imagePreview} alt={t("Symptom Image Preview", "Ifoto y'Ibimenyetso (Igeragezwa)")} width={200} height={200} className="rounded-md border object-contain max-h-48 w-auto shadow-md" data-ai-hint="injury symptom image"/>
                   <Button 
                     variant="destructive" 
                     size="icon" 
                     onClick={removeImage} 
                     className="absolute top-0 right-0 m-1 h-7 w-7 opacity-70 group-hover:opacity-100 transition-opacity"
-                    aria-label="Remove image"
+                    aria-label={t("Remove image", "Kura ifoto")}
                   >
                     <XCircle className="h-4 w-4"/>
                   </Button>
@@ -187,12 +181,12 @@ export default function SymptomAnalyzerPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Analyzing...
+                    {t("Analyzing...", "Gusesengura...")}
                   </>
                 ) : (
                   <>
                   <Wand2 className="mr-2 h-5 w-5" />
-                  Analyze Symptoms
+                  {t("Analyze Symptoms", "Sengura Ibimenyetso")}
                   </>
                 )}
               </Button>
@@ -202,22 +196,22 @@ export default function SymptomAnalyzerPage() {
 
         <Card className="shadow-xl hover-lift transition-all duration-300 ease-in-out">
           <CardHeader>
-            <CardTitle className="font-headline">Analysis Results</CardTitle>
+            <CardTitle className="font-headline">{t("Analysis Results", "Ibisubizo by'Isesengura")}</CardTitle>
             <CardDescription>
-              Potential conditions and next steps based on your input will appear here.
+              {t("Potential conditions and next steps based on your input will appear here.", "Indwara zishoboka n'intambwe zikurikira zishingiye ku byo wanditse bizagaragara hano.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="min-h-[200px] flex flex-col">
             {isLoading && (
               <div className="flex flex-col items-center justify-center h-full flex-grow">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">AI is thinking...</p>
+                <p className="text-muted-foreground">{t("AI is thinking...", "AI iri gutekereza...")}</p>
               </div>
             )}
             {result && !isLoading && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 text-primary">Potential Conditions:</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-primary">{t("Potential Conditions:", "Indwara Zishoboka:")}</h3>
                   {result.potentialConditions && result.potentialConditions.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 text-sm text-foreground/90 dark:text-foreground/80">
                       {result.potentialConditions.map((condition, index) => (
@@ -225,24 +219,28 @@ export default function SymptomAnalyzerPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No specific conditions strongly indicated based on the input. Please provide more details or consult a doctor.</p>
+                    <p className="text-sm text-muted-foreground">{t("No specific conditions strongly indicated based on the input. Please provide more details or consult a doctor.", "Nta ndwara zihariye zigaragara cyane zishingiye ku byo wanditse. Nyamuneka tanga ibisobanuro birambuye cyangwa ugane muganga.")}</p>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 text-primary">Recommended Next Steps:</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-primary">{t("Recommended Next Steps:", "Intambwe Zikurikira Zisabwa:")}</h3>
                   <p className="text-sm whitespace-pre-wrap text-foreground/90 dark:text-foreground/80">{result.nextSteps}</p>
+                </div>
+                 <div className="pt-4 mt-4 border-t">
+                    <h3 className="text-md font-semibold mb-1 text-destructive">{t("Disclaimer:", "Itangazo Ry'ingenzi:")}</h3>
+                    <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
                 </div>
               </div>
             )}
             {!result && !isLoading && (
               <div className="flex items-center justify-center h-full flex-grow">
-                <p className="text-muted-foreground text-center">Enter your symptoms and click "Analyze Symptoms" to see results.</p>
+                <p className="text-muted-foreground text-center">{t("Enter your symptoms and click \"Analyze Symptoms\" to see results.", "Andika ibimenyetso byawe hanyuma ukande \"Sengura Ibimenyetso\" kugirango ubone ibisubizo.")}</p>
               </div>
             )}
           </CardContent>
           <CardFooter>
              <p className="text-xs text-muted-foreground">
-                Remember: This AI analysis is not a diagnosis. Consult a healthcare professional for medical advice.
+                {t("Remember: This AI analysis is not a diagnosis. Consult a healthcare professional for medical advice.", "Wibuke: Iri sesengura rya AI si isuzuma. Gana umuganga w'umwuga kugirango aguhe inama z'ubuvuzi.")}
              </p>
           </CardFooter>
         </Card>

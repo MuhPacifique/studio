@@ -33,7 +33,6 @@ export default function TestYourselfPage() {
   
   useEffect(() => {
     setIsClient(true);
-    // Simulate initial setup if needed
     setIsLoadingPage(false);
   }, []);
 
@@ -53,10 +52,11 @@ export default function TestYourselfPage() {
     setResult(null);
 
     try {
-      // Conceptual: const response = await fetch('/api/ai/test-yourself', { method: 'POST', body: JSON.stringify({symptoms})});
-      // Conceptual: const aiResponse = await response.json();
-      const aiResponse = await testYourself({ symptoms }); // Direct call for prototype
+      // In a full-stack app, this call would ideally go to your backend,
+      // which then calls the Genkit flow securely.
+      const aiResponse = await testYourself({ symptoms }); 
       setResult(aiResponse);
+      toast({title: t("Insights Generated (Prototype)", "Amakuru y'Igeragezwa Yabonetse"), description: t("AI results are for informational purposes based on medical reference.", "Ibisubizo bya AI ni iby'amakuru gusa ashingiye ku bushakashatsi bw'ubuvuzi.")})
     } catch (error) {
       console.error("Test Yourself Error:", error);
       toast({
@@ -87,10 +87,8 @@ export default function TestYourselfPage() {
     );
   }
   
-  if (!isAuthenticated && isClient) {
-     router.replace('/welcome');
-     return null;
-  }
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
 
   return (
     <AppLayout>
@@ -234,9 +232,13 @@ export default function TestYourselfPage() {
               </div>
             )}
           </CardContent>
+           <CardFooter>
+             <p className="text-xs text-muted-foreground">
+                {t("Remember: This AI analysis is not a diagnosis. Consult a healthcare professional for medical advice.", "Wibuke: Iri sesengura rya AI si isuzuma. Gana umuganga w'umwuga kugirango aguhe inama z'ubuvuzi.")}
+             </p>
+          </CardFooter>
         </Card>
       </div>
     </AppLayout>
   );
 }
-

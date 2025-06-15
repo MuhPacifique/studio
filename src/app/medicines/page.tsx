@@ -76,23 +76,19 @@ export default function MedicinesPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching initial data from conceptual APIs
+    // Simulate fetching initial data (ephemeral)
     const fetchData = async () => {
       setIsLoadingPage(true);
-      // Conceptual: const medResponse = await fetch('/api/medicines?limit=50');
-      // Conceptual: const medData = await medResponse.json();
-      // Conceptual: setMedicines(medData.medicines || []);
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
+      // Conceptually, data would be fetched from an API:
+      // const medResponse = await fetch('/api/medicines?limit=50');
+      // const medData = await medResponse.json();
+      // setMedicines(medData.medicines || []);
+      await new Promise(resolve => setTimeout(resolve, 300)); 
       setMedicines(mockMedicinesData); 
       
-      // Conceptual: const cartResponse = await fetch('/api/cart');
-      // Conceptual: const cartData = await cartResponse.json();
-      // Conceptual: setCart(cartData.items || []);
-      setCart([]); // Start with an empty cart for simulation
-      
-      // Conceptual: const ordersResponse = await fetch('/api/orders/my');
-      // Conceptual: const ordersData = await ordersResponse.json();
-      // Conceptual: setOrders(ordersData.orders || []);
+      // Cart and orders would also be fetched if persisted on backend.
+      // For this prototype, cart starts empty and orders are from mock.
+      setCart([]); 
       setOrders(mockOrdersData);
       
       setIsLoadingPage(false);
@@ -110,7 +106,7 @@ export default function MedicinesPage() {
     );
   }, [searchTerm, selectedCategory, medicines]);
 
-  const addToCart = async (medicine: Medicine) => {
+  const addToCart = (medicine: Medicine) => {
     if (!isAuthenticated) { 
         toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango wongere mu gitebo.", "Nyamuneka injira kugirango wongere mu gitebo.") });
         return;
@@ -127,48 +123,40 @@ export default function MedicinesPage() {
       toast({ variant: "destructive", title: t(`${medicine.nameKn} yashize mu bubiko.`, `${medicine.nameKn} yashize mu bubiko.`) });
       return;
     }
-
-    // Conceptual: const response = await fetch('/api/cart/items', { method: 'POST', body: JSON.stringify({ medicine_id: medicine.id, quantity: 1 }) });
-    // Conceptual: if (response.ok) { /* Update cart from response or refetch */ }
     
-    // Simulate optimistic UI update
+    // Simulate UI update and backend call
     if (existingItem) {
       setCart(prevCart => prevCart.map(item => item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
       setCart(prevCart => [...prevCart, { ...medicine, quantity: 1 }]);
     }
-    toast({ title: t(`${medicine.nameKn} yongewe mu gitebo. (Igerageza)`, `${medicine.nameKn} yongewe mu gitebo. (Igerageza)`) });
+    toast({ title: t(`${medicine.nameKn} yongewe mu gitebo (Igerageza).`, `${medicine.nameKn} yongewe mu gitebo (Igerageza).`), description: t("Amakuru ntazabikwa nyuma yo guhindura paji.", "Amakuru ntazabikwa nyuma yo guhindura paji.") });
   };
 
-  const updateQuantity = async (medicineId: string, change: number) => {
+  const updateQuantity = (medicineId: string, change: number) => {
     const itemInCart = cart.find(item => item.id === medicineId);
     if (!itemInCart) return;
 
     const newQuantity = itemInCart.quantity + change;
 
     if (newQuantity <= 0) {
-      removeFromCart(medicineId); // Handles API call simulation
+      removeFromCart(medicineId); 
       return;
     }
     if (newQuantity > itemInCart.stock) {
       toast({ variant: "destructive", title: t(`Ntushobora kongeraho ${itemInCart.nameKn}`, `Ntushobora kongeraho ${itemInCart.nameKn}`), description: t(`Umubare ntarengwa (${itemInCart.stock}) wagezweho.`, `Umubare ntarengwa (${itemInCart.stock}) wagezweho.`) });
-      // Simulate setting to max stock if over
-      // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart.id}`, { method: 'PUT', body: JSON.stringify({ quantity: itemInCart.stock }) });
       setCart(prevCart => prevCart.map(item => item.id === medicineId ? { ...item, quantity: item.stock } : item));
+      toast({ title: t("Ingano yahinduwe (Igerageza).", "Ingano yahinduwe (Igerageza)."), description: t("Amakuru ntazabikwa nyuma yo guhindura paji.", "Amakuru ntazabikwa nyuma yo guhindura paji.") });
       return;
     }
     
-    // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart.id}`, { method: 'PUT', body: JSON.stringify({ quantity: newQuantity }) });
-    // Conceptual: if (response.ok) { /* Update from response or refetch */ }
     setCart(prevCart => prevCart.map(item => item.id === medicineId ? { ...item, quantity: newQuantity } : item));
+    toast({ title: t("Ingano yahinduwe (Igerageza).", "Ingano yahinduwe (Igerageza)."), description: t("Amakuru ntazabikwa nyuma yo guhindura paji.", "Amakuru ntazabikwa nyuma yo guhindura paji.") });
   };
 
-  const removeFromCart = async (medicineId: string) => {
-    const itemInCart = cart.find(item => item.id === medicineId);
-    // Conceptual: const response = await fetch(`/api/cart/items/${itemInCart?.id_in_cart_table_from_backend}`, { method: 'DELETE' });
-    // Conceptual: if (response.ok) { /* Update from response or refetch */ }
+  const removeFromCart = (medicineId: string) => {
     setCart(prevCart => prevCart.filter(item => item.id !== medicineId));
-    toast({ title: t("Ikintu cyakuwe mu gitebo. (Igerageza)", "Ikintu cyakuwe mu gitebo. (Igerageza)") });
+    toast({ title: t("Ikintu cyakuwe mu gitebo (Igerageza).", "Ikintu cyakuwe mu gitebo (Igerageza)."), description: t("Amakuru ntazabikwa nyuma yo guhindura paji.", "Amakuru ntazabikwa nyuma yo guhindura paji.") });
   };
 
   const cartTotal = useMemo(() => {
@@ -207,10 +195,7 @@ export default function MedicinesPage() {
     );
   }
   
-  if (!isAuthenticated && isClient) {
-     router.replace('/welcome');
-     return null; 
-  }
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
 
 
   return (
@@ -300,7 +285,7 @@ export default function MedicinesPage() {
             </CardHeader>
             <CardContent>
               {cart.length === 0 ? (
-                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa. Amakuru y'igitebo abikwa by'agateganyo.", "Igitebo cyawe kirimo ubusa. Amakuru y'igitebo abikwa by'agateganyo.")}</p>
+                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ni ay'igihe gito muri iyi prototype.", "Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ni ay'igihe gito muri iyi prototype.")}</p>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {cart.map(item => (
@@ -370,10 +355,9 @@ export default function MedicinesPage() {
             </CardContent>
           </Card>
         ) : (
-          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari. Amakuru y'ibyo watumije abikwa by'agateganyo.", "Nta byo watumije mbere bihari. Amakuru y'ibyo watumije abikwa by'agateganyo.")}</p>
+          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari. Amakuru y'ibyo watumije ni ay'igeragezwa muri iyi prototype.", "Nta byo watumije mbere bihari. Amakuru y'ibyo watumije ni ay'igeragezwa muri iyi prototype.")}</p>
         )}
       </div>
     </AppLayout>
   );
 }
-

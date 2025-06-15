@@ -28,12 +28,11 @@ interface Article {
   categoryKn: string;
   readTime: string;
   readTimeKn: string;
-  // Conceptual: fullContentUrl: string; // URL to fetch full article from backend
+  // Conceptual: fullContentUrl: string; 
 }
 
-// Mock data - this would be fetched from /api/articles in a real app
 const mockArticlesData: Article[] = [
-  { id: 'art1', title: 'Understanding Common Cold vs. Flu', titleKn: 'Kumenya Itandukaniro hagati y\'Ibicurane na Grippe', summary: 'Learn the key differences between a common cold and the flu, including symptoms, prevention, and when to see a doctor.', summaryKn: 'Menya itandukaniro nyamukuru hagati y\'ibicurane bisanzwe na grippe, harimo ibimenyetso, uburyo bwo kwirinda, n\'igihe cyo kujya kwa muganga.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'health infographic comparison', category: 'General Health', categoryKn: 'Ubuzima Rusange', readTime: '5 min read', readTimeKn: 'isomwa mu min 5' /*, fullContentUrl: '/api/articles/art1/content' */ },
+  { id: 'art1', title: 'Understanding Common Cold vs. Flu', titleKn: 'Kumenya Itandukaniro hagati y\'Ibicurane na Grippe', summary: 'Learn the key differences between a common cold and the flu, including symptoms, prevention, and when to see a doctor.', summaryKn: 'Menya itandukaniro nyamukuru hagati y\'ibicurane bisanzwe na grippe, harimo ibimenyetso, uburyo bwo kwirinda, n\'igihe cyo kujya kwa muganga.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'health infographic comparison', category: 'General Health', categoryKn: 'Ubuzima Rusange', readTime: '5 min read', readTimeKn: 'isomwa mu min 5' },
   { id: 'art2', title: 'The Importance of a Balanced Diet', titleKn: 'Akamaro k\'Indyo Yuzuye', summary: 'Discover how a balanced diet contributes to overall health, boosts immunity, and provides essential nutrients for your body.', summaryKn: 'Menya uburyo indyo yuzuye igira uruhare mu buzima bwiza muri rusange, yongera ubudahangarwa bw\'umubiri, kandi itanga intungamubiri z\'ingenzi ku mubiri wawe.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'healthy food nutrition', category: 'Nutrition', categoryKn: 'Imirire', readTime: '7 min read', readTimeKn: 'isomwa mu min 7' },
   { id: 'art3', title: 'Tips for Managing Stress Effectively', titleKn: 'Inama zo Gucunga Stress mu Buryo Buboneye', summary: 'Explore practical strategies for managing stress in daily life, including mindfulness, exercise, and relaxation techniques.', summaryKn: 'Shakisha ingamba zifatika zo gucunga stress mu buzima bwa buri munsi, harimo kwitegereza, imyitozo ngororamubiri, n\'uburyo bwo kuruhuka.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'stress relief yoga', category: 'Mental Wellness', categoryKn: 'Ubuzima bwo mu Mutwe', readTime: '6 min read', readTimeKn: 'isomwa mu min 6' },
   { id: 'art4', title: 'Benefits of Regular Physical Activity', titleKn: 'Akamaro k\'Imyitozo Ngororamubiri Isanzwe', summary: 'Understand the wide-ranging benefits of incorporating regular physical activity into your routine for physical and mental well-being.', summaryKn: 'Menya akamaro kenshi ko gushyira imyitozo ngororamubiri isanzwe muri gahunda yawe ku buzima bwiza bw\'umubiri n\'ubwo mu mutwe.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'exercise fitness running', category: 'Fitness', categoryKn: 'Imyitozo Ngororamubiri', readTime: '8 min read', readTimeKn: 'isomwa mu min 8' },
@@ -51,13 +50,13 @@ export default function EducationalArticlesPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching articles from an API
+    // Simulate fetching articles (ephemeral)
     const fetchArticles = async () => {
       setIsLoading(true);
       // Conceptual: const response = await fetch('/api/articles');
       // Conceptual: const data = await response.json();
       // Conceptual: setArticles(data.articles || []);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300)); 
       setArticles(mockArticlesData);
       setIsLoading(false);
     };
@@ -69,19 +68,18 @@ export default function EducationalArticlesPage() {
     article.titleKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
     article.categoryKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
     article.summaryKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    article.title.toLowerCase().includes(searchTerm.toLowerCase()) || // Also search English fields
+    article.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     article.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     article.summary.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleReadMore = (articleId: string, articleTitle: string) => {
     // In a real app, this would navigate to a dynamic route like `/health-resources/articles/${articleId}`
-    // which would then fetch the full article content from `/api/articles/${articleId}`.
     toast({
-      title: t("Kujya ku Nyandiko (Agateganyo)", "Kujya ku Nyandiko (Agateganyo)"),
-      description: t(`Ubu wajyanwa ku nyandiko yuzuye ya "${articleTitle}". Ibi bisaba inzira yihariye n'isesengura ry'inyandiko yuzuye.`, `Ubu wajyanwa ku nyandiko yuzuye ya "${articleTitle}". Ibi bisaba inzira yihariye n'isesengura ry'inyandiko yuzuye.`),
+      title: t("Kujya ku Nyandiko (Igerageza)", "Kujya ku Nyandiko (Igerageza)"),
+      description: t(`Ubu wajyanwa ku nyandiko yuzuye ya "${articleTitle}". Ibi bisaba inzira yihariye n'isesengura ry'inyandiko yuzuye. Amakuru ntazabikwa muri iyi prototype.`, `Ubu wajyanwa ku nyandiko yuzuye ya "${articleTitle}". Ibi bisaba inzira yihariye n'isesengura ry'inyandiko yuzuye. Amakuru ntazabikwa muri iyi prototype.`),
     });
-    // router.push(`/health-resources/articles/${articleId}`); // Conceptual navigation
+    // router.push(`/health-resources/articles/${articleId}`); // Conceptual navigation, real page not implemented
   };
 
   if (!isClient || isLoading) {
@@ -103,12 +101,7 @@ export default function EducationalArticlesPage() {
     );
   }
   
-  if (!isAuthenticated && isClient) {
-    // This should ideally be caught by AppLayout and redirected.
-    // Adding a fallback here for safety.
-     router.replace('/welcome');
-     return null; // Prevent rendering further if redirecting
-  }
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
 
 
   return (
@@ -170,4 +163,3 @@ export default function EducationalArticlesPage() {
     </AppLayout>
   );
 }
-

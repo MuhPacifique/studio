@@ -24,7 +24,6 @@ interface WellnessTip {
   categoryKn: 'Umubiri' | 'Ubwonko' | 'Imirire' | 'Ibitotsi';
 }
 
-// Mock data - this would be fetched from /api/wellness-tips in a real app
 const mockWellnessTipsData: WellnessTip[] = [
   { id: 'tip1', title: 'Stay Hydrated', titleKn: 'Nywa Amazi Ahagije', description: 'Drink at least 8 glasses of water a day. Proper hydration is crucial for energy levels, brain function, and overall health.', descriptionKn: 'Nywa nibura ibirahuri 8 by\'amazi ku munsi. Kunywa amazi ahagije ni ingenzi ku mbaraga, imikorere y\'ubwonko, n\'ubuzima bwiza muri rusange.', icon: Zap, category: 'Physical', categoryKn: 'Umubiri' },
   { id: 'tip2', title: 'Mindful Moments', titleKn: 'Ibihe byo Kwitekerezaho', description: 'Take 5-10 minutes each day for mindfulness or meditation. It can significantly reduce stress and improve focus.', descriptionKn: 'Fata iminota 5-10 buri munsi yo kwitekerezaho cyangwa gutekereza. Byagabanya cyane stress kandi byongera ubushobozi bwo kwibanda.', icon: Lightbulb, category: 'Mental', categoryKn: 'Ubwonko' },
@@ -47,13 +46,13 @@ export default function WellnessTipsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching wellness tips from an API
+    // Simulate fetching wellness tips (ephemeral)
     const fetchWellnessTips = async () => {
       setIsLoading(true);
       // Conceptual: const response = await fetch('/api/wellness-tips');
       // Conceptual: const data = await response.json();
       // Conceptual: setWellnessTips(data.tips || []);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300)); 
       setWellnessTips(mockWellnessTipsData);
       setIsLoading(false);
     };
@@ -79,15 +78,10 @@ export default function WellnessTipsPage() {
     );
   }
   
-  if (!isAuthenticated && isClient) {
-    // This should ideally be caught by AppLayout and redirected.
-    // Adding a fallback here for safety.
-     router.replace('/welcome');
-     return null; // Prevent rendering further if redirecting
-  }
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
 
   const groupedTips = wellnessTips.reduce((acc, tip) => {
-    if (!acc[tip.categoryKn]) { // Group by Kinyarwanda category name
+    if (!acc[tip.categoryKn]) { 
       acc[tip.categoryKn] = [];
     }
     acc[tip.categoryKn].push(tip);
@@ -110,7 +104,6 @@ export default function WellnessTipsPage() {
           <Card key={categoryKn} className="shadow-lg hover-lift">
             <CardHeader>
               <CardTitle className="font-headline text-xl flex items-center text-primary">
-                {/* Use the first tip's icon for the category header */}
                 {tips[0] && <tips[0].icon className="mr-2 h-5 w-5" />} 
                 {categoryKn} {t("Wellness", "Ubuzima Bwiza")}
               </CardTitle>
@@ -138,4 +131,3 @@ export default function WellnessTipsPage() {
     </AppLayout>
   );
 }
-

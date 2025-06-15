@@ -18,25 +18,27 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface SupportGroup {
   id: string;
   name: string;
+  nameKn: string;
   description: string;
+  descriptionKn: string;
   imageUrl: string;
   aiHint: string;
   memberCount: number;
   category: string;
+  categoryKn: string;
   isPrivate: boolean;
   isJoined?: boolean; 
   isRequested?: boolean; 
 }
 
-// Default mock data, will not persist after page reload.
 const initialMockSupportGroups: SupportGroup[] = [
-  { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', isPrivate: false, isJoined: false },
-  { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', isPrivate: true, isJoined: false },
-  { id: 'sg3', name: 'Mental Wellness Advocates', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', isPrivate: false, isJoined: true }, 
-  { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false, isJoined: false },
+  { id: 'sg1', name: 'Diabetes Management Group', nameKn: 'Itsinda ryo Gucunga Diyabete', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', descriptionKn: 'Umuryango w\'ubufasha ku bantu bacunga diyabete. Sangira inama, amafunguro, n\'inkunga.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', categoryKn: 'Indwara Idakira', isPrivate: false, isJoined: false },
+  { id: 'sg2', name: 'New Parents Support Circle', nameKn: 'Itsinda ry\'Ubufasha ku Babyeyi Bashya', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', descriptionKn: 'Hura n\'abandi babyeyi bashya kugirango muganire ku byishimo n\'imbogamizi z\'ububyeyi.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', categoryKn: 'Ububyeyi', isPrivate: true, isJoined: false },
+  { id: 'sg3', name: 'Mental Wellness Advocates', nameKn: 'Abaharanira Ubuzima Bwiza bwo mu Mutwe', description: 'A safe space to discuss mental health, share coping strategies, and support one another.', descriptionKn: 'Ahantu hizewe ho kuganirira ku buzima bwo mu mutwe, gusangira uburyo bwo kwihangana, no gufashanya.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'mental health therapy', memberCount: 210, category: 'Mental Health', categoryKn: 'Ubuzima bwo mu Mutwe', isPrivate: false, isJoined: true }, 
+  { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', nameKn: 'Abakunda Imyitozo Ngororamubiri n\'Ubuzima Bwiza', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', descriptionKn: 'Ku bakunda imyitozo ngororamubiri, kurya neza, n\'ubuzima bukora. Sangira ibitekerezo by\'imyitozo n\'inkunga.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', categoryKn: 'Imibereho', isPrivate: false, isJoined: false },
 ];
 
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const translate = (enText: string, knText: string) => knText;
 
 const SupportGroupCardSkeleton = () => (
     <Card className="flex flex-col shadow-lg">
@@ -64,33 +66,31 @@ export default function SupportGroupsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const t = (enText: string, knText: string) => translate(enText, knText);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [groups, setGroups] = useState<SupportGroup[]>([]); // Group list is ephemeral
+  const [groups, setGroups] = useState<SupportGroup[]>([]); 
 
   useEffect(() => {
     setIsClient(true);
-    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
+    // Simulate fetching initial data (ephemeral)
+    const fetchGroups = async () => {
+        setIsLoadingData(true);
+        // Conceptual: const response = await fetch('/api/support-groups');
+        // Conceptual: const data = await response.json();
+        // Conceptual: setGroups(data.groups || []);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setGroups(initialMockSupportGroups);
+        setIsLoadingData(false);
+    };
+    fetchGroups();
   }, []);
-  
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
-
-  useEffect(() => {
-    if (isClient) {
-      // Simulate fetching initial data. No localStorage means data resets on reload.
-      setGroups(initialMockSupportGroups);
-      setIsLoadingData(false);
-    }
-  }, [isClient, currentLanguage]);
 
 
   const handleJoinGroup = (groupId: string) => {
-    // UI update is ephemeral
+    // Simulate UI update and backend call
     setGroups(prevGroups => 
       prevGroups.map(group => {
         if (group.id === groupId) {
@@ -99,10 +99,10 @@ export default function SupportGroupsPage() {
             return group;
           }
           if (group.isPrivate && !group.isRequested) {
-            toast({ title: t("Request Sent (Mock)", "Icyifuzo Cyoherejwe (By'agateganyo)"), description: t(`Your request to join "${group.name}" has been sent. (Not persisted)`, `Icyifuzo cyawe cyo kwinjira muri "${group.name}" cyoherejwe. (Ntibizabikwa)`)});
+            toast({ title: t("Request Sent (Simulation)", "Icyifuzo Cyoherejwe (Igerageza)"), description: t(`Your request to join "${group.nameKn}" has been sent. Data will not persist.`, `Icyifuzo cyawe cyo kwinjira muri "${group.nameKn}" cyoherejwe. Amakuru ntazabikwa.`)});
             return { ...group, isRequested: true };
           } else if (!group.isPrivate && !group.isJoined) {
-            toast({ title: t("Group Joined (Mock)", "Uramaze Kwinjira mu Itsinda (By'agateganyo)"), description: t(`You have joined "${group.name}". (Not persisted)`, `Wamaze kwinjira muri "${group.name}". (Ntibizabikwa)`)});
+            toast({ title: t("Group Joined (Simulation)", "Uramaze Kwinjira mu Itsinda (Igerageza)"), description: t(`You have joined "${group.nameKn}". Data will not persist.`, `Wamaze kwinjira muri "${group.nameKn}". Amakuru ntazabikwa.`)});
             return { ...group, isJoined: true, memberCount: group.memberCount + 1 };
           }
         }
@@ -112,10 +112,10 @@ export default function SupportGroupsPage() {
   };
 
   const filteredGroups = groups.filter(group =>
-    group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a,b) => a.name.localeCompare(b.name));
+    group.nameKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    group.categoryKn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    group.descriptionKn.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a,b) => a.nameKn.localeCompare(b.nameKn));
 
   if (!isClient || isLoadingData) {
     return (
@@ -148,6 +148,9 @@ export default function SupportGroupsPage() {
     );
   }
 
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
+
   return (
     <AppLayout>
       <PageHeader 
@@ -168,7 +171,7 @@ export default function SupportGroupsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Button className="transition-transform hover:scale-105 active:scale-95" onClick={() => toast({ title: t("Create Group (Mock)", "Kora Itsinda (By'agateganyo)"), description: t("This feature requires backend integration.", "Iki gice gisaba guhuzwa na seriveri.")})}>
+            <Button className="transition-transform hover:scale-105 active:scale-95" onClick={() => toast({ title: t("Create Group (Simulation)", "Kora Itsinda (Igerageza)"), description: t("This feature requires backend integration. Data will not persist.", "Iki gice gisaba guhuzwa na seriveri. Amakuru ntazabikwa.")})}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t("Create New Group", "Kora Itsinda Rishya")}
             </Button>
         </div>
@@ -180,7 +183,7 @@ export default function SupportGroupsPage() {
                 <Users2 className="mr-2 h-6 w-6"/> {t("Find Your Community", "Shaka Umuryango Wawe")}
             </CardTitle>
             <CardDescription>
-                {t("Join support groups to connect with others who share similar health journeys, interests, or challenges. Data requires backend integration to persist.", "Injira mu matsinda y'ubufasha kugirango uhure n'abandi mufite ingendo z'ubuzima, ibyo mukunda, cyangwa imbogamizi zisa. Amakuru asaba guhuzwa na seriveri kugirango abikwe.")}
+                {t("Join support groups to connect with others who share similar health journeys, interests, or challenges. Data is ephemeral in this prototype.", "Injira mu matsinda y'ubufasha kugirango uhure n'abandi mufite ingendo z'ubuzima, ibyo mukunda, cyangwa imbogamizi zisa. Amakuru ni ay'igihe gito muri iyi prototype.")}
             </CardDescription>
         </CardHeader>
       </Card>
@@ -192,7 +195,7 @@ export default function SupportGroupsPage() {
                 <div className="relative overflow-hidden rounded-t-lg">
                   <Image 
                     src={group.imageUrl} 
-                    alt={group.name} 
+                    alt={group.nameKn} 
                     width={400} 
                     height={200} 
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
@@ -204,15 +207,15 @@ export default function SupportGroupsPage() {
             <CardHeader className="pt-4">
               <div className="flex justify-between items-start">
                 <Link href={`/community-support/support-groups/${group.id}`} className="block">
-                    <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.name}</CardTitle>
+                    <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{group.nameKn}</CardTitle>
                 </Link>
                 {group.isPrivate && <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">{t("Private", "Rwihishwa")}</Badge>}
                 {!group.isPrivate && <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-400">{t("Public", "Rusange")}</Badge>}
               </div>
-              <Badge variant="outline" className="w-fit mt-1">{group.category}</Badge>
+              <Badge variant="outline" className="w-fit mt-1">{group.categoryKn}</Badge>
             </CardHeader>
             <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
+              <p className="text-sm text-muted-foreground mb-3">{group.descriptionKn}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center border-t pt-4">
               <div className="flex items-center text-sm text-muted-foreground">
@@ -243,4 +246,3 @@ export default function SupportGroupsPage() {
     </AppLayout>
   );
 }
-```

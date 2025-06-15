@@ -23,7 +23,6 @@ interface MockDoctorClient {
   specialtyKn: string;
 }
 
-// This data is now static as localStorage is removed for this.
 const mockDoctorsClient: MockDoctorClient[] = [ 
   { id: "doc1", name: "Dr. Emily Carter", nameKn: "Dr. Emily Carter", specialty: "General Physician", specialtyKn: "Umuganga Rusange" },
   { id: "doc2", name: "Dr. Ben Adams", nameKn: "Dr. Ben Adams", specialty: "Pediatrician", specialtyKn: "Umuganga w'Abana" },
@@ -43,8 +42,7 @@ export default function BookAppointmentPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
+  // Conceptual auth state; AppLayout manages actual auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
@@ -53,18 +51,27 @@ export default function BookAppointmentPage() {
   const [selectedTime, setSelectedTime] = useState<string | undefined>();
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [doctors, setDoctors] = useState<MockDoctorClient[]>([]);
 
   useEffect(() => {
     setIsClient(true);
-    // No auth check here, AppLayout handles it.
-    setIsLoadingPage(false);
+    // Simulate fetching doctors (ephemeral)
+    const fetchDoctors = async () => {
+        setIsLoadingPage(true);
+        // Conceptual: const response = await fetch('/api/doctors/available');
+        // Conceptual: const data = await response.json();
+        // Conceptual: setDoctors(data.doctors || []);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setDoctors(mockDoctorsClient);
+        setIsLoadingPage(false);
+    };
+    fetchDoctors();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
         toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.", "Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.") });
-        // router.push('/welcome'); // AppLayout should handle this if auth state is managed globally
         return;
     }
     if (!selectedDate || !selectedDoctorId || !selectedTime || !reason.trim()) {
@@ -77,20 +84,23 @@ export default function BookAppointmentPage() {
     }
     setIsSubmitting(true);
     
-    const selectedDoctor = mockDoctorsClient.find(doc => doc.id === selectedDoctorId);
+    const selectedDoctor = doctors.find(doc => doc.id === selectedDoctorId);
     if (!selectedDoctor) {
         toast({ variant: "destructive", title: t("Muganga Ntiyabonetse", "Muganga Ntiyabonetse") });
         setIsSubmitting(false);
         return;
     }
 
-    // Simulate API call. No localStorage persistence.
+    // Simulate API call to backend
+    // Conceptual: const response = await fetch('/api/appointments/book', { method: 'POST', body: JSON.stringify({ doctor_id: selectedDoctorId, ...}) });
     await new Promise(resolve => setTimeout(resolve, 1500)); 
+    
     toast({
       title: t("Igihe Cyafashe (Igerageza)", "Igihe Cyafashe (Igerageza)"),
       description: t(`Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`, 
                       `Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`),
     });
+    // Reset form - data would be persisted on backend
     setSelectedDate(new Date());
     setSelectedDoctorId(undefined);
     setSelectedTime(undefined);
@@ -111,19 +121,8 @@ export default function BookAppointmentPage() {
     );
   }
   
-   if (!isAuthenticated) {
-     // This case should be handled by AppLayout redirection primarily.
-     return (
-         <AppLayout>
-            <PageHeader title={t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")} />
-            <Card className="mt-10 text-center p-10">
-                <CardTitle>{t("Ugomba Kwinjira", "Ugomba Kwinjira")}</CardTitle>
-                <CardDescription className="mt-2">{t("Nyamuneka injira kugirango ufashe igihe.", "Nyamuneka injira kugirango ufashe igihe.")}</CardDescription>
-                <Button onClick={() => router.push('/welcome')} className="mt-6">{t("Injira / Iyandikishe", "Injira / Iyandikishe")}</Button>
-            </Card>
-         </AppLayout>
-     )
-  }
+   // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
 
   return (
     <AppLayout>
@@ -154,20 +153,20 @@ export default function BookAppointmentPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Muganga", "Hitamo Muganga")}</Label>
+                <label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Muganga", "Hitamo Muganga")}</label>
                 <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
                   <SelectTrigger id="doctor" className="w-full">
                     <SelectValue placeholder={t("Hitamo muganga cyangwa ubunararibonye", "Hitamo muganga cyangwa ubunararibonye")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDoctorsClient.map(doc => (
+                    {doctors.map(doc => (
                       <SelectItem key={doc.id} value={doc.id}>{doc.nameKn} ({doc.specialtyKn})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Isaha", "Hitamo Isaha")}</Label>
+                <label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Isaha", "Hitamo Isaha")}</label>
                 <Select value={selectedTime} onValueChange={setSelectedTime} disabled={!selectedDate}>
                   <SelectTrigger id="timeSlot" className="w-full">
                     <SelectValue placeholder={selectedDate ? t("Hitamo isaha", "Hitamo isaha") : t("Hitamo itariki mbere", "Hitamo itariki mbere")} />
@@ -182,7 +181,7 @@ export default function BookAppointmentPage() {
             </div>
 
             <div className="flex flex-col items-center md:items-start">
-               <Label className="block text-sm font-medium text-foreground mb-2">{t("Hitamo Itariki", "Hitamo Itariki")}</Label>
+               <label className="block text-sm font-medium text-foreground mb-2">{t("Hitamo Itariki", "Hitamo Itariki")}</label>
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -193,7 +192,7 @@ export default function BookAppointmentPage() {
             </div>
             
             <div>
-              <Label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Impamvu y'Uruzinduko", "Impamvu y'Uruzinduko")}</Label>
+              <label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Impamvu y'Uruzinduko", "Impamvu y'Uruzinduko")}</label>
               <Textarea 
                 id="reason" 
                 placeholder={t("Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...", "Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...")} 

@@ -18,13 +18,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface ForumPost {
   id: string;
   title: string;
+  titleKn: string;
   author: string;
   authorAvatar: string;
   authorInitials: string;
   category: string;
+  categoryKn: string;
   timestamp: string;
   summary: string;
+  summaryKn: string;
   fullContent: string; 
+  fullContentKn: string;
   likes: number;
   commentsCount: number;
   aiHint: string;
@@ -40,26 +44,26 @@ interface Comment {
   text: string;
 }
 
-// Default mock data, will not persist after page reload.
+// Default mock data, ephemeral.
 const defaultForumPosts: ForumPost[] = [
-  { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs and include lists:\n\n*   Mindfulness techniques\n*   Gentle exercises\n*   Dietary considerations\n\nPlease share what has helped you!", likes: 15, commentsCount: 4, aiHint: 'community support people', tags: ['chronic pain', 'support', 'wellness'] },
-  { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed. It's important to remember you're not alone in this.", likes: 22, commentsCount: 8, aiHint: 'anxious person thinking', tags: ['anxiety', 'medical tests', 'mental health'] },
+  { id: 'fp1', title: 'Managing chronic pain - tips and support', titleKn: 'Gucunga ububabare budakira - inama n\'ubufasha', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', categoryKn: 'Gucunga Ububabare', timestamp: 'Iminsi 2 ishize', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', summaryKn: 'Ndashaka inama n\'ubunararibonye ku gucunga ububabare budakira. Ni iki cyagufashije?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs and include lists:\n\n*   Mindfulness techniques\n*   Gentle exercises\n*   Dietary considerations\n\nPlease share what has helped you!", fullContentKn: "Amakuru arambuye ku gucunga ububabare budakira ajya hano. Harimo inkuru z'abantu ku giti cyabo, inama z'ubuvuzi zakusanyijwe (hamwe n'itangazo ry'uko bitanga isuzuma), n'ibibazo ku muryango mugari. Bishobora kuba ibice byinshi kandi bikaba birimo n'urutonde:\n\n*   Tekiniki zo kwitegereza\n*   Imyitozo yoroheje\n*   Ibyo kwitondera mu mirire\n\nNyamuneka sangiza ibyagufashije!", likes: 15, commentsCount: 2, aiHint: 'community support people', tags: ['ububabare budakira', 'ubufasha', 'ubuzima bwiza'] },
+  { id: 'fp2', title: 'Dealing with anxiety before medical tests', titleKn: 'Guhangana n\'ubwoba mbere y\'ibipimo bya muganga', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', categoryKn: 'Ubuzima Bwo Mu Mutwe', timestamp: 'Amasaha 5 ashize', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', summaryKn: 'Buri gihe ngira ubwoba bwinshi mbere y\'ikizamini cyangwa igikorwa cya muganga. Abandi babyitwaramo bate?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed. It's important to remember you're not alone in this.", fullContentKn: "Ikiganiro cyimbitse ku bijyanye n'ubwoba bwo kwipimisha kwa muganga, uburyo bwo kubyitwaramo, imyitozo yo guhumeka, no gushaka ubufasha bw'inzobere igihe bibaye ngombwa. Ni ingenzi kwibuka ko utari wenyine muri ibi.", likes: 22, commentsCount: 1, aiHint: 'anxious person thinking', tags: ['ubwoba', 'ibipimo bya muganga', 'ubuzima bwo mu mutwe'] },
 ];
 
-const defaultComments: { [postId: string]: Comment[] } = {
+const defaultCommentsData: { [postId: string]: Comment[] } = {
   fp1: [
-    { id: 'c1', author: 'Eva S.', authorAvatar: 'https://placehold.co/40x40.png?text=ES', authorInitials: 'ES', timestamp: '1 day ago', text: 'Great post! I find gentle yoga very helpful for my chronic back pain.' },
-    { id: 'c2', author: 'David L.', authorAvatar: 'https://placehold.co/40x40.png?text=DL', authorInitials: 'DL', timestamp: '18 hours ago', text: 'Has anyone tried acupuncture? Curious about its effectiveness.' },
+    { id: 'c1', author: 'Eva S.', authorAvatar: 'https://placehold.co/40x40.png?text=ES', authorInitials: 'ES', timestamp: 'Umunsi 1 ushize', text: 'Inkuru nziza! Nsanga yoga yoroheje imfasha cyane ku bubabare bwanjye budakira bw\'umugongo.' },
+    { id: 'c2', author: 'David L.', authorAvatar: 'https://placehold.co/40x40.png?text=DL', authorInitials: 'DL', timestamp: 'Amasaha 18 ashize', text: 'Hari uwagerageje acupuncture? Nshishikajwe no kumenya akamaro kayo.' },
   ],
   fp2: [
-    { id: 'c3', author: 'Sarah P.', authorAvatar: 'https://placehold.co/40x40.png?text=SP', authorInitials: 'SP', timestamp: '3 hours ago', text: 'Deep breathing exercises and listening to calming music help me a lot.' },
+    { id: 'c3', author: 'Sarah P.', authorAvatar: 'https://placehold.co/40x40.png?text=SP', authorInitials: 'SP', timestamp: 'Amasaha 3 ashize', text: 'Imyitozo yo guhumeka cyane no kumva umuziki utuje bimfasha cyane.' },
   ],
 };
 
 const forumCategories = ['Pain Management', 'Mental Wellness', 'Nutrition', 'Fitness', 'General Health', 'Other'];
 const forumCategoriesKn = ['Gucunga Ububabare', 'Ubuzima Bwo Mu Mutwe', 'Imirire', 'Imyitozo Ngororamubiri', 'Ubuzima Rusange', 'Ibindi'];
 
-const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
+const translate = (enText: string, knText: string) => knText;
 
 const PostDetailSkeleton = () => (
     <>
@@ -126,15 +130,13 @@ export default function ForumPostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
+  const t = (enText: string, knText: string) => translate(enText, knText);
 
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms.
-  // AppLayout will handle redirection if this page is accessed without auth.
   const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [post, setPost] = useState<ForumPost | null>(null); // Post details are ephemeral
-  const [comments, setComments] = useState<Comment[]>([]); // Comments are ephemeral
+  const [post, setPost] = useState<ForumPost | null>(null); 
+  const [comments, setComments] = useState<Comment[]>([]); 
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
@@ -142,34 +144,40 @@ export default function ForumPostDetailPage() {
 
   useEffect(() => {
     setIsClient(true);
-    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
-  }, []);
+    // Simulate fetching post and comments (ephemeral)
+    const fetchPostData = async () => {
+        setIsLoadingData(true);
+        // Conceptual: const postRes = await fetch(`/api/forums/posts/${postId}`);
+        // Conceptual: const postData = await postRes.json();
+        // Conceptual: const commentsRes = await fetch(`/api/forums/posts/${postId}/comments`);
+        // Conceptual: const commentsData = await commentsRes.json();
 
-  const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
+        const foundPost = defaultForumPosts.find(p => p.id === postId);
 
-  useEffect(() => {
-    if (isClient) {
-      // Simulate fetching post and comments. No localStorage means data resets on reload.
-      const foundPost = defaultForumPosts.find(p => p.id === postId);
+        if (foundPost) {
+            setPost(foundPost);
+            setComments(defaultCommentsData[postId] || []);
+        } else {
+            toast({ variant: "destructive", title: t("Post not found", "Inkuru ntiyabonetse") });
+            router.push('/community-support/forums');
+        }
+        setIsLoadingData(false);
+    };
 
-      if (foundPost) {
-        setPost(foundPost);
-        setComments(defaultComments[postId] || []);
-      } else {
-        toast({ variant: "destructive", title: t("Post not found", "Inkuru ntiyabonetse") });
-        router.push('/community-support/forums');
-      }
-      setIsLoadingData(false);
+    if (postId) {
+        fetchPostData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, router, toast, postId, currentLanguage]);
+  }, [isClient, postId, router]);
+
 
   const handleLikePost = () => {
     if (post) {
-      // UI update is ephemeral
+      // Simulate UI update and backend call
       const updatedPost = { ...post, likes: post.likes + 1 };
       setPost(updatedPost);
-      toast({ title: t("Post Liked (Mock)", "Inkuru Yakunzwe (By'agateganyo)") });
+      toast({ title: t("Post Liked (Simulation)", "Inkuru Yakunzwe (Igerageza)"), description: t("Data will not persist.", "Amakuru ntazabikwa.") });
     }
   };
   
@@ -190,18 +198,18 @@ export default function ForumPostDetailPage() {
       text: newComment,
     };
 
-    // UI update is ephemeral
-    const updatedComments = [...comments, commentToAdd];
-    setComments(updatedComments);
+    // Simulate UI update and backend call
+    // Conceptual: const response = await fetch(`/api/forums/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify(commentToAdd) });
+    // Conceptual: if (response.ok) { const savedComment = await response.json(); setComments(prev => [...prev, savedComment]); }
+    setComments(prev => [...prev, commentToAdd]);
 
     if(post) {
-      const updatedPost = {...post, commentsCount: post.commentsCount + 1};
-      setPost(updatedPost);
+      setPost(prevPost => prevPost ? {...prevPost, commentsCount: prevPost.commentsCount + 1} : null);
     }
     
     setNewComment('');
     setIsSubmittingComment(false);
-    toast({ title: t("Comment Added (Mock)", "Igitecyerezo Cyongeweho (By'agateganyo)"), description: t("Your comment has been added. It will not persist after page reload.", "Igitecyerezo cyawe cyongeweho. Nticyizabikwa nyuma yo guhindura paji.") });
+    toast({ title: t("Comment Added (Simulation)", "Igitecyerezo Cyongeweho (Igerageza)"), description: t("Your comment has been added. Data will not persist.", "Igitecyerezo cyawe cyongeweho. Amakuru ntazabikwa.") });
   };
 
 
@@ -222,23 +230,26 @@ export default function ForumPostDetailPage() {
     );
   }
 
+  // Conceptual: if (!isAuthenticated && isClient) { router.replace('/welcome'); return null; }
+
+
   return (
     <AppLayout>
       <PageHeader 
-        title={post.title}
+        title={post.titleKn}
         breadcrumbs={[
           {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
           {label: t("Community & Support", "Ubufatanye & Ubufasha"), href: "/community-support/forums"}, 
           {label: t("Patient Forums", "Ibiganiro by'Abarwayi"), href: "/community-support/forums"},
-          {label: post.title.substring(0,30) + "..."}
+          {label: post.titleKn.substring(0,30) + "..."}
         ]}
       />
 
       <Card className="shadow-xl hover-lift">
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
-            <CardTitle className="font-headline text-2xl text-primary">{post.title}</CardTitle>
-            <Badge variant="outline">{currentLanguage === 'kn' ? forumCategoriesKn[forumCategories.indexOf(post.category)] || post.category : post.category}</Badge>
+            <CardTitle className="font-headline text-2xl text-primary">{post.titleKn}</CardTitle>
+            <Badge variant="outline">{post.categoryKn}</Badge>
           </div>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Avatar className="h-8 w-8">
@@ -259,7 +270,7 @@ export default function ForumPostDetailPage() {
             )}
         </CardHeader>
         <CardContent className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-          {post.fullContent}
+          {post.fullContentKn}
         </CardContent>
         <CardFooter className="border-t pt-4 flex justify-start space-x-4">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={handleLikePost}>
@@ -325,4 +336,3 @@ export default function ForumPostDetailPage() {
     </AppLayout>
   );
 }
-```
