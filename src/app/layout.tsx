@@ -3,30 +3,27 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // localStorage for theme and language preference is removed.
-  // The app will default to Kinyarwanda ('kn') as set on the <html> tag.
-  // Theme will default to OS/browser preference (light or dark).
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Set lang attribute for accessibility, default to 'kn'
+    setIsClient(true); // Set isClient to true after mount
+
     document.documentElement.lang = 'kn';
 
-    // Apply dark mode based on OS preference if no class is set
-    // Check if theme classes are already set to avoid overriding explicit user choices (if any persisted via other means)
     const hasThemeClass = document.documentElement.classList.contains('light') || document.documentElement.classList.contains('dark');
     
     if (!hasThemeClass) {
       if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
       } else {
-        document.documentElement.classList.add('light'); // Default to light if no OS preference or OS prefers light
+        document.documentElement.classList.add('light'); 
       }
     }
   }, []);
@@ -42,7 +39,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen bg-background flex flex-col">
         {children}
-        <Toaster />
+        {isClient && <Toaster />}
       </body>
     </html>
   );

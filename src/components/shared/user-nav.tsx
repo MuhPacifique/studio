@@ -23,31 +23,27 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated);
   
-  // These details would come from a real auth system/context.
-  // Since localStorage is removed, these will be null/default if not "logged in".
-  const [userName, setUserName] = useState<string | null>(null); // Example: "Ntwari Jean"
-  const [userRole, setUserRole] = useState<string | null>(null); // Example: "patient"
+  const [userName, setUserName] = useState<string | null>(null); 
+  const [userRole, setUserRole] = useState<string | null>(null); 
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
 
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
 
    useEffect(() => {
+    // This effect runs only on the client after mount
     if (typeof window !== "undefined") {
-      const osTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setCurrentTheme(osTheme);
-      document.documentElement.classList.toggle('dark', osTheme === 'dark');
+      const isInitiallyDark = document.documentElement.classList.contains('dark');
+      setCurrentTheme(isInitiallyDark ? 'dark' : 'light');
     }
-  }, []);
+  }, []); 
   
   useEffect(() => {
     setIsAuthenticated(propIsAuthenticated);
     if (propIsAuthenticated) {
-        // Simulate fetching/setting user details if authenticated
-        // This is where a real app would get data from its auth context/store
         setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); 
-        setUserRole("patient"); // Default mock role
-        setProfileImageUrl(""); // No mock image URL
+        setUserRole("patient"); 
+        setProfileImageUrl(""); 
     } else {
         setUserName(null);
         setUserRole(null);
@@ -59,17 +55,19 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
   const toggleTheme = () => {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setCurrentTheme(newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    // Theme preference persistence is removed as localStorage is gone.
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleLogout = () => {
-    // Simulate logout: clear local state. Real logout involves backend API call.
     setIsAuthenticated(false); 
     setUserName(null);
     setUserRole(null);
-    // AppLayout will handle redirection to /welcome if on a protected page.
-    // Or navigate explicitly:
     router.push('/welcome');
   };
   
@@ -163,4 +161,3 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
     </div>
   );
 }
-```

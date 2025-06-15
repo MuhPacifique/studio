@@ -49,4 +49,3 @@ export function PageHeader({ title, breadcrumbs, children }: PageHeaderProps) {
     </div>
   );
 }
-```

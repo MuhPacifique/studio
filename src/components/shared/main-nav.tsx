@@ -275,4 +275,3 @@ export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttr
     </nav>
   );
 }
-```

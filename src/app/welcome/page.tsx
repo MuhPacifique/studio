@@ -23,9 +23,9 @@ const roles: { name: Role; title: string; titleKn: string; description: string; 
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { toast } = useToast(); 
+  const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  
+
   // Defaulting to Kinyarwanda
   const language = 'kn';
   const t = (enText: string, knText: string) => language === 'kn' ? knText : enText;
@@ -45,14 +45,14 @@ export default function WelcomePage() {
     if (selectedRole === "admin") return `/admin/login?role=${selectedRole}`;
     return `/login?role=${selectedRole}`;
   };
-  
+
   const getRegisterPath = () => {
     if (selectedRole === "admin") {
       toast({
           title: t('Admin Registration', 'Kwiyandikisha kw\'Umunyamabanga'),
           description: t('Administrator accounts are created internally.', 'Konti z\'abanyamabanga zikorerwa imbere.'),
       });
-      return "#"; 
+      return "#";
     }
     return `/register?role=${selectedRole}`;
   };
@@ -64,13 +64,13 @@ export default function WelcomePage() {
         <LogoIcon className="h-12 w-12 transition-transform duration-500 ease-out group-hover:rotate-[360deg]"/>
         <span className="text-3xl font-bold font-headline">MediServe Hub</span>
       </Link>
-      
+
       <Card className="w-full max-w-3xl shadow-2xl dark:shadow-primary/10">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl sm:text-3xl font-headline gradient-text">{t('Welcome to MediServe Hub!', 'Murakaza neza kuri MediServe Hub!')}</CardTitle>
           <CardDescription className="text-md sm:text-lg text-muted-foreground">
-            {selectedRole ? 
-              t(`You've selected: ${roles.find(r => r.name === selectedRole)?.title || selectedRole}. Now, please login or register.`, `Wahisemo: ${roles.find(r => r.name === selectedRole)?.titleKn || selectedRole}. Noneho, injira cyangwa wiyandikishe.`) 
+            {selectedRole ?
+              t(`You've selected: ${roles.find(r => r.name === selectedRole)?.title || selectedRole}. Now, please login or register.`, `Wahisemo: ${roles.find(r => r.name === selectedRole)?.titleKn || selectedRole}. Noneho, injira cyangwa wiyandikishe.`)
               : t("Please select your role to continue.", "Nyamuneka hitamo uruhare rwawe kugirango ukomeze.")
             }
           </CardDescription>
@@ -79,8 +79,8 @@ export default function WelcomePage() {
           {!selectedRole ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {roles.map((role) => (
-                <Card 
-                  key={role.name} 
+                <Card
+                  key={role.name}
                   className={cn("hover-lift cursor-pointer transition-all duration-300 ease-in-out group border-2", role.bgColor, role.borderColor, "hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-primary/30")}
                   onClick={() => handleRoleSelect(role.name)}
                 >
@@ -100,7 +100,7 @@ export default function WelcomePage() {
           ) : (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Card 
+                <Card
                     className="hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-primary/30"
                     onClick={() => router.push(getLoginPath())}
                 >
@@ -115,8 +115,8 @@ export default function WelcomePage() {
                     </div>
                   </CardContent>
                 </Card>
-                
-                <Card 
+
+                <Card
                     className={cn(
                         "hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20 border-2 border-accent/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-accent/30",
                         selectedRole === 'admin' && "opacity-60 cursor-not-allowed bg-muted/10 border-muted/30 hover:bg-muted/10"
@@ -149,4 +149,3 @@ export default function WelcomePage() {
     </div>
   );
 }
-```
