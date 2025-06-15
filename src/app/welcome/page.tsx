@@ -46,16 +46,23 @@ export default function WelcomePage() {
     return `/login?role=${selectedRole}`;
   };
 
-  const getRegisterPath = () => {
+  const handleRegisterClick = () => {
     if (selectedRole === "admin") {
       toast({
           title: t('Admin Registration', 'Kwiyandikisha kw\'Umunyamabanga'),
           description: t('Administrator accounts are created internally.', 'Konti z\'abanyamabanga zikorerwa imbere.'),
       });
-      return "#";
+    } else if (selectedRole === "doctor") {
+      toast({
+          title: t('Doctor Registration', 'Kwiyandikisha kwa Muganga'),
+          description: t('Doctor accounts are created by administrators. Please contact support if you are a doctor wishing to join.', 'Konti za muganga zikorerwa n\'abanyamabanga. Nyamuneka vugana n\'ubufasha niba uri muganga wifuza kwinjira.'),
+      });
+    } else if (selectedRole) {
+        router.push(`/register?role=${selectedRole}`);
     }
-    return `/register?role=${selectedRole}`;
   };
+
+  const isRegistrationAllowed = selectedRole && selectedRole !== 'admin' && selectedRole !== 'doctor';
 
 
   return (
@@ -119,19 +126,22 @@ export default function WelcomePage() {
                 <Card
                     className={cn(
                         "hover-lift cursor-pointer transition-all duration-300 ease-in-out group bg-accent/10 hover:bg-accent/20 border-2 border-accent/30 hover:shadow-lg dark:hover:shadow-md dark:hover:shadow-accent/30",
-                        selectedRole === 'admin' && "opacity-60 cursor-not-allowed bg-muted/10 border-muted/30 hover:bg-muted/10"
+                        (selectedRole === 'admin' || selectedRole === 'doctor') && "opacity-60 cursor-not-allowed bg-muted/10 border-muted/30 hover:bg-muted/10"
                     )}
-                    onClick={() => selectedRole !== 'admin' && router.push(getRegisterPath())}
+                    onClick={handleRegisterClick}
                 >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className={cn("text-xl font-medium font-headline text-accent", selectedRole === 'admin' && "text-muted-foreground")}>{t('Register', 'Iyandikishe')}</CardTitle>
-                    <UserPlus className={cn("h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110", selectedRole === 'admin' && "text-muted-foreground")} />
+                    <CardTitle className={cn("text-xl font-medium font-headline text-accent", (selectedRole === 'admin' || selectedRole === 'doctor') && "text-muted-foreground")}>{t('Register', 'Iyandikishe')}</CardTitle>
+                    <UserPlus className={cn("h-8 w-8 text-accent opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110", (selectedRole === 'admin' || selectedRole === 'doctor') && "text-muted-foreground")} />
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        {selectedRole === 'admin' ? t('Admin registration is managed internally.', 'Kwiyandikisha kw\'abanyamabanga bikorerwa imbere.') : t('Create a new account.', 'Fungura konti nshya.')}
+                        {selectedRole === 'admin' ? t('Admin registration is managed internally.', 'Kwiyandikisha kw\'abanyamabanga bikorerwa imbere.') :
+                         selectedRole === 'doctor' ? t('Doctor accounts are created by administrators.', 'Konti za muganga zikorerwa n\'abanyamabanga.') :
+                         t('Create a new account.', 'Fungura konti nshya.')
+                        }
                     </p>
-                    {selectedRole !== 'admin' && (
+                    {isRegistrationAllowed && (
                         <div className="flex items-center pt-3 text-sm font-medium text-accent group-hover:underline">
                             {t('Create Account', 'Fungura Konti')} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                         </div>
