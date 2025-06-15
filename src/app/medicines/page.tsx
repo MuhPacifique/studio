@@ -353,4 +353,3 @@ export default function MedicinesPage() {
     </AppLayout>
   );
 }
-```
