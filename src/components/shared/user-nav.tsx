@@ -14,50 +14,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, UserCircle, UserPlus, LayoutDashboard, Settings, Briefcase, Moon, Sun, LogOut } from 'lucide-react';
+import { LogIn, UserCircle, LayoutDashboard, Briefcase, Moon, Sun, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
-// Accept isAuthenticated as a prop
 export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();
-  // Use the prop for authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated);
   
-  // These would ideally come from a user context/store after login
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userType, setUserType] = useState<string | null>(null);
+  // These details would come from a real auth system/context.
+  // Since localStorage is removed, these will be null/default if not "logged in".
+  const [userName, setUserName] = useState<string | null>(null); // Example: "Ntwari Jean"
+  const [userRole, setUserRole] = useState<string | null>(null); // Example: "patient"
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
 
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
 
    useEffect(() => {
-    // Set initial theme based on OS preference
     if (typeof window !== "undefined") {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setCurrentTheme('dark');
-        document.documentElement.classList.add('dark');
-      } else {
-        setCurrentTheme('light');
-        document.documentElement.classList.remove('dark');
-      }
+      const osTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      setCurrentTheme(osTheme);
+      document.documentElement.classList.toggle('dark', osTheme === 'dark');
     }
   }, []);
   
-  // Update local auth state if the prop changes (e.g., after a mock login elsewhere)
   useEffect(() => {
     setIsAuthenticated(propIsAuthenticated);
     if (propIsAuthenticated) {
         // Simulate fetching/setting user details if authenticated
-        // In a real app, this data would come from a context or API call
-        setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); // "Prototype User"
-        setUserType("patient"); // Default to patient for demo
-        setProfileImageUrl(""); // Or a placeholder
+        // This is where a real app would get data from its auth context/store
+        setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa")); 
+        setUserRole("patient"); // Default mock role
+        setProfileImageUrl(""); // No mock image URL
     } else {
         setUserName(null);
-        setUserType(null);
+        setUserRole(null);
         setProfileImageUrl(null);
     }
   }, [propIsAuthenticated]);
@@ -67,15 +60,16 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setCurrentTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    // Theme preference persistence is removed as localStorage is gone.
   };
 
   const handleLogout = () => {
-    // This mock logout only affects UI. Real logout needs backend.
+    // Simulate logout: clear local state. Real logout involves backend API call.
     setIsAuthenticated(false); 
     setUserName(null);
-    setUserType(null);
-    // For prototype, AppLayout will handle redirection if needed.
-    // Or directly redirect to welcome.
+    setUserRole(null);
+    // AppLayout will handle redirection to /welcome if on a protected page.
+    // Or navigate explicitly:
     router.push('/welcome');
   };
   
@@ -109,12 +103,6 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
               <LogIn className="mr-2 h-4 w-4" /> {t('Injira', 'Injira')}
             </Link>
           </Button>
-          {/* Registration button might be redundant if /welcome is the main entry */}
-          {/* <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/welcome">
-              <UserPlus className="mr-2 h-4 w-4" /> {t('Iyandikishe', 'Iyandikishe')}
-            </Link>
-          </Button> */}
         </>
       ) : (
         <DropdownMenu>
@@ -131,10 +119,10 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{userName || t("Ukoresha", "Ukoresha")}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {userType === 'patient' ? t('Umurwayi', 'Umurwayi') :
-                   userType === 'doctor' ? t('Muganga', 'Muganga') :
-                   userType === 'admin' ? t('Umunyamabanga', 'Umunyamabanga') :
-                   userType === 'seeker' ? t('Ushaka Ubujyanama', 'Ushaka Ubujyanama') :
+                  {userRole === 'patient' ? t('Umurwayi', 'Umurwayi') :
+                   userRole === 'doctor' ? t('Muganga', 'Muganga') :
+                   userRole === 'admin' ? t('Umunyamabanga', 'Umunyamabanga') :
+                   userRole === 'seeker' ? t('Ushaka Ubujyanama', 'Ushaka Ubujyanama') :
                    t('Ukoresha', 'Ukoresha')}
                 </p>
               </div>
@@ -147,7 +135,7 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
                   <span>{t('Umwirondoro Wanjye', 'Umwirondoro Wanjye')}</span>
                 </Link>
               </DropdownMenuItem>
-              {userType === 'admin' && (
+              {userRole === 'admin' && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -155,7 +143,7 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
                   </Link>
                 </DropdownMenuItem>
               )}
-              {userType === 'doctor' && (
+              {userRole === 'doctor' && (
                 <DropdownMenuItem asChild>
                   <Link href="/doctor/dashboard">
                     <Briefcase className="mr-2 h-4 w-4" />
@@ -175,3 +163,4 @@ export function UserNav({ isAuthenticated: propIsAuthenticated }: { isAuthentica
     </div>
   );
 }
+```

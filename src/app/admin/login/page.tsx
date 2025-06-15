@@ -20,7 +20,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation'; 
-import { Phone } from 'lucide-react'; // Not used here, but keeping for consistency if needed
 
 const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
 
@@ -44,19 +43,20 @@ export default function AdminLoginPage() {
   });
 
   const onSubmit = async (data: AdminLoginFormValues) => {
-    // This is a mock login. In a real app, this would call a backend API.
+    // This is a mock login. No data is persisted.
+    form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Since localStorage for auth is removed, this login doesn't "persist" a session.
-    // It just simulates a successful login attempt for UI flow.
+    form.formState.isSubmitting = false;
     
     if (data.username === "reponsekdz06@gmail.com" && data.password === "20072025") {
       toast({
         title: t("Kwinjira kw'Umunyamabanga Byagenze Neza", "Kwinjira kw'Umunyamabanga Byagenze Neza"),
         description: t("Murakaza neza, Munyamabanga! (Igerageza)", "Murakaza neza, Munyamabanga! (Igerageza)"),
       });
-      // In a real app, backend would set a session cookie/token.
-      // For prototype, redirect. UserNav won't show logged-in state without further changes.
+      // For prototype, simulate "logging in" by redirecting.
+      // AppLayout's mock auth state isn't directly changed here.
+      // To test authenticated admin views, manually set `isAuthenticated` to true in AppLayout
+      // and adapt role checks or simulate an admin role.
       router.push('/admin/dashboard'); 
     } else {
       toast({
@@ -127,3 +127,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+```

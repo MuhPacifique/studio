@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-// Button component is not directly used for navigation here, Link is used instead
 import { Users, Pill, ListOrdered, BarChart3, Settings, ArrowRight, ShieldAlert, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -25,21 +24,20 @@ const adminFeatures = [
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true); // Used to simulate auth check
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); 
+  // Mock authentication: In a real app, this comes from context/session
+  // For prototype after localStorage removal, assume false unless specific logic sets it.
+  // AppLayout's redirection will handle unauthorized access.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false); 
 
   useEffect(() => {
     // Simulate checking admin authentication status
-    // In a real app, this would involve an API call to verify the admin's session/token
-    const simulateAuthCheck = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-      // For prototype purposes, let's assume if they reach here, they are "authenticated" as admin
-      // (because admin login page redirects here on mock success).
-      // A real check would be more robust.
-      setIsAuthenticatedAdmin(true); 
-      setIsLoading(false);
-    };
-    simulateAuthCheck();
+    // This page should be protected by AppLayout. If reached, assume "admin" for demo.
+    // However, without localStorage, there's no easy way to persist this from admin/login.
+    // The conceptual flow is: admin logs in -> gets token -> token used for API calls.
+    // For UI, if AppLayout allows access, we proceed. A real check is needed.
+    setIsAuthenticatedAdmin(true); // Simulate admin role if page is accessed
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {
@@ -47,22 +45,21 @@ export default function AdminDashboardPage() {
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">{t("Tugenzura uburenganzira...", "Tugenzura uburenganzira...")}</p> {/* Verifying authorization... */}
+          <p className="text-muted-foreground">{t("Tugenzura uburenganzira...", "Tugenzura uburenganzira...")}</p>
         </div>
       </AppLayout>
     );
   }
 
-  if (!isAuthenticatedAdmin) {
-    // This part might not be hit often if login page directly redirects.
-    // But good as a safeguard.
+  // This check is largely conceptual now, as AppLayout handles actual redirection.
+  if (!isAuthenticatedAdmin) { 
     toast({
         variant: "destructive",
         title: t("Access Denied", "Ntabwo Wemerewe"),
         description: t("You must be an administrator to view this page.", "Ugomba kuba uri umunyamabanga kugirango ubashe kureba iyi paji."),
     });
-    router.replace('/admin/login');
-    return null; // Or a loading/redirecting state
+    router.replace('/admin/login'); // Fallback redirect
+    return null; 
   }
 
 
@@ -114,3 +111,4 @@ export default function AdminDashboardPage() {
     </AppLayout>
   );
 }
+```

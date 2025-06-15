@@ -18,7 +18,7 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 interface MedicineStock {
   id: string;
@@ -30,7 +30,6 @@ interface MedicineStock {
   supplier: string;
 }
 
-// Mock initial data - in a real app, this would be fetched from the backend
 const initialMockInventory: MedicineStock[] = [
   { id: 'inv1', name: 'Paracetamol 500mg', category: 'Pain Relief', stockLevel: 150, unitPrice: 40, expiryDate: '2025-12-31', supplier: 'PharmaSupply Co.' },
   { id: 'inv2', name: 'Amoxicillin 250mg', category: 'Antibiotics', stockLevel: 80, unitPrice: 150, expiryDate: '2024-10-30', supplier: 'MediGoods Inc.' },
@@ -50,25 +49,20 @@ type MedicineFormValues = z.infer<ReturnType<typeof medicineFormSchema>>;
 
 export default function AdminInventoryPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  // Assume if user reaches this page, they are an "authenticated admin" for prototype purposes.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(true); 
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [inventoryList, setInventoryList] = useState<MedicineStock[]>([]); // Start empty
+  const [inventoryList, setInventoryList] = useState<MedicineStock[]>([]); 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<MedicineStock | null>(null);
   
   useEffect(() => {
-    // Simulate checking admin authentication and fetching initial data
-    const simulateLoad = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // For prototype, assume authenticated if reaching here
-      setIsAuthenticatedAdmin(true);
-      setInventoryList(initialMockInventory); // Load mock data after "auth"
-      setIsLoadingPage(false);
-    };
-    simulateLoad();
+    // Simulate fetching initial data. No localStorage means data resets on reload.
+    setInventoryList(initialMockInventory);
+    setIsLoadingPage(false);
   }, []);
   
   const form = useForm<MedicineFormValues>({
@@ -82,7 +76,7 @@ export default function AdminInventoryPage() {
     } else {
       form.reset({ name: '', category: '', stockLevel: 0, unitPrice: 0, expiryDate: '', supplier: '' });
     }
-  }, [editingMedicine, form]); // Removed isFormDialogOpen dependency as it was causing reset on every open
+  }, [editingMedicine, form]);
 
   const filteredInventory = inventoryList.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,28 +84,27 @@ export default function AdminInventoryPage() {
   );
 
   const handleFormSubmit = (data: MedicineFormValues) => {
-    // UI update is now ephemeral, backend would handle persistence
+    // UI update is ephemeral, backend would handle persistence
     if (editingMedicine) {
       setInventoryList(prev => prev.map(med => med.id === editingMedicine.id ? { ...editingMedicine, ...data } : med));
-      toast({ title: t("Umuti Wahinduwe (Igerageza)", "Umuti Wahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`)});
+      toast({ title: t("Umuti Wahinduwe (Igerageza)", "Umuti Wahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`)});
     } else {
-      const newMedicine: MedicineStock = { ...data, id: `inv${Date.now()}` }; // Still need client-side ID for list key
+      const newMedicine: MedicineStock = { ...data, id: `inv${Date.now()}` }; 
       setInventoryList(prev => [newMedicine, ...prev]);
-      toast({ title: t("Umuti Wongeweho (Igerageza)", "Umuti Wongeweho (Igerageza)"), description: t(`${data.name} wongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} wongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`)});
+      toast({ title: t("Umuti Wongeweho (Igerageza)", "Umuti Wongeweho (Igerageza)"), description: t(`${data.name} wongeweho ku rutonde. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} wongeweho ku rutonde. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`)});
     }
     setIsFormDialogOpen(false);
     setEditingMedicine(null);
-    form.reset(); // Reset form after submission
+    form.reset(); 
   };
 
   const handleOpenDialog = (medicine: MedicineStock | null = null) => {
     setEditingMedicine(medicine);
-    // form.reset will be called by useEffect based on editingMedicine
     setIsFormDialogOpen(true);
   };
 
   const handleDeleteItem = (itemId: string, itemName: string) => {
-    // UI update is now ephemeral
+    // UI update is ephemeral
     setInventoryList(prev => prev.filter(item => item.id !== itemId));
     toast({ variant: "destructive", title: t("Gusiba Ikintu (Igerageza)", "Gusiba Ikintu (Igerageza)"), description: t(`${itemName} yakuwe mu bubiko ku buryo bw'agateganyo. Gusiba nyako bisaba seriveri.`, `${itemName} yakuwe mu bubiko ku buryo bw'agateganyo. Gusiba nyako bisaba seriveri.`)});
   };
@@ -134,8 +127,7 @@ export default function AdminInventoryPage() {
 
   if (!isAuthenticatedAdmin) {
     toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
-    router.replace('/admin/login');
-    return null;
+    return <AppLayout><PageHeader title={t("Access Denied", "Ntabwo Wemerewe")} /></AppLayout>;
   }
 
   return (
@@ -215,7 +207,7 @@ export default function AdminInventoryPage() {
           <DialogHeader>
             <DialogTitle>{editingMedicine ? t('Edit Medicine', 'Hindura Umuti') : t('Add New Medicine', 'Ongeraho Umuti Mushya')}</DialogTitle>
             <DialogDescription>
-              {editingMedicine ? t("Update the medicine details. (Mock)", "Hindura amakuru y'umuti. (Igerageza)") : t("Fill in the details to add a new medicine. (Mock)", "Uzuza amakuru kugirango wongere umuti mushya. (Igerageza)")}
+              {editingMedicine ? t("Update the medicine details. (Mock - backend needed)", "Hindura amakuru y'umuti. (Igerageza - seriveri irakenewe)") : t("Fill in the details to add a new medicine. (Mock - backend needed)", "Uzuza amakuru kugirango wongere umuti mushya. (Igerageza - seriveri irakenewe)")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
@@ -235,3 +227,4 @@ export default function AdminInventoryPage() {
     </AppLayout>
   );
 }
+```

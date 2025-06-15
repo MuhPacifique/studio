@@ -9,13 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CalendarPlus, UserCheck, Clock, Info } from 'lucide-react';
+import { Loader2, CalendarPlus, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
 
-interface MockDoctorClient { // Renamed to avoid conflict
+interface MockDoctorClient { 
   id: string;
   name: string;
   nameKn: string;
@@ -23,19 +23,8 @@ interface MockDoctorClient { // Renamed to avoid conflict
   specialtyKn: string;
 }
 
-interface AppointmentClient { // Renamed
-  id: string;
-  userId: string; // This would be actual user ID from backend
-  doctorId: string;
-  doctorName: string;
-  date: string; 
-  time: string;
-  reason: string;
-  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
-  type: 'Online' | 'In-Person';
-}
-
-const mockDoctorsClient: MockDoctorClient[] = [ // Renamed
+// This data is now static as localStorage is removed for this.
+const mockDoctorsClient: MockDoctorClient[] = [ 
   { id: "doc1", name: "Dr. Emily Carter", nameKn: "Dr. Emily Carter", specialty: "General Physician", specialtyKn: "Umuganga Rusange" },
   { id: "doc2", name: "Dr. Ben Adams", nameKn: "Dr. Ben Adams", specialty: "Pediatrician", specialtyKn: "Umuganga w'Abana" },
   { id: "doc3", name: "Dr. Olivia Chen", nameKn: "Dr. Olivia Chen", specialty: "Cardiologist", specialtyKn: "Umuganga w'Umutima" },
@@ -48,14 +37,15 @@ const availableTimeSlots = [
   "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
 ];
 
-const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 export default function BookAppointmentPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms
-  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -66,21 +56,15 @@ export default function BookAppointmentPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check
-    const checkAuth = async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        // This is a placeholder. Real auth would check a session/token.
-        setIsAuthenticated(true); // Assume authenticated for prototype
-        setIsLoadingPage(false);
-    };
-    checkAuth();
+    // No auth check here, AppLayout handles it.
+    setIsLoadingPage(false);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
         toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.", "Nyamuneka injira kugirango ufashe igihe cyo kwa muganga.") });
-        router.push('/welcome');
+        // router.push('/welcome'); // AppLayout should handle this if auth state is managed globally
         return;
     }
     if (!selectedDate || !selectedDoctorId || !selectedTime || !reason.trim()) {
@@ -100,21 +84,18 @@ export default function BookAppointmentPage() {
         return;
     }
 
-    // Simulate API call to save appointment
-    // const newAppointment: AppointmentClient = { /* ... */ };
-    // Backend would handle saving to database based on schema.sql.
-
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+    // Simulate API call. No localStorage persistence.
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
     toast({
       title: t("Igihe Cyafashe (Igerageza)", "Igihe Cyafashe (Igerageza)"),
-      description: t(`Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, 
-                      `Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`),
+      description: t(`Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`, 
+                      `Igihe cyawe na ${selectedDoctor.nameKn} ku itariki ya ${format(selectedDate, "PPP")} saa ${selectedTime} cyasabwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`),
     });
     setSelectedDate(new Date());
     setSelectedDoctorId(undefined);
     setSelectedTime(undefined);
     setReason("");
-    router.push('/appointments/my-appointments'); // Navigate to view appointments
+    router.push('/appointments/my-appointments'); 
     
     setIsSubmitting(false);
   };
@@ -131,6 +112,7 @@ export default function BookAppointmentPage() {
   }
   
    if (!isAuthenticated) {
+     // This case should be handled by AppLayout redirection primarily.
      return (
          <AppLayout>
             <PageHeader title={t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")} />
@@ -158,8 +140,8 @@ export default function BookAppointmentPage() {
         <Info className="h-5 w-5 text-primary" />
         <AlertTitle className="font-headline text-primary">{t("Amakuru yo Gufata Igihe", "Amakuru yo Gufata Igihe")}</AlertTitle>
         <AlertDescription>
-          {t("Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri.", 
-             "Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri.")}
+          {t("Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri. Muri iyi prototype, amakuru ntazabikwa.", 
+             "Hitamo muganga ukunze, itariki, n'isaha. Nyamuneka tanga impamvu ngufi y'uruzinduko rwawe. Gufata igihe byose bishingiye ku kwemezwa na seriveri. Muri iyi prototype, amakuru ntazabikwa.")}
         </AlertDescription>
       </Alert>
 
@@ -172,7 +154,7 @@ export default function BookAppointmentPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Muganga", "Hitamo Muganga")}</label>
+                <Label htmlFor="doctor" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Muganga", "Hitamo Muganga")}</Label>
                 <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
                   <SelectTrigger id="doctor" className="w-full">
                     <SelectValue placeholder={t("Hitamo muganga cyangwa ubunararibonye", "Hitamo muganga cyangwa ubunararibonye")} />
@@ -185,7 +167,7 @@ export default function BookAppointmentPage() {
                 </Select>
               </div>
               <div>
-                <label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Isaha", "Hitamo Isaha")}</label>
+                <Label htmlFor="timeSlot" className="block text-sm font-medium text-foreground mb-1">{t("Hitamo Isaha", "Hitamo Isaha")}</Label>
                 <Select value={selectedTime} onValueChange={setSelectedTime} disabled={!selectedDate}>
                   <SelectTrigger id="timeSlot" className="w-full">
                     <SelectValue placeholder={selectedDate ? t("Hitamo isaha", "Hitamo isaha") : t("Hitamo itariki mbere", "Hitamo itariki mbere")} />
@@ -200,7 +182,7 @@ export default function BookAppointmentPage() {
             </div>
 
             <div className="flex flex-col items-center md:items-start">
-               <label className="block text-sm font-medium text-foreground mb-2">{t("Hitamo Itariki", "Hitamo Itariki")}</label>
+               <Label className="block text-sm font-medium text-foreground mb-2">{t("Hitamo Itariki", "Hitamo Itariki")}</Label>
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -211,7 +193,7 @@ export default function BookAppointmentPage() {
             </div>
             
             <div>
-              <label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Impamvu y'Uruzinduko", "Impamvu y'Uruzinduko")}</label>
+              <Label htmlFor="reason" className="block text-sm font-medium text-foreground mb-1">{t("Impamvu y'Uruzinduko", "Impamvu y'Uruzinduko")}</Label>
               <Textarea 
                 id="reason" 
                 placeholder={t("Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...", "Sobanura mu magambo make impamvu y'igihe cyawe (urugero: isuzuma risanzwe, ikimenyetso runaka)...")} 
@@ -241,3 +223,4 @@ export default function BookAppointmentPage() {
     </AppLayout>
   );
 }
+```

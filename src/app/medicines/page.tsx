@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 interface Medicine {
   id: string;
@@ -31,28 +31,29 @@ interface Medicine {
   aiHint: string;
 }
 
-// Mock data - in a real app, this would be fetched from the backend
+// Mock data - will not persist after page reload.
 const mockMedicinesData: Medicine[] = [
   { id: 'med1', name: 'Paracetamol 500mg', nameKn: 'Parasetamoli 500mg', description: 'Relieves pain and fever.', descriptionKn: 'Igabanya ububabare n\'umuriro.', price: 599, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 150, aiHint: 'pills medication' },
   { id: 'med2', name: 'Amoxicillin 250mg', nameKn: 'Amogisiline 250mg', description: 'Antibiotic for bacterial infections.', descriptionKn: 'Antibiyotike y\'indwara ziterwa na bagiteri.', price: 1250, imageUrl: 'https://placehold.co/300x200.png', category: 'Antibiotics', categoryKn: 'Antibiyotike', stock: 80, aiHint: 'capsules pharmacy' },
   { id: 'med3', name: 'Loratadine 10mg', nameKn: 'Loratadine 10mg', description: 'Antihistamine for allergies.', descriptionKn: 'Antihistaminike ya aleriji.', price: 875, imageUrl: 'https://placehold.co/300x200.png', category: 'Allergy Relief', categoryKn: 'Igabanya Aleriji', stock: 120, aiHint: 'tablets allergy' },
-  { id: 'med4', name: 'Ibuprofen 200mg', nameKn: 'Ibiprofene 200mg', description: 'Anti-inflammatory drug.', descriptionKn: 'Umuti ugabanya ububyimbe.', price: 720, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 0, aiHint: 'medicine painkiller' }, // Out of stock
+  { id: 'med4', name: 'Ibuprofen 200mg', nameKn: 'Ibiprofene 200mg', description: 'Anti-inflammatory drug.', descriptionKn: 'Umuti ugabanya ububyimbe.', price: 720, imageUrl: 'https://placehold.co/300x200.png', category: 'Pain Relief', categoryKn: 'Igabanya Ububabare', stock: 0, aiHint: 'medicine painkiller' }, 
   { id: 'med5', name: 'Vitamin C 1000mg', nameKn: 'Vitamini C 1000mg', description: 'Immune system support.', descriptionKn: 'Ifasha ubudahangarwa bw\'umubiri.', price: 1000, imageUrl: 'https://placehold.co/300x200.png', category: 'Vitamins', categoryKn: 'Vitamini', stock: 300, aiHint: 'supplements health' },
 ];
 
-interface CartItemClient extends Medicine { // Renamed to avoid conflict if Medicine type changes
+interface CartItemClient extends Medicine { 
   quantity: number;
 }
 
-interface OrderClient { // Renamed
+interface OrderClient { 
   id: string;
   date: string;
   items: CartItemClient[];
   total: number;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered'; // Simplified status
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered'; 
 }
 
-const mockOrdersClient: OrderClient[] = [ // Renamed
+// Mock data - will not persist after page reload.
+const mockOrdersClient: OrderClient[] = [ 
   { id: 'order1', date: '2024-07-15', items: [{ ...mockMedicinesData[0], quantity: 2 }, { ...mockMedicinesData[2], quantity: 1 }], total: (599*2) + 875, status: 'Delivered' },
   { id: 'order2', date: '2024-07-28', items: [{ ...mockMedicinesData[1], quantity: 1 }], total: 1250, status: 'Processing' },
 ];
@@ -64,30 +65,24 @@ export default function MedicinesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms
-  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<CartItemClient[]>([]);
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [orders, setOrders] = useState<OrderClient[]>([]);
+  const [cart, setCart] = useState<CartItemClient[]>([]); // Cart is ephemeral
+  const [medicines, setMedicines] = useState<Medicine[]>([]); // Medicines list is ephemeral
+  const [orders, setOrders] = useState<OrderClient[]>([]); // Orders list is ephemeral
 
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check and data fetching
-    const loadData = async () => {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-        // In a real app, this would be an API call to check auth
-        // For prototype, we'll assume user becomes authenticated to see content.
-        setIsAuthenticated(true); 
-        setMedicines(mockMedicinesData); // Load mock data
-        setOrders(mockOrdersClient);     // Load mock orders
-        setIsLoadingPage(false);
-    };
-    loadData();
+    // Simulate fetching initial data. No localStorage means data resets on reload.
+    setMedicines(mockMedicinesData); 
+    setOrders(mockOrdersClient);     
+    setIsLoadingPage(false);
   }, []);
 
 
@@ -101,9 +96,9 @@ export default function MedicinesPage() {
   }, [searchTerm, selectedCategory, medicines]);
 
   const addToCart = (medicine: Medicine) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated) { // This check is largely conceptual now
         toast({ variant: "destructive", title: t("Ntabwo Winjiye", "Ntabwo Winjiye"), description: t("Nyamuneka injira kugirango wongere mu gitebo.", "Nyamuneka injira kugirango wongere mu gitebo.") });
-        router.push('/welcome');
+        // router.push('/welcome'); // AppLayout handles this
         return;
     }
     // UI update is ephemeral, backend would handle cart state
@@ -126,6 +121,7 @@ export default function MedicinesPage() {
   };
 
   const updateQuantity = (medicineId: string, change: number) => {
+    // UI update is ephemeral
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.id === medicineId) {
@@ -143,6 +139,7 @@ export default function MedicinesPage() {
   };
 
   const removeFromCart = (medicineId: string) => {
+    // UI update is ephemeral
     setCart(prevCart => prevCart.filter(item => item.id !== medicineId));
     toast({ title: t("Ikintu cyakuwe mu gitebo.", "Ikintu cyakuwe mu gitebo.") });
   };
@@ -179,8 +176,7 @@ export default function MedicinesPage() {
   }
   
   if (!isAuthenticated) {
-     // This state should ideally not be reached if routing from welcome/login is correct.
-     // But as a fallback if user lands here unauthenticated.
+     // This case should be handled by AppLayout redirection primarily.
      return (
          <AppLayout>
             <PageHeader title={t("Gutumiza Imiti", "Gutumiza Imiti")} />
@@ -281,7 +277,7 @@ export default function MedicinesPage() {
             </CardHeader>
             <CardContent>
               {cart.length === 0 ? (
-                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa.", "Igitebo cyawe kirimo ubusa.")}</p>
+                <p className="text-muted-foreground">{t("Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ntazabikwa.", "Igitebo cyawe kirimo ubusa. Amakuru y'igitebo ntazabikwa.")}</p>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {cart.map(item => (
@@ -351,9 +347,10 @@ export default function MedicinesPage() {
             </CardContent>
           </Card>
         ) : (
-          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari.", "Nta byo watumije mbere bihari.")}</p>
+          <p className="text-muted-foreground">{t("Nta byo watumije mbere bihari. Amakuru y'ibyo watumije asaba guhuzwa na seriveri.", "Nta byo watumije mbere bihari. Amakuru y'ibyo watumije asaba guhuzwa na seriveri.")}</p>
         )}
       </div>
     </AppLayout>
   );
 }
+```

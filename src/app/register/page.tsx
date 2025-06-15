@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation'; 
 import { Phone } from 'lucide-react';
 
 const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
@@ -46,7 +46,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const role = searchParams.get('role');
-    if (role && role !== 'admin') { // Admin registration not allowed via this form
+    if (role && role !== 'admin') { 
       setRoleFromQuery(role);
     } else {
       toast({ variant: "destructive", title: t("Uruhare Rutemewe", "Uruhare Rutemewe"), description: t("Nyamuneka hitamo uruhare rwemewe mbere yo kwiyandikisha cyangwa admin ntiyiyandikisha hano.", "Nyamuneka hitamo uruhare rwemewe mbere yo kwiyandikisha cyangwa admin ntiyiyandikisha hano.") });
@@ -67,17 +67,18 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
-    // This is a mock registration. In a real app, this would call a backend API.
+    // This is a mock registration. No data is persisted.
+    form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1000));
+    form.formState.isSubmitting = false;
 
-    // Since localStorage for auth is removed, this registration doesn't "persist" a session.
-    // It just simulates a successful registration for UI flow.
     toast({
       title: t("Kwiyandikisha Byagenze Neza", "Kwiyandikisha Byagenze Neza"),
       description: `${t("Konti yawe ya", "Konti yawe ya")} ${roleFromQuery || 'user'} ${t("yafunguwe. Murakaza neza,", "yafunguwe. Murakaza neza,")} ${data.fullName}! (Igerageza)`,
     });
-    // In a real app, backend would set a session cookie/token and redirect.
-    router.push('/'); 
+    // Redirect to login page for the selected role, conceptually.
+    // A real app would likely auto-login or send to a verification step.
+    router.push(`/login?role=${roleFromQuery}`); 
   };
   
   const roleTitles: Record<string, { en: string, kn: string }> = {
@@ -94,7 +95,7 @@ export default function RegisterPage() {
   if (!roleFromQuery) {
      return (
          <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
-            <p>{t("Gutegura...", "Gutegura...")}</p> {/* Loading... */}
+            <p>{t("Gutegura...", "Gutegura...")}</p>
          </div>
     );
   }
@@ -109,7 +110,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{pageTitle}</CardTitle>
-          <CardDescription>{t("Injira muri MediServe Hub uyu munsi. Kode y'igenzura (y'agateganyo) izoherezwa kuri telefone yawe.", "Injira muri MediServe Hub uyu munsi. Kode y'igenzura (y'agateganyo) izoherezwa kuri telefone yawe.")}</CardDescription>
+          <CardDescription>{t("Injira muri MediServe Hub uyu munsi. Igenzura ni iry'ikitegererezo gusa.", "Injira muri MediServe Hub uyu munsi. Igenzura ni iry'ikitegererezo gusa.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -205,3 +206,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+```

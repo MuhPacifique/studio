@@ -22,17 +22,16 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent as AlertDialogContentComponent, // Renamed to avoid conflict with DialogContent
+  AlertDialogContent as AlertDialogContentComponent, 
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Not directly used, but part of the primitive
 } from "@/components/ui/alert-dialog";
 import { useRouter } from 'next/navigation';
 
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 interface User {
   id: string;
@@ -44,6 +43,7 @@ interface User {
   profileImageUrl?: string; 
 }
 
+// Initial mock data, will not persist after page reload.
 const initialMockUsers: User[] = [
   { id: 'usr1', name: 'Alice Wonderland', email: 'alice@example.com', role: 'Patient', status: 'Active', joinedDate: '2023-01-15', profileImageUrl: 'https://placehold.co/60x60.png?text=AW' },
   { id: 'usr2', name: 'Bob The Builder', email: 'bob@example.com', role: 'Patient', status: 'Inactive', joinedDate: '2023-02-20', profileImageUrl: 'https://placehold.co/60x60.png?text=BB' },
@@ -64,13 +64,15 @@ type UserFormValues = z.infer<ReturnType<typeof userFormSchema>>;
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use, not critical for this refactor
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  // Assume if user reaches this page, they are an "authenticated admin" for prototype purposes.
+  // Real auth check is handled by AppLayout.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(true); 
 
   const [searchTerm, setSearchTerm] = useState('');
   const [usersList, setUsersList] = useState<User[]>([]);
-  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false); // Combined for add/edit
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false); 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -79,14 +81,9 @@ export default function AdminUsersPage() {
 
 
   useEffect(() => {
-    // Simulate checking admin authentication and fetching initial data
-    const simulateLoad = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setIsAuthenticatedAdmin(true);
-      setUsersList(initialMockUsers);
-      setIsLoadingPage(false);
-    };
-    simulateLoad();
+    // Simulate fetching initial data. No localStorage means data resets on reload.
+    setUsersList(initialMockUsers);
+    setIsLoadingPage(false);
   }, []);
 
 
@@ -129,7 +126,6 @@ export default function AdminUsersPage() {
 
   const handleOpenFormDialog = (user: User | null = null) => {
     setEditingUser(user);
-    // form.reset will be handled by useEffect dependency on editingUser
     setIsFormDialogOpen(true);
   };
 
@@ -140,18 +136,20 @@ export default function AdminUsersPage() {
 
   const handleFormSubmit = (data: UserFormValues) => {
     const profileImageToSave = imagePreview || data.profileImageUrl || `https://placehold.co/60x60.png?text=${getInitials(data.name)}`;
+    
+    // UI update is ephemeral, backend would handle persistence
     if (editingUser) {
       setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...editingUser, ...data, profileImageUrl: profileImageToSave } : u));
-      toast({ title: t("Umukoresha Yahinduwe (Igerageza)", "Umukoresha Yahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`) });
+      toast({ title: t("Umukoresha Yahinduwe (Igerageza)", "Umukoresha Yahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
     } else {
       const newUser: User = {
         ...data,
-        id: `usr${Date.now()}`,
+        id: `usr${Date.now()}`, // Client-side ID for list key, backend would generate real ID
         joinedDate: new Date().toISOString().split('T')[0],
         profileImageUrl: profileImageToSave,
       };
       setUsersList(prev => [newUser, ...prev]);
-      toast({ title: t("Umukoresha Yongeweho (Igerageza)", "Umukoresha Yongeweho (Igerageza)"), description: t(`${data.name} yongeweho. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yongeweho. Ibi bizasabwa koherezwa kuri seriveri.`) });
+      toast({ title: t("Umukoresha Yongeweho (Igerageza)", "Umukoresha Yongeweho (Igerageza)"), description: t(`${data.name} yongeweho. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} yongeweho. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
     }
     setIsFormDialogOpen(false);
     setEditingUser(null);
@@ -161,6 +159,7 @@ export default function AdminUsersPage() {
 
   const confirmDeleteUser = () => {
     if (!userToDelete) return;
+    // UI update is ephemeral
     setUsersList(prev => prev.filter(u => u.id !== userToDelete.id));
     toast({ title: t("Umukoresha Yasibwe (Igerageza)", "Umukoresha Yasibwe (Igerageza)"), description: t(`${userToDelete.name} yasibwe. Gusiba nyako bisaba seriveri.`, `${userToDelete.name} yasibwe. Gusiba nyako bisaba seriveri.`), variant: 'destructive' });
     setIsDeleteDialogOpen(false);
@@ -200,10 +199,11 @@ export default function AdminUsersPage() {
     );
   }
 
+  // This check is conceptual. AppLayout handles actual redirection.
   if (!isAuthenticatedAdmin) {
     toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
-    router.replace('/admin/login');
-    return null;
+    // router.replace('/admin/login'); // This might cause infinite loop if AppLayout logic isn't perfect
+    return <AppLayout><PageHeader title={t("Access Denied", "Ntabwo Wemerewe")} /></AppLayout>;
   }
 
   return (
@@ -234,7 +234,7 @@ export default function AdminUsersPage() {
       <Card className="shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline">{t("User List", "Urutonde rw'Abakoresha")}</CardTitle>
-          <CardDescription>{t("View, edit, or remove user accounts. Changes are illustrative.", "Reba, hindura, cyangwa ukureho konti. Impinduka ni iz'ikitegererezo.")}</CardDescription>
+          <CardDescription>{t("View, edit, or remove user accounts. Changes are illustrative and require backend integration.", "Reba, hindura, cyangwa ukureho konti. Impinduka ni iz'ikitegererezo kandi zisaba guhuzwa na seriveri.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
             <DialogHeader>
                 <DialogTitle>{editingUser ? t('Edit User', 'Hindura Umukoresha') : t('Add New User', 'Ongeraho Umukoresha Mushya')}</DialogTitle>
                 <DialogDescription>
-                {editingUser ? t("Update the user's details. (Mock)", "Hindura amakuru y'umukoresha. (Igerageza)") : t("Fill in the details to create a new user. (Mock)", "Uzuza amakuru kugirango ukore umukoresha mushya. (Igerageza)")}
+                {editingUser ? t("Update the user's details. (Mock - backend needed)", "Hindura amakuru y'umukoresha. (Igerageza - seriveri irakenewe)") : t("Fill in the details to create a new user. (Mock - backend needed)", "Uzuza amakuru kugirango ukore umukoresha mushya. (Igerageza - seriveri irakenewe)")}
                 </DialogDescription>
             </DialogHeader>
             
@@ -388,12 +388,12 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContentComponent> {/* Using Renamed Component */}
+        <AlertDialogContentComponent> 
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Confirm Deletion", "Emeza Gusiba")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("Are you sure you want to delete this user: ", "Urifuza gusiba uyu mukoresha: ")}
-              <span className="font-semibold">{userToDelete?.name}</span>? {t("This action cannot be undone. (Mock)", "Iki gikorwa ntigishobora gusubizwamo. (Igerageza)")}
+              <span className="font-semibold">{userToDelete?.name}</span>? {t("This action cannot be undone. (Mock - backend needed)", "Iki gikorwa ntigishobora gusubizwamo. (Igerageza - seriveri irakenewe)")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -406,3 +406,4 @@ export default function AdminUsersPage() {
     </AppLayout>
   );
 }
+```

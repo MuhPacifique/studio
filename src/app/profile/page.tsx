@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Edit3, Save, Shield, Bell, FileText, Loader2, Palette, MessageCircle, MapPin, Briefcase, KeyRound, Database, LockKeyhole, History, FileClock, Camera, PowerOff, Sun, Moon, Settings as SettingsIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 const profileSchema = z.object({
   fullName: z.string().min(2, t("Izina ryuzuye rigomba kuba nibura inyuguti 2.", "Izina ryuzuye rigomba kuba nibura inyuguti 2.")),
@@ -53,13 +52,13 @@ const profileSchema = z.object({
   enableTwoFactor: z.boolean().optional(),
 }).refine(data => {
     if (data.newPassword && !data.currentPassword) {
-        return false; // Current password needed to set new password
+        return false; 
     }
     if (data.newPassword && !data.confirmNewPassword) {
-        return false;  // Confirmation missing
+        return false;  
     }
     if (data.newPassword && data.newPassword !== data.confirmNewPassword) {
-        return false; // Passwords don't match
+        return false; 
     }
     return true;
 }, {
@@ -71,7 +70,7 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<ReturnType<typeof profileSchema>>;
 
 export default function ProfilePage() {
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [initials, setInitials] = useState("U");
@@ -79,10 +78,10 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Default user data if no backend is connected
+  // Default user data if no backend is connected. This will not persist.
   const [currentUser, setCurrentUser] = useState<ProfileFormValues>({
     fullName: t("Ntwari Jean", "Ntwari Jean"),
-    email: "ntwari.jean@example.rw",
+    email: "ntwari.jean@example.rw", // This should be non-editable or fetched from an auth context
     phone: "0788123456",
     dob: "1990-01-01",
     address: "KG 123 St",
@@ -101,28 +100,25 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: currentUser, // Initialize with default/mock data
+    defaultValues: currentUser, 
   });
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching user profile data from a backend
-    const fetchProfileData = async () => {
-      setIsLoadingData(true);
-      await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API delay
-      // In a real app, you'd fetch data and then:
-      // setCurrentUser(fetchedUserData);
-      // form.reset(fetchedUserData);
-      // if(fetchedUserData.profileImageUrl) setImagePreview(fetchedUserData.profileImageUrl);
-      // updateInitials(fetchedUserData.fullName);
-      
-      // For prototype, we use the default `currentUser` state
-      form.reset(currentUser);
-      if(currentUser.profileImageUrl) setImagePreview(currentUser.profileImageUrl);
-      updateInitials(currentUser.fullName);
-      setIsLoadingData(false);
-    };
-    fetchProfileData();
+    // Simulate fetching user profile data. No localStorage means data resets on reload.
+    form.reset(currentUser);
+    if(currentUser.profileImageUrl) setImagePreview(currentUser.profileImageUrl);
+    updateInitials(currentUser.fullName);
+    
+    // Set theme and language from current state, as localStorage is gone
+    document.documentElement.lang = currentUser.preferredLanguage || 'kn';
+    document.documentElement.classList.remove('light', 'dark');
+    if (currentUser.theme === 'dark') document.documentElement.classList.add('dark');
+    else if (currentUser.theme === 'light') document.documentElement.classList.remove('dark');
+    else if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+        
+    setIsLoadingData(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
@@ -135,10 +131,9 @@ export default function ProfilePage() {
 
   const handleLanguageChange = (langValue: string | undefined) => {
     if (langValue && (langValue === 'en' || langValue === 'kn' || langValue === 'fr')) {
-      // Normally this would be saved to backend. For UI, just update state.
       form.setValue("preferredLanguage", langValue, { shouldDirty: true, shouldValidate: true });
-      document.documentElement.lang = langValue; // For immediate UI effect if CSS depends on it
-      toast({ description: t(`Ururimi rwahinduwe ${langValue}. (Igerageza)`, `Ururimi rwahinduwe ${langValue}. (Igerageza)`) });
+      document.documentElement.lang = langValue; 
+      toast({ description: t(`Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa)`, `Ururimi rwahinduwe ${langValue}. (Ibi ntibizabikwa)`) });
     }
   };
 
@@ -147,10 +142,10 @@ export default function ProfilePage() {
       form.setValue("theme", themeValue as 'light' | 'dark' | 'system', { shouldDirty: true, shouldValidate: true });
       document.documentElement.classList.remove('light', 'dark');
       if (themeValue === 'dark') document.documentElement.classList.add('dark');
-      else if (themeValue === 'light') document.documentElement.classList.remove('dark'); // Ensure light mode if explicitly set
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+      else if (themeValue === 'light') document.documentElement.classList.remove('dark'); 
+      else if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
-      toast({ description: t(`Insanganyamatsiko yahinduwe ${themeValue}. (Igerageza)`, `Insanganyamatsiko yahinduwe ${themeValue}. (Igerageza)`) });
+      toast({ description: t(`Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa)`, `Insanganyamatsiko yahinduwe ${themeValue}. (Ibi ntibizabikwa)`) });
     }
   };
 
@@ -175,18 +170,17 @@ export default function ProfilePage() {
     const updatedProfileImageUrl = imagePreview || data.profileImageUrl || "";
     const dataToSave: ProfileFormValues = { ...data, profileImageUrl: updatedProfileImageUrl };
     
-    // Simulate API call
-    form.formState.isSubmitting = true; // Manually set for UI feedback
+    form.formState.isSubmitting = true; 
     await new Promise(resolve => setTimeout(resolve, 1000));
     form.formState.isSubmitting = false;
 
-    // In a real app, this data would be sent to the backend.
+    // Update local state (not persisted)
     setCurrentUser(dataToSave); 
     updateInitials(dataToSave.fullName);
 
     toast({
       title: t("Umwirondoro Wahinduwe (Igerageza)", "Umwirondoro Wahinduwe (Igerageza)"),
-      description: t("Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo).", "Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo)."),
+      description: t("Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype.", "Amakuru y'umwirondoro wawe yoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Ntazabikwa muri iyi prototype."),
     });
     form.reset(dataToSave); 
     form.setValue('currentPassword',''); 
@@ -201,7 +195,7 @@ export default function ProfilePage() {
     });
   };
 
-  if (!isClient || isLoadingData) { // Added isLoadingData check
+  if (!isClient || isLoadingData) { 
     return (
       <AppLayout>
          <PageHeader title={t("Umwirondoro Wanjye", "Umwirondoro Wanjye")} />
@@ -309,7 +303,7 @@ export default function ProfilePage() {
                                 </SelectContent>
                             </Select>
                          </FormControl> 
-                       <FormDescription>{t("Tuzagerageza gukoresha uru rurimi aho bishoboka.", "Tuzagerageza gukoresha uru rurimi aho bishoboka.")}</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormDescription>{t("Tuzagerageza gukoresha uru rurimi aho bishoboka. (Ntibizabikwa)", "Tuzagerageza gukoresha uru rurimi aho bishoboka. (Ntibizabikwa)")}</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="theme" render={({ field }) => ( <FormItem> <FormLabel>{t("Insanganyamatsiko", "Insanganyamatsiko")}</FormLabel> 
                          <FormControl>
                             <Select onValueChange={handleThemeChange} value={field.value}>
@@ -321,7 +315,7 @@ export default function ProfilePage() {
                                 </SelectContent>
                             </Select>
                          </FormControl> 
-                       <FormDescription>{t("Hitamo insanganyamatsiko y'ikoranabuhanga ukunda.", "Hitamo insanganyamatsiko y'ikoranabuhanga ukunda.")}</FormDescription> <FormMessage /> </FormItem> )} />
+                       <FormDescription>{t("Hitamo insanganyamatsiko y'ikoranabuhanga ukunda. (Ntibizabikwa)", "Hitamo insanganyamatsiko y'ikoranabuhanga ukunda. (Ntibizabikwa)")}</FormDescription> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="enableMarketingEmails" render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm hover:bg-muted/50 dark:hover:bg-muted/20">
                             <div className="space-y-0.5"> <FormLabel>{t("Email z'Ubucuruzi", "Email z'Ubucuruzi")}</FormLabel> <FormDescription>{t("Yakira amakuru ku bishya n'amatangazo.", "Yakira amakuru ku bishya n'amatangazo.")}</FormDescription> </div>
@@ -407,3 +401,4 @@ export default function ProfilePage() {
     </AppLayout>
   );
 }
+```

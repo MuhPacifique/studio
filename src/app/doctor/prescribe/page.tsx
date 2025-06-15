@@ -14,25 +14,25 @@ import { Loader2, User, Pill, PlusCircle, Trash2, Send, Search } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
-interface MockPatientClient { // Renamed
+interface MockPatientClient { 
   id: string;
-  name: string; // Should be Kinyarwanda if that's the display language
+  name: string; 
 }
 
-interface MockMedicineClient { // Renamed
+interface MockMedicineClient { 
   id: string;
-  name: string; // Should be Kinyarwanda
+  name: string; 
 }
 
-interface PrescribedMedicineItemClient extends MockMedicineClient { // Renamed
+interface PrescribedMedicineItemClient extends MockMedicineClient { 
   dosage: string;
   frequency: string;
   duration: string;
 }
 
-// Mock data - in a real app, this would be fetched from the backend
+// Mock data - will not persist after page reload.
 const mockPatientsClient: MockPatientClient[] = [
   { id: 'patient123', name: t('Patty Patient (patient@example.com)', 'Patty Umurwayi (patient@example.com)') },
   { id: 'aliceW', name: t('Alice Wonderland', 'Alice Wonderland') },
@@ -49,13 +49,15 @@ export default function PrescribeMedicinePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticatedDoctor, setIsAuthenticatedDoctor] = useState(false); // Assume false
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticatedDoctor, setIsAuthenticatedDoctor] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   
   const [selectedPatient, setSelectedPatient] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<MockMedicineClient[]>([]);
-  const [prescriptionItems, setPrescriptionItems] = useState<PrescribedMedicineItemClient[]>([]);
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescribedMedicineItemClient[]>([]); // Ephemeral state
   const [currentDosage, setCurrentDosage] = useState('');
   const [currentFrequency, setCurrentFrequency] = useState('');
   const [currentDuration, setCurrentDuration] = useState('');
@@ -64,15 +66,8 @@ export default function PrescribeMedicinePage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check
-    const checkAuth = async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        // This is a placeholder. Real auth would check a session/token.
-        // For prototype, assuming doctor is "authenticated" to access this page.
-        setIsAuthenticatedDoctor(true);
-        setIsLoadingPage(false);
-    };
-    checkAuth();
+    // No auth check here, AppLayout handles it.
+    setIsLoadingPage(false);
   }, []);
 
   useEffect(() => {
@@ -97,12 +92,13 @@ export default function PrescribeMedicinePage() {
         toast({ variant: "destructive", title: t("Amakuru Arabura", "Amakuru Arabura"), description: t("Nyamuneka tanga ingano, inshuro, n'igihe cyo gufata umuti.", "Nyamuneka tanga ingano, inshuro, n'igihe cyo gufata umuti.") });
         return;
     }
+    // UI update is ephemeral
     setPrescriptionItems(prev => [...prev, { ...selectedMedicine, dosage: currentDosage, frequency: currentFrequency, duration: currentDuration }]);
     setSearchTerm(''); 
     setCurrentDosage('');
     setCurrentFrequency('');
     setCurrentDuration('');
-    toast({ title: t(`${selectedMedicine.name} wongewe ku rupapuro.`, `${selectedMedicine.name} wongewe ku rupapuro.`) });
+    toast({ title: t(`${selectedMedicine.name} wongewe ku rupapuro. (Ntibizabikwa)`, `${selectedMedicine.name} wongewe ku rupapuro. (Ntibizabikwa)`) });
   };
   
   const handleSelectMedicineFromSearch = (medicine: MockMedicineClient) => {
@@ -112,6 +108,7 @@ export default function PrescribeMedicinePage() {
 
 
   const handleRemoveMedicine = (medicineId: string) => {
+    // UI update is ephemeral
     setPrescriptionItems(prev => prev.filter(med => med.id !== medicineId));
   };
 
@@ -122,13 +119,10 @@ export default function PrescribeMedicinePage() {
     }
     setIsSubmitting(true);
 
-    // Simulate API call to save prescription
-    // const newPrescription = { /* ... */ };
-    // Backend would handle saving to database based on schema.sql.
-
+    // Simulate API call. No data is persisted.
     await new Promise(resolve => setTimeout(resolve, 1500)); 
     setIsSubmitting(false);
-    toast({ title: t("Urupapuro rw'Imiti Rwabitswe (Igerageza)", "Urupapuro rw'Imiti Rwabitswe (Igerageza)"), description: t(`Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
+    toast({ title: t("Urupapuro rw'Imiti Rwabitswe (Igerageza)", "Urupapuro rw'Imiti Rwabitswe (Igerageza)"), description: t(`Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`, `Urupapuro rw'imiti rwa ${mockPatientsClient.find(p=>p.id === selectedPatient)?.name} rwoherejwe kuri seriveri (mu buryo bw'ikitegererezo). Amakuru ntazabikwa muri iyi prototype.`) });
     
     setSelectedPatient(undefined);
     setPrescriptionItems([]);
@@ -154,6 +148,7 @@ export default function PrescribeMedicinePage() {
   }
 
   if (!isAuthenticatedDoctor) {
+     // This case should be handled by AppLayout redirection primarily.
      return (
          <AppLayout>
             <PageHeader title={t("Andika Imiti / Inama ku Murwayi", "Andika Imiti / Inama ku Murwayi")} />
@@ -180,7 +175,7 @@ export default function PrescribeMedicinePage() {
       <Card className="w-full max-w-4xl mx-auto shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><Pill className="mr-2 h-6 w-6 text-primary"/>{t("Urupapuro Rushya rw'Imiti", "Urupapuro Rushya rw'Imiti")}</CardTitle>
-          <CardDescription>{t("Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza.", "Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza.")}</CardDescription>
+          <CardDescription>{t("Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza. Amakuru ntazabikwa muri iyi prototype.", "Hitamo umurwayi, ongeraho imiti, kandi utange amabwiriza. Amakuru ntazabikwa muri iyi prototype.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -288,3 +283,4 @@ export default function PrescribeMedicinePage() {
     </AppLayout>
   );
 }
+```

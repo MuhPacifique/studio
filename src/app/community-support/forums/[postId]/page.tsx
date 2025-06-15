@@ -40,6 +40,7 @@ interface Comment {
   text: string;
 }
 
+// Default mock data, will not persist after page reload.
 const defaultForumPosts: ForumPost[] = [
   { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs and include lists:\n\n*   Mindfulness techniques\n*   Gentle exercises\n*   Dietary considerations\n\nPlease share what has helped you!", likes: 15, commentsCount: 4, aiHint: 'community support people', tags: ['chronic pain', 'support', 'wellness'] },
   { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed. It's important to remember you're not alone in this.", likes: 22, commentsCount: 8, aiHint: 'anxious person thinking', tags: ['anxiety', 'medical tests', 'mental health'] },
@@ -58,7 +59,6 @@ const defaultComments: { [postId: string]: Comment[] } = {
 const forumCategories = ['Pain Management', 'Mental Wellness', 'Nutrition', 'Fitness', 'General Health', 'Other'];
 const forumCategoriesKn = ['Gucunga Ububabare', 'Ubuzima Bwo Mu Mutwe', 'Imirire', 'Imyitozo Ngororamubiri', 'Ubuzima Rusange', 'Ibindi'];
 
-// Translation helper
 const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 const PostDetailSkeleton = () => (
@@ -129,10 +129,12 @@ export default function ForumPostDetailPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [post, setPost] = useState<ForumPost | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [post, setPost] = useState<ForumPost | null>(null); // Post details are ephemeral
+  const [comments, setComments] = useState<Comment[]>([]); // Comments are ephemeral
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
@@ -140,31 +142,19 @@ export default function ForumPostDetailPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
   }, []);
 
   const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
 
   useEffect(() => {
     if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe"), description: t("Please log in to view forum posts.", "Nyamuneka injira kugirango ubashe kureba inkuru zo mu biganiro.") });
-        router.replace('/welcome');
-        return;
-      }
-      setIsAuthenticated(true);
-      
-      const savedPostsString = localStorage.getItem('forumPosts');
-      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
-      const foundPost = allPosts.find(p => p.id === postId);
+      // Simulate fetching post and comments. No localStorage means data resets on reload.
+      const foundPost = defaultForumPosts.find(p => p.id === postId);
 
       if (foundPost) {
         setPost(foundPost);
-        const savedCommentsString = localStorage.getItem('forumComments');
-        const allComments: { [postId: string]: Comment[] } = savedCommentsString ? JSON.parse(savedCommentsString) : defaultComments;
-        setComments(allComments[postId] || []);
+        setComments(defaultComments[postId] || []);
       } else {
         toast({ variant: "destructive", title: t("Post not found", "Inkuru ntiyabonetse") });
         router.push('/community-support/forums');
@@ -176,15 +166,10 @@ export default function ForumPostDetailPage() {
 
   const handleLikePost = () => {
     if (post) {
+      // UI update is ephemeral
       const updatedPost = { ...post, likes: post.likes + 1 };
       setPost(updatedPost);
-      
-      const savedPostsString = localStorage.getItem('forumPosts');
-      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
-      const updatedPosts = allPosts.map(p => p.id === postId ? updatedPost : p);
-      localStorage.setItem('forumPosts', JSON.stringify(updatedPosts));
-      
-      toast({ title: t("Post Liked", "Inkuru Yakunzwe") });
+      toast({ title: t("Post Liked (Mock)", "Inkuru Yakunzwe (By'agateganyo)") });
     }
   };
   
@@ -198,34 +183,25 @@ export default function ForumPostDetailPage() {
     
     const commentToAdd: Comment = {
       id: `c${Date.now()}`,
-      author: localStorage.getItem('mockUserName') || t('Anonymous User', 'Ukoresha utazwi'),
+      author: t('Current User (Mock)', 'Ukoresha (By\'agateganyo)'),
       authorAvatar: 'https://placehold.co/40x40.png?text=U',
-      authorInitials: (localStorage.getItem('mockUserName') || "U").substring(0,2).toUpperCase(),
+      authorInitials: "U",
       timestamp: t('Just now', 'Nonaha'),
       text: newComment,
     };
 
+    // UI update is ephemeral
     const updatedComments = [...comments, commentToAdd];
     setComments(updatedComments);
 
     if(post) {
       const updatedPost = {...post, commentsCount: post.commentsCount + 1};
       setPost(updatedPost);
-
-      const savedPostsString = localStorage.getItem('forumPosts');
-      const allPosts: ForumPost[] = savedPostsString ? JSON.parse(savedPostsString) : defaultForumPosts;
-      const updatedAllPosts = allPosts.map(p => p.id === postId ? updatedPost : p);
-      localStorage.setItem('forumPosts', JSON.stringify(updatedAllPosts));
     }
     
-    const savedCommentsString = localStorage.getItem('forumComments');
-    const allComments: { [postId: string]: Comment[] } = savedCommentsString ? JSON.parse(savedCommentsString) : defaultComments;
-    allComments[postId] = updatedComments;
-    localStorage.setItem('forumComments', JSON.stringify(allComments));
-
     setNewComment('');
     setIsSubmittingComment(false);
-    toast({ title: t("Comment Added", "Igitecyerezo Cyongeweho") });
+    toast({ title: t("Comment Added (Mock)", "Igitecyerezo Cyongeweho (By'agateganyo)"), description: t("Your comment has been added. It will not persist after page reload.", "Igitecyerezo cyawe cyongeweho. Nticyizabikwa nyuma yo guhindura paji.") });
   };
 
 
@@ -327,9 +303,9 @@ export default function ForumPostDetailPage() {
         <CardFooter className="border-t pt-6">
           <form onSubmit={handleAddComment} className="w-full space-y-3">
             <div>
-              <label htmlFor="newComment" className="block text-sm font-medium text-foreground mb-1">
+              <Label htmlFor="newComment" className="block text-sm font-medium text-foreground mb-1">
                 {t("Leave a Reply", "Siga Igitecyerezo")}
-              </label>
+              </Label>
               <Textarea
                 id="newComment"
                 placeholder={t("Write your comment here...", "Andika igitecyerezo cyawe hano...")}
@@ -349,3 +325,4 @@ export default function ForumPostDetailPage() {
     </AppLayout>
   );
 }
+```

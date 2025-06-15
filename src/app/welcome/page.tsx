@@ -23,27 +23,25 @@ const roles: { name: Role; title: string; titleKn: string; description: string; 
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { toast } = useToast(); // Keep toast for general messages
+  const { toast } = useToast(); 
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   
-  // Defaulting to Kinyarwanda as per app direction
+  // Defaulting to Kinyarwanda
   const language = 'kn';
   const t = (enText: string, knText: string) => language === 'kn' ? knText : enText;
 
   useEffect(() => {
-    // Clear any simulated auth state on welcome page load as localStorage is removed.
-    // This is conceptual; real auth state would be managed via context/backend.
+    // Any necessary client-side setup after localStorage removal.
+    // For instance, if a global state needed reset, it would happen here,
+    // but for now, the app defaults to unauthenticated state.
   }, []);
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    // No longer saving selectedRole to localStorage
-    // The selection is now transient for this page only to guide next step.
+    // Role selection is transient for UI guidance to next step.
   };
 
   const getLoginPath = () => {
-    // Navigate to login, passing role as query param conceptually
-    // Real app would handle role context server-side or via state management after login
     if (selectedRole === "admin") return `/admin/login?role=${selectedRole}`;
     return `/login?role=${selectedRole}`;
   };
@@ -54,7 +52,7 @@ export default function WelcomePage() {
           title: t('Admin Registration', 'Kwiyandikisha kw\'Umunyamabanga'),
           description: t('Administrator accounts are created internally.', 'Konti z\'abanyamabanga zikorerwa imbere.'),
       });
-      return "#"; // Prevent navigation for admin registration
+      return "#"; 
     }
     return `/register?role=${selectedRole}`;
   };
@@ -151,3 +149,4 @@ export default function WelcomePage() {
     </div>
   );
 }
+```

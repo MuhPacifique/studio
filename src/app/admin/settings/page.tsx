@@ -9,39 +9,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Bell, CreditCard as PaymentIcon, ShieldCheck, Palette, Server, Save, DatabaseZap, FileJson, Users, BarChartHorizontalBig, KeyRound, DollarSign, UsersRound, Briefcase, BarChartBig, GitBranch, Moon, Sun, Settings as SettingsIcon, Loader2 } from 'lucide-react';
+import { Bell, CreditCard as PaymentIcon, ShieldCheck, Server, Save, UsersRound, Briefcase, GitBranch, Moon, Sun, Settings as SettingsIcon, Loader2, Palette } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 export default function AdminSettingsPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  // Assume if user reaches this page, they are an "authenticated admin" for prototype purposes.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(true);
 
-  // State for form fields - normally these would be fetched from a backend
+  // State for form fields - will not persist after page reload.
   const [appName, setAppName] = useState("MediServe Hub");
   const [defaultLanguage, setDefaultLanguage] = useState<'en' | 'kn' | 'fr'>('kn');
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  // ... other settings states
 
   useEffect(() => {
-    // Simulate checking admin authentication status
-    const simulateAuthCheck = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // For prototype, assume authenticated if reaching here via admin flow
-      setIsAuthenticatedAdmin(true);
-      setIsLoading(false);
-      // In real app, fetch current settings from backend here
-    };
-    simulateAuthCheck();
+    // Simulate fetching initial data. No localStorage means data resets on reload.
+    setIsLoading(false);
+    // Set theme based on OS preference as localStorage is removed
+    if (typeof window !== "undefined") {
+        const osTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        setCurrentTheme(osTheme); // Set local state to reflect OS
+        document.documentElement.classList.toggle('dark', osTheme === 'dark');
+    }
   }, []);
 
 
@@ -49,28 +46,24 @@ export default function AdminSettingsPage() {
     // Simulate saving settings to a backend
     toast({
       title: t(`${section} Settings Saved (Mock)`, `Igenamiterere rya ${section} Ryabitswe (By'agateganyo)`),
-      description: t(`Your changes to ${section.toLowerCase()} settings would be applied server-side.`, `Impinduka zawe ku igenamiterere rya ${section.toLowerCase()} zakoreshejwe ku rubuga rw'inyuma.`),
+      description: t(`Your changes to ${section.toLowerCase()} settings would be applied server-side. Data will not persist in this prototype.`, `Impinduka zawe ku igenamiterere rya ${section.toLowerCase()} zakoreshejwe ku rubuga rw'inyuma. Amakuru ntazabikwa muri iyi prototype.`),
     });
 
-    if (section === "General") {
-        // These UI changes are client-side for immediate feedback,
-        // but persistence is now conceptual (backend's job)
+    if (section === "General & Appearance") {
         document.documentElement.lang = defaultLanguage;
         
         document.documentElement.classList.remove('light', 'dark');
         if (currentTheme === 'dark') {
             document.documentElement.classList.add('dark');
         } else if (currentTheme === 'light') {
-            document.documentElement.classList.remove('dark'); // Ensure light mode if explicitly set
-        } else { // System preference
+            document.documentElement.classList.remove('dark'); 
+        } else { 
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.documentElement.classList.add('dark');
             } else {
                  document.documentElement.classList.remove('dark');
             }
         }
-        // dispatchEvent for other components is removed as localStorage is gone.
-        // Components should re-read from a global state or props if live updates are needed.
     }
   };
 
@@ -88,8 +81,7 @@ export default function AdminSettingsPage() {
 
   if (!isAuthenticatedAdmin) {
     toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
-    router.replace('/admin/login');
-    return null;
+    return <AppLayout><PageHeader title={t("Access Denied", "Ntabwo Wemerewe")} /></AppLayout>;
   }
 
   return (
@@ -108,7 +100,7 @@ export default function AdminSettingsPage() {
         <AccordionItem value="general" className="border rounded-lg shadow-lg bg-card hover-lift">
           <AccordionTrigger className="px-6 py-4 hover:no-underline group">
             <div className="flex items-center">
-              <SettingsIcon className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" />
+              <Palette className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" />
               <span className="font-headline text-lg">{t("General & Appearance", "Rusange & Imigaragarire")}</span>
             </div>
           </AccordionTrigger>
@@ -130,7 +122,7 @@ export default function AdminSettingsPage() {
                   <SelectContent>
                     <SelectItem value="kn">{t("Kinyarwanda", "Kinyarwanda")}</SelectItem>
                     <SelectItem value="en">{t("English", "Icyongereza")}</SelectItem>
-                    <SelectItem value="fr">{t("French (Not fully supported)", "Igifaransa (Ntibyuzuye)")}</SelectItem>
+                    <SelectItem value="fr" disabled>{t("French (Not fully supported)", "Igifaransa (Ntibyuzuye)")}</SelectItem>
                   </SelectContent>
                  </Select>
               </div>
@@ -151,7 +143,7 @@ export default function AdminSettingsPage() {
                 <Switch id="maintenanceModeSwitch" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
                 <Label htmlFor="maintenanceModeSwitch">{t("Enable Maintenance Mode", "Fungura Uburyo bw'Igisubizo")}</Label>
               </div>
-              <Button onClick={() => handleSaveChanges("General")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />{t("Save General Settings", "Bika Igenamiterere Rusange")}</Button>
+              <Button onClick={() => handleSaveChanges("General & Appearance")} className="transition-transform hover:scale-105 active:scale-95"><Save className="mr-2 h-4 w-4" />{t("Save General Settings", "Bika Igenamiterere Rusange")}</Button>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -182,20 +174,20 @@ export default function AdminSettingsPage() {
             </div>
           </AccordionContent>
         </AccordionItem>
-
-        {/* Other AccordionItems (Notifications, Payment, Security, Advanced, Integrations, Data Management) */}
-        {/* These would also have their state managed and "Save" buttons would conceptually send data to backend */}
+        
         <AccordionItem value="notifications" className="border rounded-lg shadow-lg bg-card hover-lift">
           <AccordionTrigger className="px-6 py-4 hover:no-underline group"><div className="flex items-center"><Bell className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /><span className="font-headline text-lg">{t("Notification Settings", "Igenamiterere ry'Imenyesha")}</span></div></AccordionTrigger>
           <AccordionContent className="px-6 pb-6 pt-0 space-y-6">
              <div><Label>{t("Admin Notification Email (Server Configured)", "Email y'Imenyesha y'Umunyamabanga (Byateguwe ku Nserveri)")}</Label><Input value="admin@mediservehub.com" readOnly className="mt-1 bg-muted"/></div>
+             <p className="text-sm text-muted-foreground">{t("Notification preferences (e.g., email, SMS) for users are managed in their individual profiles. This section is for system-level notification configurations handled by the backend.", "Ibyifuzo by'imenyesha (urugero: email, SMS) ku bakoresha bicungirwa mu myirondoro yabo. Iki gice ni icy'igenamiterere ry'imenyesha rya sisitemu rigenzurwa n'inyuma.")}</p>
              <Button onClick={() => handleSaveChanges("Notification")}><Save className="mr-2 h-4 w-4" />{t("Save Notification Settings", "Bika Igenamiterere ry'Imenyesha")}</Button>
           </AccordionContent>
         </AccordionItem>
+
          <AccordionItem value="payment" className="border rounded-lg shadow-lg bg-card hover-lift">
           <AccordionTrigger className="px-6 py-4 hover:no-underline group"><div className="flex items-center"><PaymentIcon className="mr-3 h-5 w-5 text-primary group-hover:animate-pulse" /><span className="font-headline text-lg">{t("Payment Gateway & Billing (Server Configured)", "Uburyo bwo Kwishyura & Fagitire (Byateguwe ku Nserveri)")}</span></div></AccordionTrigger>
           <AccordionContent className="px-6 pb-6 pt-0 space-y-6">
-            <p className="text-sm text-muted-foreground">{t("Payment gateway configurations are managed on the backend for security.", "Igenamiterere ry'uburyo bwo kwishyura rigenzurwa ku nserveri kubw'umutekano.")}</p>
+            <p className="text-sm text-muted-foreground">{t("Payment gateway configurations (e.g., API keys for Stripe, MoMo) are managed securely on the backend and are not exposed here. This section would allow enabling/disabling methods or setting currency options if applicable.", "Igenamiterere ry'uburyo bwo kwishyura (urugero: API keys za Stripe, MoMo) rigenzurwa mu buryo bwizewe ku nserveri kandi ntirigaragara hano. Iki gice cyakwemerera gufungura/guhagarika uburyo cyangwa gushyiraho amahitamo y'ifaranga niba biboneka.")}</p>
              <Button onClick={() => handleSaveChanges("Payment Gateway")}><Save className="mr-2 h-4 w-4" />{t("Save Payment Settings", "Bika Igenamiterere ry'Ubwishyu")}</Button>
           </AccordionContent>
         </AccordionItem>
@@ -204,3 +196,4 @@ export default function AdminSettingsPage() {
     </AppLayout>
   );
 }
+```

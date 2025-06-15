@@ -6,10 +6,9 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/shared/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2, ShieldQuestion, FileHeart } from 'lucide-react'; 
+import { Pill, Stethoscope, ActivitySquare, MessageSquareQuote, FlaskConical, Video, CreditCard, ArrowRight, Loader2, LifeBuoy, Users2, ClipboardList, CalendarCheck2, ShieldQuestion, FileHeart } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { useRouter } from 'next/navigation';
-// Removed useToast as it's not used after removing localStorage-dependent toasts for auth
 
 interface Feature {
     title: string;
@@ -21,18 +20,18 @@ interface Feature {
     color: string;
     bgColor: string;
     borderColor: string;
-    roles?: string[]; // Optional: 'patient', 'doctor', 'admin', 'seeker'
+    roles?: string[];
 }
 
 const features: Feature[] = [
   {
     title: "Order Medicines",
-    titleKn: "Gura Imithi",
+    titleKn: "Gura Imiti",
     description: "Browse our catalog and order your medicines online.",
     descriptionKn: "Reba urutonde rw'imiti kandi uyitumize kuri interineti.",
     href: "/medicines",
     icon: Pill,
-    color: "text-primary", 
+    color: "text-primary",
     bgColor: "bg-primary/10 hover:bg-primary/20",
     borderColor: "border-primary/30",
     roles: ['patient', 'seeker']
@@ -43,8 +42,8 @@ const features: Feature[] = [
     description: "Access information about available medical tests.",
     descriptionKn: "Reba amakuru ajyanye n'ibipimo bya muganga biboneka.",
     href: "/medical-tests",
-    icon: ClipboardList, 
-    color: "text-accent", 
+    icon: ClipboardList,
+    color: "text-accent",
     bgColor: "bg-accent/10 hover:bg-accent/20",
     borderColor: "border-accent/30",
     roles: ['patient', 'seeker']
@@ -56,7 +55,7 @@ const features: Feature[] = [
     descriptionKn: "Fata igihe cyo kubonana n'abaganga b'inzobere.",
     href: "/appointments/book",
     icon: CalendarCheck2,
-    color: "text-green-600 dark:text-green-400", 
+    color: "text-green-600 dark:text-green-400",
     bgColor: "bg-green-500/10 hover:bg-green-500/20",
     borderColor: "border-green-500/30",
     roles: ['patient', 'seeker']
@@ -68,7 +67,7 @@ const features: Feature[] = [
     descriptionKn: "Reba kandi ucunge imiti wandikiwe na muganga.",
     href: "/my-health/prescriptions",
     icon: FileHeart,
-    color: "text-primary", 
+    color: "text-primary",
     bgColor: "bg-primary/10 hover:bg-primary/20",
     borderColor: "border-primary/30",
     roles: ['patient', 'seeker']
@@ -78,24 +77,24 @@ const features: Feature[] = [
     titleKn: "Amakuru y'Ubuzima",
     description: "Articles and tips for a healthier lifestyle.",
     descriptionKn: "Inyandiko n'inama z'ubuzima bwiza.",
-    href: "/health-resources/articles", 
+    href: "/health-resources/articles",
     icon: LifeBuoy,
-    color: "text-blue-600 dark:text-blue-400", 
+    color: "text-blue-600 dark:text-blue-400",
     bgColor: "bg-blue-500/10 hover:bg-blue-500/20",
     borderColor: "border-blue-500/30",
-    roles: ['patient', 'seeker', 'doctor', 'admin'] // Accessible to all logged in roles
+    roles: ['patient', 'seeker', 'doctor', 'admin']
   },
   {
     title: "Community Support",
     titleKn: "Ubufasha Rusange",
     description: "Connect with forums and support groups.",
     descriptionKn: "Hura n'ibiganiro rusange n'amatsinda y'ubufasha.",
-    href: "/community-support/forums", 
+    href: "/community-support/forums",
     icon: Users2,
-    color: "text-purple-600 dark:text-purple-400", 
+    color: "text-purple-600 dark:text-purple-400",
     bgColor: "bg-purple-500/10 hover:bg-purple-500/20",
     borderColor: "border-purple-500/30",
-    roles: ['patient', 'seeker', 'doctor', 'admin'] // Accessible to all logged in roles
+    roles: ['patient', 'seeker', 'doctor', 'admin']
   },
   {
     title: "Symptom Analyzer",
@@ -104,7 +103,7 @@ const features: Feature[] = [
     descriptionKn: "Menya byinshi bishingiye ku bimenyetso byawe. (AI)",
     href: "/symptom-analyzer",
     icon: ActivitySquare,
-    color: "text-teal-600 dark:text-teal-400", 
+    color: "text-teal-600 dark:text-teal-400",
     bgColor: "bg-teal-500/10 hover:bg-teal-500/20",
     borderColor: "border-teal-500/30",
     roles: ['patient', 'seeker', 'doctor', 'admin']
@@ -116,7 +115,7 @@ const features: Feature[] = [
     descriptionKn: "Shaka ibisubizo by'ibibazo bikunze kubazwa mu buvuzi. (AI)",
     href: "/faq",
     icon: MessageSquareQuote,
-    color: "text-indigo-600 dark:text-indigo-400", 
+    color: "text-indigo-600 dark:text-indigo-400",
     bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
     borderColor: "border-indigo-500/30",
     roles: ['patient', 'seeker', 'doctor', 'admin']
@@ -127,8 +126,8 @@ const features: Feature[] = [
     description: "Input symptoms for potential disease info. (AI Powered)",
     descriptionKn: "Andika ibimenyetso byawe umenye indwara zishoboka. (AI)",
     href: "/test-yourself",
-    icon: ShieldQuestion, 
-    color: "text-pink-600 dark:text-pink-400", 
+    icon: ShieldQuestion,
+    color: "text-pink-600 dark:text-pink-400",
     bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
     borderColor: "border-pink-500/30",
     roles: ['patient', 'seeker', 'doctor', 'admin']
@@ -140,7 +139,7 @@ const features: Feature[] = [
     descriptionKn: "Vugana n'abaganga kuri interineti ukoresheje videwo.",
     href: "/online-consultation",
     icon: Video,
-    color: "text-orange-600 dark:text-orange-400", 
+    color: "text-orange-600 dark:text-orange-400",
     bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
     borderColor: "border-orange-500/30",
     roles: ['patient', 'seeker', 'doctor']
@@ -150,26 +149,22 @@ const features: Feature[] = [
 export default function HomePage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until a backend confirms.
-  // For prototype, this would mean most features are 'disabled' or show 'login needed'.
-  const [isAuthenticated, setIsAuthenticated] = useState(false); 
-  const [userName, setUserName] = useState<string | null>("Ukoresha"); // Default Kinyarwanda "User"
-  const [userRole, setUserRole] = useState<string | null>(null); 
-  
+  // AppLayout handles authentication. This page doesn't need to manage it directly.
+  // For display purposes here, we can set a default.
+  const [userName, setUserName] = useState<string | null>(t("Ukoresha", "Ukoresha"));
+
   const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
 
   useEffect(() => {
     setIsClient(true);
-    // In a real app, an API call would verify session/token and set user data.
-    // Since localStorage is removed, we simulate a default non-authenticated state.
-    // To test a logged-in state, you'd manually set these after a mock login:
-    // setIsAuthenticated(true);
-    // setUserName(t("Umukoresha Prototipa", "Umukoresha Prototipa"));
-    // setUserRole("patient"); 
+    // In a real app, user details would come from context/store after login.
+    // Here, we're just using a default placeholder or could attempt to get from AppLayout state if passed down.
+    // Since AppLayout's auth is also mocked and defaults to unauthenticated,
+    // a sophisticated user name display here is not feasible without backend.
   }, []);
-  
 
-  if (!isClient) { // Basic SSR/loading guard
+
+  if (!isClient) {
     return (
       <AppLayout>
         <div className="flex flex-col justify-center items-center h-screen bg-background text-foreground">
@@ -180,26 +175,7 @@ export default function HomePage() {
     );
   }
 
-  // If not authenticated, redirect to welcome page or show a login prompt.
-  // For this refactor, the responsibility of auth check is moved away from localStorage.
-  // A real app would use context or a session check.
-  // For now, if we decide `isAuthenticated` is false, we might show a limited dashboard
-  // or a prompt to log in. Let's assume for now the dashboard shows general features
-  // and specific actions within features would require login (handled by those pages).
-  
-  const displayedFeatures = features.filter(feature => {
-    if (!isAuthenticated && feature.href !== "/" && feature.href !== "/welcome") { 
-        // If not authenticated, only show features that don't require a specific role
-        // or are explicitly public (none in current list, so this effectively hides most)
-        // This logic needs to be more robust based on backend auth.
-        // For now, let's assume if not authenticated, they can see feature cards but actions inside might be blocked.
-        // Or, just show all cards, and specific pages handle auth.
-        return true; // Show all features, individual pages will gate access.
-    }
-    if (!feature.roles) return true; // No specific role required
-    if (userRole && feature.roles.includes(userRole)) return true;
-    return false;
-  });
+  const displayedFeatures = features; // Show all features as per previous logic, AppLayout controls access.
 
 
   return (
@@ -210,7 +186,7 @@ export default function HomePage() {
           <CardHeader>
             <CardTitle className="text-2xl font-headline gradient-text">{t('Umufasha wawe w\'Ubuzima Byose Hamwe', 'Umufasha wawe w\'Ubuzima Byose Hamwe')}</CardTitle>
             <CardDescription className="text-foreground/80">
-              {t('MediServe Hub itanga uburyo bworoshye bwo gucunga ubuzima bwawe, kuva ku kugura imiti kugeza ku kuvugana n\'abaganga kuri interineti.', 
+              {t('MediServe Hub itanga uburyo bworoshye bwo gucunga ubuzima bwawe, kuva ku kugura imiti kugeza ku kuvugana n\'abaganga kuri interineti.',
                  'MediServe Hub itanga uburyo bworoshye bwo gucunga ubuzima bwawe, kuva ku kugura imiti kugeza ku kuvugana n\'abaganga kuri interineti.')}
             </CardDescription>
           </CardHeader>
@@ -243,8 +219,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        {(userRole === 'patient' || userRole === 'seeker' || !isAuthenticated /* Show if seeker OR if not authenticated to prompt login */) && (
-          <Card className="shadow-lg hover-lift">
+        <Card className="shadow-lg hover-lift">
             <CardHeader>
               <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>{t('Ukeneye Kwishyura?', 'Ukeneye Kwishyura?')}</CardTitle>
             </CardHeader>
@@ -257,8 +232,7 @@ export default function HomePage() {
                 </Link>
               </Button>
             </CardContent>
-          </Card>
-        )}
+        </Card>
       </div>
     </AppLayout>
   );

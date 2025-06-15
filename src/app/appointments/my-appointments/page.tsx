@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { format, isPast } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface AppointmentClient { // Renamed to avoid conflict
+interface AppointmentClient { 
   id: string;
-  userId: string; // This would be used by a backend to filter
+  userId: string; 
   doctorId: string;
   doctorName: string;
   specialty?: string; 
@@ -26,7 +26,7 @@ interface AppointmentClient { // Renamed to avoid conflict
   reason?: string;
 }
 
-const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 const AppointmentSkeleton = () => (
   <Card className="shadow-lg">
@@ -54,26 +54,21 @@ export default function MyAppointmentsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  // Assume not authenticated until backend confirms
-  const [isAuthenticated, setIsAuthenticated] = useState(false); 
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [appointments, setAppointments] = useState<AppointmentClient[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true); 
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check and data fetching
-    const loadData = async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setIsAuthenticated(true); // Assume authenticated for prototype
-        // Data would be fetched from backend here, not localStorage
-        // For now, show empty or very minimal mock data
-        setAppointments([ /*
-          { id: 'appt1', userId: 'user123', doctorId: 'doc1', doctorName: 'Dr. Emily Carter', specialty: 'General Physician', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), time: '10:00 AM', status: 'Confirmed', type: 'Online', reason: 'Checkup'},
-          { id: 'appt2', userId: 'user123', doctorId: 'doc2', doctorName: 'Dr. Ben Adams', specialty: 'Pediatrician', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), time: '02:30 PM', status: 'Completed', type: 'In-Person', reason: 'Vaccination'}
-        */ ]); 
-        setIsLoadingData(false);
-    };
-    loadData();
+    // Simulate data fetching. No localStorage means data resets on reload.
+    // In a real app, data comes from backend.
+    setAppointments([ /* Mock data for initial UI structure if needed, but should be empty for this flow
+      { id: 'appt1', userId: 'mockUserId123', doctorId: 'doc1', doctorName: 'Dr. Emily Carter', specialty: 'General Physician', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), time: '10:00 AM', status: 'Confirmed', type: 'Online', reason: 'Checkup'},
+      { id: 'appt2', userId: 'mockUserId123', doctorId: 'doc2', doctorName: 'Dr. Ben Adams', specialty: 'Pediatrician', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), time: '02:30 PM', status: 'Completed', type: 'In-Person', reason: 'Vaccination'}
+    */ ]); 
+    setIsLoadingData(false);
   }, []);
 
   
@@ -103,21 +98,20 @@ export default function MyAppointmentsPage() {
 
 
   const handleCancelAppointment = (apptId: string) => {
-    // This would be an API call to the backend
-    // For UI, we can optimistically update or show a toast.
-    // setAppointments(prev => 
-    //     prev.map(appt => appt.id === apptId ? {...appt, status: 'Cancelled'} : appt)
-    // );
+    // UI update is ephemeral, backend would handle persistence
+    setAppointments(prev => 
+        prev.map(appt => appt.id === apptId ? {...appt, status: 'Cancelled'} : appt)
+    );
     toast({
         title: t("Gusaba Guhagarika (Igerageza)", "Gusaba Guhagarika (Igerageza)"),
-        description: t(`Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri.`, `Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri.`),
+        description: t(`Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri. Ntibizabikwa muri iyi prototype.`, `Icyifuzo cyo guhagarika iteraniro ${apptId} cyoherejwe kuri seriveri. Ntibizabikwa muri iyi prototype.`),
     });
   };
 
   const handleJoinCall = (appointment: AppointmentClient) => {
     if (appointment.type === 'Online' && (appointment.status === 'Confirmed' || appointment.status === 'Pending')) { 
         toast({ title: t("Kwinjira mu Bujyanama kuri Interineti (Igerageza)", "Kwinjira mu Bujyanama kuri Interineti (Igerageza)"), description: t(`Guhuza n'ikiganiro cyawe na ${appointment.doctorName}... Ibi byasaba seriveri ya videwo.`, `Guhuza n'ikiganiro cyawe na ${appointment.doctorName}... Ibi byasaba seriveri ya videwo.`)});
-        // router.push('/online-consultation'); // Navigation can still happen
+        // router.push('/online-consultation'); 
     } else {
         toast({ variant:"destructive", title: t("Ntushobora Kwinjira mu Kiganiro", "Ntushobora Kwinjira mu Kiganiro"), description: t("Iri teraniro ntabwo ari ikiganiro cyo kuri interineti kiri gukora.", "Iri teraniro ntabwo ari ikiganiro cyo kuri interineti kiri gukora.")});
     }
@@ -159,6 +153,7 @@ export default function MyAppointmentsPage() {
   }
   
   if (!isAuthenticated) {
+     // This case should be handled by AppLayout redirection primarily.
      return (
          <AppLayout>
             <PageHeader title={t("Amateraniro Yanjye", "Amateraniro Yanjye")} />
@@ -201,7 +196,7 @@ export default function MyAppointmentsPage() {
             <CalendarCheck2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <CardTitle>{t("Nta Materaniro Ufite", "Nta Materaniro Ufite")}</CardTitle>
             <CardDescription className="mt-2">
-                {t("Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu!", "Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu!")}
+                {t("Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu! Amakuru y'amateraniro asaba guhuzwa na seriveri.", "Usa n'aho nta materaniro ufite ateganyijwe cyangwa yashize. Fata igihe gishya ubu! Amakuru y'amateraniro asaba guhuzwa na seriveri.")}
             </CardDescription>
         </Card>
       )}
@@ -280,3 +275,4 @@ export default function MyAppointmentsPage() {
     </AppLayout>
   );
 }
+```

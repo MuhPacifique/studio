@@ -28,6 +28,7 @@ interface SupportGroup {
   isRequested?: boolean; 
 }
 
+// Default mock data, will not persist after page reload.
 const initialMockSupportGroups: SupportGroup[] = [
   { id: 'sg1', name: 'Diabetes Management Group', description: 'A supportive community for individuals managing diabetes. Share tips, recipes, and encouragement.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'support group people', memberCount: 125, category: 'Chronic Illness', isPrivate: false, isJoined: false },
   { id: 'sg2', name: 'New Parents Support Circle', description: 'Connect with other new parents to navigate the joys and challenges of parenthood.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'parents baby discussion', memberCount: 88, category: 'Parenthood', isPrivate: true, isJoined: false },
@@ -35,7 +36,6 @@ const initialMockSupportGroups: SupportGroup[] = [
   { id: 'sg4', name: 'Fitness & Healthy Living Enthusiasts', description: 'For those passionate about fitness, healthy eating, and active lifestyles. Share workout ideas and motivation.', imageUrl: 'https://placehold.co/400x250.png', aiHint: 'fitness group exercise', memberCount: 150, category: 'Lifestyle', isPrivate: false, isJoined: false },
 ];
 
-// Translation helper
 const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 const SupportGroupCardSkeleton = () => (
@@ -64,47 +64,33 @@ export default function SupportGroupsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [groups, setGroups] = useState<SupportGroup[]>([]);
+  const [groups, setGroups] = useState<SupportGroup[]>([]); // Group list is ephemeral
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
   }, []);
   
   const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
 
   useEffect(() => {
     if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe"),
-          description: t("Please log in to access support groups.", "Nyamuneka injira kugirango ubashe kugera ku matsinda y'ubufasha."),
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-        const savedGroups = localStorage.getItem('supportGroupsState');
-        setGroups(savedGroups ? JSON.parse(savedGroups) : initialMockSupportGroups);
-      }
+      // Simulate fetching initial data. No localStorage means data resets on reload.
+      setGroups(initialMockSupportGroups);
       setIsLoadingData(false);
     }
-  }, [isClient, router, toast, currentLanguage]);
+  }, [isClient, currentLanguage]);
 
-  useEffect(() => {
-    if (isClient && groups.length > 0) { // Only save if groups have been initialized
-      localStorage.setItem('supportGroupsState', JSON.stringify(groups));
-    }
-  }, [groups, isClient]);
 
   const handleJoinGroup = (groupId: string) => {
+    // UI update is ephemeral
     setGroups(prevGroups => 
       prevGroups.map(group => {
         if (group.id === groupId) {
@@ -113,10 +99,10 @@ export default function SupportGroupsPage() {
             return group;
           }
           if (group.isPrivate && !group.isRequested) {
-            toast({ title: t("Request Sent", "Icyifuzo Cyoherejwe"), description: t(`Your request to join "${group.name}" has been sent.`, `Icyifuzo cyawe cyo kwinjira muri "${group.name}" cyoherejwe.`)});
+            toast({ title: t("Request Sent (Mock)", "Icyifuzo Cyoherejwe (By'agateganyo)"), description: t(`Your request to join "${group.name}" has been sent. (Not persisted)`, `Icyifuzo cyawe cyo kwinjira muri "${group.name}" cyoherejwe. (Ntibizabikwa)`)});
             return { ...group, isRequested: true };
           } else if (!group.isPrivate && !group.isJoined) {
-            toast({ title: t("Group Joined", "Uramaze Kwinjira mu Itsinda"), description: t(`You have joined "${group.name}".`, `Wamaze kwinjira muri "${group.name}".`)});
+            toast({ title: t("Group Joined (Mock)", "Uramaze Kwinjira mu Itsinda (By'agateganyo)"), description: t(`You have joined "${group.name}". (Not persisted)`, `Wamaze kwinjira muri "${group.name}". (Ntibizabikwa)`)});
             return { ...group, isJoined: true, memberCount: group.memberCount + 1 };
           }
         }
@@ -182,7 +168,7 @@ export default function SupportGroupsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Button className="transition-transform hover:scale-105 active:scale-95">
+            <Button className="transition-transform hover:scale-105 active:scale-95" onClick={() => toast({ title: t("Create Group (Mock)", "Kora Itsinda (By'agateganyo)"), description: t("This feature requires backend integration.", "Iki gice gisaba guhuzwa na seriveri.")})}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t("Create New Group", "Kora Itsinda Rishya")}
             </Button>
         </div>
@@ -194,7 +180,7 @@ export default function SupportGroupsPage() {
                 <Users2 className="mr-2 h-6 w-6"/> {t("Find Your Community", "Shaka Umuryango Wawe")}
             </CardTitle>
             <CardDescription>
-                {t("Join support groups to connect with others who share similar health journeys, interests, or challenges.", "Injira mu matsinda y'ubufasha kugirango uhure n'abandi mufite ingendo z'ubuzima, ibyo mukunda, cyangwa imbogamizi zisa.")}
+                {t("Join support groups to connect with others who share similar health journeys, interests, or challenges. Data requires backend integration to persist.", "Injira mu matsinda y'ubufasha kugirango uhure n'abandi mufite ingendo z'ubuzima, ibyo mukunda, cyangwa imbogamizi zisa. Amakuru asaba guhuzwa na seriveri kugirango abikwe.")}
             </CardDescription>
         </CardHeader>
       </Card>
@@ -257,3 +243,4 @@ export default function SupportGroupsPage() {
     </AppLayout>
   );
 }
+```

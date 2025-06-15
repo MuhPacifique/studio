@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Not directly used, FormLabel is preferred
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,10 +14,10 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Smartphone, DollarSign, Loader2, Building, Landmark } from 'lucide-react';
+import { CreditCard, Smartphone, DollarSign, Loader2, Landmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 const paymentSchema = z.object({
   amount: z.coerce.number().min(100, { message: t("Amafaranga agomba kuba nibura 100 RWF.", "Amafaranga agomba kuba nibura 100 RWF.") }),
@@ -33,7 +32,7 @@ const paymentSchema = z.object({
   mobileNumber: z.string().optional(),
   mobileProvider: z.string().optional(),
   bankName: z.string().optional(),
-  accountNumber: z.string().optional(), // Not explicitly used in UI, but good for schema
+  accountNumber: z.string().optional(), 
   userReference: z.string().optional(), 
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === "creditCard") {
@@ -71,10 +70,12 @@ const paymentSchema = z.object({
 type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 export default function PaymentPage() {
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Assume false initially
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   
   const form = useForm<PaymentFormValues>({
@@ -98,33 +99,25 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check
-    const checkAuth = async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        // This is a placeholder. Real auth would check a session/token.
-        // For now, we'll assume if they get here, they are "authenticated" for prototype purposes.
-        setIsAuthenticated(true);
-        setIsLoadingPage(false);
-    };
-    checkAuth();
+    // No auth check here, AppLayout handles it.
+    setIsLoadingPage(false);
   }, []);
 
 
   const onSubmit = async (data: PaymentFormValues) => {
-    // Simulate backend payment processing
+    // Simulate backend payment processing. No data is persisted.
     form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1500));
     form.formState.isSubmitting = false;
     
     toast({
       title: t("Ubwishyu Bwakozwe (Igerageza)", "Ubwishyu Bwakozwe (Igerageza)"),
-      description: t(`Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe.`, `Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe.`),
+      description: t(`Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe. Amakuru ntazabikwa muri iyi prototype.`, `Ubwishyu bwa ${data.amount.toLocaleString()} RWF bwakozwe neza binyuze muri ${data.paymentMethod} kuri: ${data.reason}. Ibi ni iby'ikitegererezo, nta bwishyu nyakuri bwakozwe. Amakuru ntazabikwa muri iyi prototype.`),
     });
     form.reset({
         amount: 5000, 
-        paymentMethod: data.paymentMethod, // Keep selected method for convenience
-        reason: "", // Clear reason
-        // Clear other fields
+        paymentMethod: data.paymentMethod, 
+        reason: "", 
         cardHolderName: "", cardNumber: "", expiryDate: "", cvv: "",
         mobileNumber: "", mobileProvider: undefined,
         bankName: undefined, userReference: "",
@@ -144,7 +137,7 @@ export default function PaymentPage() {
   }
 
   if (!isAuthenticated) {
-    // This should ideally be caught by a global auth guard or redirect from previous page
+    // This case should be handled by AppLayout redirection primarily.
     return (
       <AppLayout>
         <PageHeader title={t("Kwishyura Kuri Interineti", "Kwishyura Kuri Interineti")} />
@@ -164,7 +157,7 @@ export default function PaymentPage() {
       <Card className="w-full max-w-2xl mx-auto shadow-xl hover-lift">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />{t("Uburyo bwo Kwishyura bwizewe", "Uburyo bwo Kwishyura bwizewe")}</CardTitle>
-          <CardDescription>{t("Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba.", "Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba.")}</CardDescription>
+          <CardDescription>{t("Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba. Amakuru ntazabikwa.", "Uzuza ubwishyu bwawe bwa serivisi cyangwa ibyo watumije mu RWF. Ibi ni iby'ikitegererezo kandi nta gikorwa nyakuri kizaba. Amakuru ntazabikwa.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -208,7 +201,6 @@ export default function PaymentPage() {
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
-                            // Reset specific fields when payment method changes
                             form.reset({
                                 ...form.getValues(), 
                                 paymentMethod: value as PaymentFormValues["paymentMethod"],
@@ -217,7 +209,7 @@ export default function PaymentPage() {
                                 bankName: undefined, userReference: "",
                             });
                         }}
-                        value={field.value} // Ensure value is controlled
+                        value={field.value} 
                         className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors flex-1 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
@@ -369,3 +361,4 @@ export default function PaymentPage() {
     </AppLayout>
   );
 }
+```

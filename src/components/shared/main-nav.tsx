@@ -46,10 +46,11 @@ interface NavItem {
   adminOnly?: boolean;
   doctorOnly?: boolean;
   patientOrSeekerOnly?: boolean; 
-  requiresAuth?: boolean; // New flag to indicate if auth is needed
+  requiresAuth?: boolean;
   subItems?: NavItem[];
 }
 
+// This list assumes Kinyarwanda is the primary display language for labels.
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', labelKn: 'Imbonerahamwe', icon: Home, requiresAuth: true },
   { href: '/medicines', label: 'Order Medicines', labelKn: 'Gura Imiti', icon: Pill, patientOrSeekerOnly: true, requiresAuth: true },
@@ -137,11 +138,13 @@ const navItems: NavItem[] = [
 // Accept isAuthenticated as a prop
 export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttributes<HTMLElement> & { isAuthenticated: boolean }) {
   const pathname = usePathname();
-  // User type would ideally come from a context based on real auth
-  const userType: 'patient' | 'admin' | 'doctor' | 'seeker' | null = isAuthenticated ? "patient" : null; // Mock userType if authenticated
+  // This mock userType would be derived from the authenticated user's actual role in a real app.
+  // For now, it's hardcoded for demonstration if authenticated.
+  const userType: 'patient' | 'admin' | 'doctor' | 'seeker' | null = isAuthenticated ? (pathname.startsWith('/admin') ? 'admin' : pathname.startsWith('/doctor') ? 'doctor' : 'patient') : null; 
   
   const [isClient, setIsClient] = useState(false);
-  const preferredLanguage = 'kn' as 'en' | 'kn'; // Default to Kinyarwanda
+  // Language preference is now fixed to Kinyarwanda as localStorage is removed.
+  const preferredLanguage = 'kn' as 'en' | 'kn'; 
 
   const [openSubMenus, setOpenSubMenus] = React.useState<Record<string, boolean>>({});
 
@@ -176,8 +179,8 @@ export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttr
   }
   
   const filteredNavItems = navItems.filter(item => {
-    if (item.requiresAuth && !isAuthenticated) return false; // Hide if requires auth and not authenticated
-    if (isAuthenticated) { // If authenticated, apply role-based filtering
+    if (item.requiresAuth && !isAuthenticated) return false; 
+    if (isAuthenticated && userType) { 
         if (item.adminOnly && userType !== 'admin') return false;
         if (item.doctorOnly && userType !== 'doctor') return false;
         if (item.patientOrSeekerOnly && !(userType === 'patient' || userType === 'seeker')) return false;
@@ -194,7 +197,7 @@ export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttr
         {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.label}>
             {!item.subItems ? (
-              <Link href={item.href} passHref>
+              <Link href={item.href} legacyBehavior={false} passHref>
                 <SidebarMenuButton
                   asChild
                   variant="default"
@@ -234,18 +237,17 @@ export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttr
                 {openSubMenus[item.label] && (
                   <SidebarMenuSub className="mt-1">
                     {item.subItems.filter(subItem => {
-                        // Apply role filtering for sub-items as well if authenticated
-                        if (isAuthenticated) {
+                        if (isAuthenticated && userType) {
                             if (subItem.adminOnly && userType !== 'admin') return false;
                             if (subItem.doctorOnly && userType !== 'doctor') return false;
                             if (subItem.patientOrSeekerOnly && !(userType === 'patient' || userType === 'seeker')) return false;
-                        } else if (subItem.requiresAuth) { // If not authenticated, hide sub-items that require auth
+                        } else if (subItem.requiresAuth) { 
                             return false;
                         }
                         return true;
                     }).map((subItem) => (
                        <SidebarMenuSubItem key={subItem.href}>
-                         <Link href={subItem.href} passHref>
+                         <Link href={subItem.href} legacyBehavior={false} passHref>
                            <SidebarMenuSubButton
                              asChild
                              size="md"
@@ -273,3 +275,4 @@ export function MainNav({ className, isAuthenticated, ...props }: React.HTMLAttr
     </nav>
   );
 }
+```

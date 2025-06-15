@@ -19,7 +19,6 @@ import type { ValueType, NameType } from 'recharts/types/component/DefaultToolti
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-// Defaulting to Kinyarwanda
 const t = (enText: string, knText: string) => knText;
 
 // Mock data - in a real app, this would be fetched from the backend
@@ -76,11 +75,12 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameT
 
 export default function AdminAnalyticsPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  // Assume if user reaches this page, they are an "authenticated admin" for prototype purposes.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(true); 
   
-  // Data states for charts, could be populated from backend
+  // Data states for charts, would be populated from backend in a real app
   const [summaryMetrics, setSummaryMetrics] = useState({ totalRevenue: "5,600,050 RWF", activeUsers: "1,234", platformActivity: "Ibikorwa 567 None" });
   const [userGrowthData, setUserGrowthData] = useState(lineChartData);
   const [serviceRevenueData, setServiceRevenueData] = useState(pieChartDataKn);
@@ -88,15 +88,9 @@ export default function AdminAnalyticsPage() {
 
 
   useEffect(() => {
-    // Simulate checking admin authentication status
-    const simulateAuthCheck = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // For prototype, assume authenticated if reaching here via admin flow
-      setIsAuthenticatedAdmin(true); 
-      setIsLoading(false);
-      // In a real app, fetch analytics data from backend here
-    };
-    simulateAuthCheck();
+    // Simulate fetching analytics data.
+    // In a real app, data comes from backend, not localStorage.
+    setIsLoading(false);
   }, []);
 
 
@@ -121,8 +115,7 @@ export default function AdminAnalyticsPage() {
 
   if (!isAuthenticatedAdmin) {
     toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
-    router.replace('/admin/login');
-    return null;
+    return <AppLayout><PageHeader title={t("Access Denied", "Ntabwo Wemerewe")} /></AppLayout>;
   }
 
   return (
@@ -267,3 +260,4 @@ export default function AdminAnalyticsPage() {
     </AppLayout>
   );
 }
+```

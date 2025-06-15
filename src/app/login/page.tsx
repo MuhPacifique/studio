@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogoIcon } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation'; 
 import { Phone } from 'lucide-react';
 
 const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
@@ -35,7 +35,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams(); // Get query parameters
+  const searchParams = useSearchParams(); 
   const [roleFromQuery, setRoleFromQuery] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,39 +59,38 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    // This is a mock login. In a real app, this would call a backend API.
+    // This is a mock login. No data is persisted.
+    form.formState.isSubmitting = true;
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Since localStorage for auth is removed, this login doesn't "persist" a session.
-    // It just simulates a successful login attempt for UI flow.
+    form.formState.isSubmitting = false;
     
     let loginSuccess = false;
-    let userName = "Umukoresha"; // Default Kinyarwanda "User"
-    let redirectPath = '/';
+    let userName = t("Umukoresha", "Umukoresha"); 
+    let redirectPath = '/'; // Default redirect path after successful "login"
 
-    // Mock credentials check based on roleFromQuery
+    // Mock credentials check - THIS DOES NOT USE REAL AUTHENTICATION
     if (roleFromQuery === 'doctor' && data.email === "doctor@example.com" && data.password === "password") {
         loginSuccess = true;
-        userName = "Dr. Alex Smith"; // Keep some distinct names for demo
+        userName = t("Dr. Alex Smith", "Dr. Alex Smith"); 
         redirectPath = '/doctor/dashboard';
     } else if (roleFromQuery === 'patient' && data.email === "patient@example.com" && data.password === "password") {
         loginSuccess = true;
-        userName = "Patty Patient";
-        redirectPath = '/';
+        userName = t("Patty Patient", "Patty Patient");
+        // For patient, redirectPath remains '/' which will be handled by AppLayout
     } else if (roleFromQuery === 'seeker' && data.email === "seeker@example.com" && data.password === "password") {
         loginSuccess = true;
-        userName = "Sam Seeker";
-        redirectPath = '/';
+        userName = t("Sam Seeker", "Sam Seeker");
     }
-    // Admin login is handled separately
 
     if (loginSuccess) {
       toast({
         title: t("Kwinjira Byagenze Neza", "Kwinjira Byagenze Neza"),
         description: `${t("Murakaza neza", "Murakaza neza")}, ${userName}! (Igerageza)`,
       });
-      // In a real app, backend would set a session cookie/token.
-      // For prototype, redirect. UserNav won't show logged-in state without further changes.
+      // For prototype, simulate "logging in" by redirecting.
+      // AppLayout's mock auth state isn't directly changed here,
+      // as a real app would get session info from backend response.
+      // To test authenticated views, manually set `isAuthenticated` to true in AppLayout.
       router.push(redirectPath); 
     } else {
       toast({
@@ -99,7 +98,7 @@ export default function LoginPage() {
         title: t("Kwinjira Byanze", "Kwinjira Byanze"),
         description: t("Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa.", "Amakuru watanze ntabwo ariyo kuri uru ruhare rwahiswemo cyangwa ni ay'ikitegererezo gusa."),
       });
-      form.setError("email", { type: "manual", message: " " }); // Clear specific error message as it's generic
+      form.setError("email", { type: "manual", message: " " }); 
       form.setError("password", { type: "manual", message: t("Amakuru watanze ntabwo ariyo.", "Amakuru watanze ntabwo ariyo.") });
     }
   };
@@ -108,7 +107,6 @@ export default function LoginPage() {
     patient: { en: "Patient Login", kn: "Kwinjira kw'Umurwayi" },
     doctor: { en: "Doctor Login", kn: "Kwinjira kwa Muganga" },
     seeker: { en: "Health Seeker Login", kn: "Kwinjira k'Ushaka Ubujyanama" },
-    // Admin login is a separate page
   };
 
   const pageTitle = roleFromQuery && roleTitles[roleFromQuery] 
@@ -116,10 +114,9 @@ export default function LoginPage() {
     : t("Injira", "Injira");
 
   if (!roleFromQuery) {
-    // Still waiting for role from query params or redirecting
     return (
          <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-page p-4">
-            <p>{t("Guta...", "Gutegura...")}</p> {/* Loading... */}
+            <p>{t("Gutegura...", "Gutegura...")}</p> 
          </div>
     );
   }
@@ -203,3 +200,4 @@ export default function LoginPage() {
     </div>
   );
 }
+```

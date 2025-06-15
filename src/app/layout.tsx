@@ -19,8 +19,11 @@ export default function RootLayout({
     document.documentElement.lang = 'kn';
 
     // Apply dark mode based on OS preference if no class is set
-    if (!document.documentElement.classList.contains('light') && !document.documentElement.classList.contains('dark')) {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    // Check if theme classes are already set to avoid overriding explicit user choices (if any persisted via other means)
+    const hasThemeClass = document.documentElement.classList.contains('light') || document.documentElement.classList.contains('dark');
+    
+    if (!hasThemeClass) {
+      if (typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.add('light'); // Default to light if no OS preference or OS prefers light

@@ -13,14 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface PrescribedMedicineItemClient { // Renamed
+interface PrescribedMedicineItemClient { 
   id: string;
   name: string;
   dosage: string;
   frequency: string;
   duration: string;
 }
-interface PrescriptionClient { // Renamed
+interface PrescriptionClient { 
   id: string;
   patientId: string; 
   doctorName: string;
@@ -30,7 +30,7 @@ interface PrescriptionClient { // Renamed
   status: 'Active' | 'Completed' | 'Expired';
 }
 
-const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 const PrescriptionSkeleton = () => (
   <Card className="shadow-lg">
@@ -67,25 +67,20 @@ export default function MyPrescriptionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Assume false initially
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [prescriptions, setPrescriptions] = useState<PrescriptionClient[]>([]); 
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate auth check and data fetching
-    const loadData = async () => {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-        setIsAuthenticated(true); // Assume authenticated for prototype
-        
-        // Data would be fetched from backend, not localStorage
-        // For now, show empty or minimal mock data if localStorage is gone
-        setPrescriptions([ /*
-            { id: 'rx1', patientId: 'user123', doctorName: 'Dr. Alex Smith', datePrescribed: new Date().toISOString(), medicines: [{id: 'med1', name: 'Paracetamol 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'}], notes: 'Take after meals.', status: 'Active' }
-        */ ]);
-        setIsLoadingData(false);
-    };
-    loadData();
+    // Simulate data fetching. No localStorage means data resets on reload.
+    // In a real app, data comes from backend.
+    setPrescriptions([ /* Mock data for initial UI structure if needed
+        { id: 'rx1', patientId: 'mockUserId123', doctorName: 'Dr. Alex Smith', datePrescribed: new Date().toISOString(), medicines: [{id: 'med1', name: 'Paracetamol 500mg', dosage: '1 tab', frequency: '3 times a day', duration: '5 days'}], notes: 'Take after meals.', status: 'Active' }
+    */ ]);
+    setIsLoadingData(false);
   }, []);
   
   const getStatusBadgeVariant = (status: PrescriptionClient['status']): "default" | "secondary" | "outline" | "destructive" => {
@@ -124,6 +119,7 @@ export default function MyPrescriptionsPage() {
   }
 
   if (!isAuthenticated) {
+     // This case should be handled by AppLayout redirection primarily.
      return (
          <AppLayout>
             <PageHeader title={t("Imiti Nandikiwe", "Imiti Nandikiwe")} />
@@ -184,10 +180,10 @@ export default function MyPrescriptionsPage() {
                 )}
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 border-t pt-4">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Mock)", "Kurura PDF (By'agateganyo)")})}>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("PDF Download (Mock - backend needed)", "Kurura PDF (By'agateganyo - seriveri irakenewe)")})}>
                   <Download className="mr-2 h-4 w-4"/> {t("Kurura PDF (Igerageza)", "Kurura PDF (Igerageza)")}
                 </Button>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Mock)", "Chapisha Urupapuro (By'agateganyo)")})}>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto hover:bg-primary/10 hover:border-primary transition-colors" onClick={() => toast({description: t("Print Prescription (Mock - backend needed)", "Chapisha Urupapuro (By'agateganyo - seriveri irakenewe)")})}>
                   <Printer className="mr-2 h-4 w-4"/> {t("Chapisha Urupapuro (Igerageza)", "Chapisha Urupapuro (Igerageza)")}
                 </Button>
               </CardFooter>
@@ -199,7 +195,7 @@ export default function MyPrescriptionsPage() {
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4"/>
             <CardTitle className="font-headline">{t("Nta Rupapuro rw'Imiti Rubonetse", "Nta Rupapuro rw'Imiti Rubonetse")}</CardTitle>
             <CardContent>
-                <p className="text-muted-foreground mt-2">{t("Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Niba witeze kubona rumwe, vugana na muganga wawe cyangwa usure ishami ry'amateraniro.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Niba witeze kubona rumwe, vugana na muganga wawe cyangwa usure ishami ry'amateraniro.")}</p>
+                <p className="text-muted-foreground mt-2">{t("Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Amakuru y'imiti yandikiwe asaba guhuzwa na seriveri.", "Kugeza ubu nta rupapuro rw'imiti rufite mu bubiko. Amakuru y'imiti yandikiwe asaba guhuzwa na seriveri.")}</p>
                 <Button onClick={() => router.push('/appointments/book')} className="mt-6 transition-transform hover:scale-105 active:scale-95">
                     {t("Fata Igihe kwa Muganga", "Fata Igihe kwa Muganga")}
                 </Button>
@@ -209,3 +205,4 @@ export default function MyPrescriptionsPage() {
     </AppLayout>
   );
 }
+```

@@ -20,7 +20,7 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-const t = (enText: string, knText: string) => knText; // Defaulting to Kinyarwanda
+const t = (enText: string, knText: string) => knText; 
 
 type ServiceType = 'Medical Test' | 'Consultation' | 'Procedure';
 type ServiceTypeKn = 'Igipimo cya Muganga' | 'Kubonana na Muganga' | 'Uburyo bwo Kuvura';
@@ -37,7 +37,7 @@ interface ServiceItem {
   isActive: boolean;
 }
 
-// Mock initial data
+// Mock initial data - will not persist after page reload.
 const initialMockServices: ServiceItem[] = [
   { id: 'svc1', name: 'Complete Blood Count (CBC)', nameKn: 'Isuzuma ryuzuye ry\'amaraso (CBC)', type: 'Medical Test', typeKn: 'Igipimo cya Muganga', price: 7500, duration: 'Results in 24h', durationKn: 'Ibisubizo mu masaha 24', isActive: true },
   { id: 'svc2', name: 'General Consultation', nameKn: 'Kubonana na Muganga Rusange', type: 'Consultation', typeKn: 'Kubonana na Muganga', price: 5000, duration: '30 minutes', durationKn: 'Iminota 30', isActive: true },
@@ -60,24 +60,20 @@ type ServiceFormValues = z.infer<ReturnType<typeof serviceFormSchema>>;
 
 export default function AdminServicesPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Kept for potential future use
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(false);
+  // Assume if user reaches this page, they are an "authenticated admin" for prototype purposes.
+  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState(true); 
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [servicesList, setServicesList] = useState<ServiceItem[]>([]); // Start empty
+  const [servicesList, setServicesList] = useState<ServiceItem[]>([]); 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
 
   useEffect(() => {
-    // Simulate checking admin authentication and fetching initial data
-    const simulateLoad = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setIsAuthenticatedAdmin(true);
-      setServicesList(initialMockServices);
-      setIsLoadingPage(false);
-    };
-    simulateLoad();
+    // Simulate fetching initial data. No localStorage means data resets on reload.
+    setServicesList(initialMockServices);
+    setIsLoadingPage(false);
   }, []);
 
   const form = useForm<ServiceFormValues>({
@@ -101,13 +97,14 @@ export default function AdminServicesPage() {
 
   const handleFormSubmit = (data: ServiceFormValues) => {
     const typeKn = serviceTypeKnValues[serviceTypeValues.indexOf(data.type)] || data.type;
+    // UI update is ephemeral, backend would handle persistence
     if (editingService) {
       setServicesList(prev => prev.map(svc => svc.id === editingService.id ? { ...editingService, ...data, typeKn } : svc));
-      toast({ title: t("Serivisi Yahinduwe (Igerageza)", "Serivisi Yahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yahinduwe. Ibi bizasabwa koherezwa kuri seriveri.`) });
+      toast({ title: t("Serivisi Yahinduwe (Igerageza)", "Serivisi Yahinduwe (Igerageza)"), description: t(`${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} yahinduwe. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
     } else {
       const newService: ServiceItem = { ...data, typeKn, id: `svc${Date.now()}` };
       setServicesList(prev => [newService, ...prev]);
-      toast({ title: t("Serivisi Yongeweho (Igerageza)", "Serivisi Yongeweho (Igerageza)"), description: t(`${data.name} yongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`, `${data.name} yongeweho ku rutonde. Ibi bizasabwa koherezwa kuri seriveri.`) });
+      toast({ title: t("Serivisi Yongeweho (Igerageza)", "Serivisi Yongeweho (Igerageza)"), description: t(`${data.name} yongeweho ku rutonde. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`, `${data.name} yongeweho ku rutonde. Ibi byoherejwe kuri seriveri (mu buryo bw'ikitegererezo).`) });
     }
     setIsFormDialogOpen(false);
     setEditingService(null);
@@ -120,6 +117,7 @@ export default function AdminServicesPage() {
   };
 
   const handleDeleteItem = (itemId: string, itemName: string) => {
+    // UI update is ephemeral
     setServicesList(prev => prev.filter(item => item.id !== itemId));
     toast({ variant: "destructive", title: t("Gusiba Serivisi (Igerageza)", "Gusiba Serivisi (Igerageza)"), description: t(`${itemName} yakuwe ku rutonde. Gusiba nyako bisaba seriveri.`, `${itemName} yakuwe ku rutonde. Gusiba nyako bisaba seriveri.`)});
   };
@@ -142,8 +140,7 @@ export default function AdminServicesPage() {
 
   if (!isAuthenticatedAdmin) {
     toast({ variant: "destructive", title: t("Access Denied", "Ntabwo Wemerewe") });
-    router.replace('/admin/login');
-    return null;
+    return <AppLayout><PageHeader title={t("Access Denied", "Ntabwo Wemerewe")} /></AppLayout>;
   }
 
 
@@ -175,7 +172,7 @@ export default function AdminServicesPage() {
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><ListOrdered className="mr-2 h-5 w-5 text-primary" />{t("Service Listings", "Urutonde rwa Serivisi")}</CardTitle>
-          <CardDescription>{t("Manage medical tests, consultations, and other services. Changes are illustrative.", "Gucunga ibipimo bya muganga, kubonana na muganga, n'izindi serivisi. Impinduka ni iz'ikitegererezo.")}</CardDescription>
+          <CardDescription>{t("Manage medical tests, consultations, and other services. Changes are illustrative and require backend integration.", "Gucunga ibipimo bya muganga, kubonana na muganga, n'izindi serivisi. Impinduka ni iz'ikitegererezo kandi zisaba guhuzwa na seriveri.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -226,7 +223,7 @@ export default function AdminServicesPage() {
           <DialogHeader>
             <DialogTitle>{editingService ? t('Edit Service', 'Hindura Serivisi') : t('Add New Service', 'Ongeraho Serivisi Nshya')}</DialogTitle>
             <DialogDescription>
-              {editingService ? t("Update the service details. (Mock)", "Hindura amakuru ya serivisi. (Igerageza)") : t("Fill in the details to add a new service. (Mock)", "Uzuza amakuru kugirango wongere serivisi nshya. (Igerageza)")}
+              {editingService ? t("Update the service details. (Mock - backend needed)", "Hindura amakuru ya serivisi. (Igerageza - seriveri irakenewe)") : t("Fill in the details to add a new service. (Mock - backend needed)", "Uzuza amakuru kugirango wongere serivisi nshya. (Igerageza - seriveri irakenewe)")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
@@ -273,3 +270,4 @@ export default function AdminServicesPage() {
     </AppLayout>
   );
 }
+```

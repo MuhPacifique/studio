@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, MessageSquareQuote, Search, PlusCircle, ThumbsUp, MessageSquare, ArrowRight } from 'lucide-react';
+import { MessageSquareQuote, Search, PlusCircle, ThumbsUp, MessageSquare, ArrowRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,6 +35,7 @@ interface ForumPost {
   tags?: string[];
 }
 
+// Default mock data, will not persist after page reload.
 const defaultForumPosts: ForumPost[] = [
   { id: 'fp1', title: 'Managing chronic pain - tips and support', author: 'Alice W.', authorAvatar: 'https://placehold.co/40x40.png?text=AW', authorInitials: 'AW', category: 'Pain Management', timestamp: '2 days ago', summary: 'Looking for advice and shared experiences on managing long-term chronic pain. What has worked for you?', fullContent: "Detailed content about managing chronic pain goes here. This includes personal anecdotes, medical advice gathered (with disclaimers), and questions for the community. It could span multiple paragraphs...", likes: 15, commentsCount: 4, aiHint: 'community support people', tags: ['chronic pain', 'support', 'wellness'] },
   { id: 'fp2', title: 'Dealing with anxiety before medical tests', author: 'Bob K.', authorAvatar: 'https://placehold.co/40x40.png?text=BK', authorInitials: 'BK', category: 'Mental Wellness', timestamp: '5 hours ago', summary: 'I always get very anxious before any medical test or procedure. How do others cope with this?', fullContent: "In-depth discussion about medical test anxiety, coping mechanisms, breathing exercises, and seeking professional help when needed.", likes: 22, commentsCount: 8, aiHint: 'anxious person thinking', tags: ['anxiety', 'medical tests', 'mental health'] },
@@ -45,7 +46,6 @@ const forumCategories = ['Pain Management', 'Mental Wellness', 'Nutrition', 'Fit
 const forumCategoriesKn = ['Gucunga Ububabare', 'Ubuzima Bwo Mu Mutwe', 'Imirire', 'Imyitozo Ngororamubiri', 'Ubuzima Rusange', 'Ibindi'];
 
 
-// Translation helper
 const translate = (enText: string, knText: string, lang: 'en' | 'kn') => lang === 'kn' ? knText : enText;
 
 const ForumPostSkeleton = () => (
@@ -83,12 +83,14 @@ export default function PatientForumsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Assume not authenticated until backend confirms.
+  // AppLayout will handle redirection if this page is accessed without auth.
+  const [isAuthenticated, setIsAuthenticated] = useState(true); 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'kn'>('kn');
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]); // Posts list is ephemeral
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostCategory, setNewPostCategory] = useState('');
@@ -97,42 +99,26 @@ export default function PatientForumsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const lang = localStorage.getItem('mockUserLang') as 'en' | 'kn' | null;
-    if (lang) setCurrentLanguage(lang);
+    setCurrentLanguage('kn'); // Default to Kinyarwanda as localStorage is removed
   }, []);
   
   const t = (enText: string, knText: string) => translate(enText, knText, currentLanguage);
 
   useEffect(() => {
     if (isClient) {
-      const authStatus = localStorage.getItem('mockAuth');
-      if (!authStatus) {
-        toast({
-          variant: "destructive",
-          title: t("Access Denied", "Ntabwo Wemerewe"),
-          description: t("Please log in to access patient forums.", "Nyamuneka injira kugirango ubashe kugera ku biganiro by'abarwayi."),
-        });
-        router.replace('/welcome'); 
-      } else {
-        setIsAuthenticated(true);
-        const savedPosts = localStorage.getItem('forumPosts');
-        setPosts(savedPosts ? JSON.parse(savedPosts) : defaultForumPosts);
-      }
+      // Simulate fetching initial data. No localStorage means data resets on reload.
+      setPosts(defaultForumPosts);
       setIsLoadingData(false);
     }
-  }, [isClient, router, toast, currentLanguage]);
+  }, [isClient, currentLanguage]);
 
-  useEffect(() => {
-    if (isClient && posts.length > 0) { // Only save if posts have been initialized
-      localStorage.setItem('forumPosts', JSON.stringify(posts));
-    }
-  }, [posts, isClient]);
 
   const handleLike = (postId: string) => {
+    // UI update is ephemeral
     setPosts(prevPosts => prevPosts.map(post => 
       post.id === postId ? { ...post, likes: post.likes + 1 } : post
     ));
-    toast({ title: t("Post Liked", "Inkuru Yakunzwe") });
+    toast({ title: t("Post Liked (Mock)", "Inkuru Yakunzwe (By'agateganyo)") });
   };
 
   const handleCreatePost = (e: React.FormEvent) => {
@@ -147,17 +133,18 @@ export default function PatientForumsPage() {
       category: newPostCategory,
       summary: newPostContent.substring(0, 100) + (newPostContent.length > 100 ? "..." : ""),
       fullContent: newPostContent,
-      author: localStorage.getItem('mockUserName') || t('Anonymous User', 'Ukoresha utazwi'),
+      author: t('Current User (Mock)', 'Ukoresha (By\'agateganyo)'), // Mock user name
       authorAvatar: 'https://placehold.co/40x40.png?text=U',
-      authorInitials: (localStorage.getItem('mockUserName') || "U").substring(0,2).toUpperCase(),
+      authorInitials: "U",
       timestamp: t('Just now', 'Nonaha'),
       likes: 0,
       commentsCount: 0,
       aiHint: 'user generated content',
       tags: newPostTags.split(',').map(tag => tag.trim()).filter(tag => tag),
     };
+    // UI update is ephemeral
     setPosts(prevPosts => [newPost, ...prevPosts]);
-    toast({ title: t("Post Created", "Inkuru Yashyizweho") });
+    toast({ title: t("Post Created (Mock)", "Inkuru Yashyizweho (By'agateganyo)"), description: t("Your post has been added to the list. It will not persist after page reload.", "Inkuru yawe yongewe ku rutonde. Ntizabikwa nyuma yo guhindura paji.") });
     setIsCreatePostOpen(false);
     setNewPostTitle('');
     setNewPostCategory('');
@@ -170,13 +157,13 @@ export default function PatientForumsPage() {
     post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     post.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
-  ).sort((a,b) => (a.timestamp === t('Just now', 'Nonaha') ? -1 : b.timestamp === t('Just now', 'Nonaha') ? 1 : 0) || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // Sort by timestamp, "Just now" first
+  ).sort((a,b) => (a.timestamp === t('Just now', 'Nonaha') ? -1 : b.timestamp === t('Just now', 'Nonaha') ? 1 : 0) || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); 
 
 
   if (!isClient || isLoadingData) {
     return (
       <AppLayout>
-        <PageHeader 
+         <PageHeader 
             title={t("Patient Forums", "Ibiganiro by'Abarwayi")}
             breadcrumbs={[
             {label: t("Dashboard", "Imbonerahamwe"), href: "/"}, 
@@ -237,7 +224,7 @@ export default function PatientForumsPage() {
                 <MessageSquareQuote className="mr-2 h-6 w-6"/> {t("Welcome to the Forums!", "Murakaza neza mu Biganiro!")}
             </CardTitle>
             <CardDescription>
-                {t("Connect with other patients, share experiences, and find support. Please remember to be respectful and that this is not a substitute for professional medical advice.", "Hura n'abandi barwayi, sangira uburambe, kandi ubone ubufasha. Nyamuneka wibuke kubaha abandi kandi uzirikane ko ibi bidashobora gusimbura inama za muganga w'umwuga.")}
+                {t("Connect with other patients, share experiences, and find support. Please remember to be respectful and that this is not a substitute for professional medical advice. Data requires backend integration to persist.", "Hura n'abandi barwayi, sangira uburambe, kandi ubone ubufasha. Nyamuneka wibuke kubaha abandi kandi uzirikane ko ibi bidashobora gusimbura inama za muganga w'umwuga. Amakuru asaba guhuzwa na seriveri kugirango abikwe.")}
             </CardDescription>
         </CardHeader>
       </Card>
@@ -347,3 +334,4 @@ export default function PatientForumsPage() {
     </AppLayout>
   );
 }
+```
