@@ -149,11 +149,12 @@ const features: Feature[] = [
 export default function HomePage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+
+  const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
   // AppLayout handles authentication. This page doesn't need to manage it directly.
   // For display purposes here, we can set a default.
   const [userName, setUserName] = useState<string | null>(t("Ukoresha", "Ukoresha"));
 
-  const t = (enText: string, knText: string) => knText; // Default to Kinyarwanda
 
   useEffect(() => {
     setIsClient(true);
